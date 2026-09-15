@@ -6,8 +6,7 @@ export const onRequest: PagesFunction = async (context) => {
   const resp = await fetch(target.toString(), {
     method: context.request.method,
     headers: {
-      'x-forwarded-host': url.host,
-      'x-forwarded-proto': 'https',
+      'x-app-origin': url.host,
     },
   });
   return new Response(resp.body, { status: resp.status, headers: resp.headers });
