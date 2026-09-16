@@ -2,7 +2,6 @@
 import { Fragment, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams, useParams } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
 import { getCurrentUser } from '@/lib/supabaseAuth';
 import { supabase } from '@/lib/supabaseClient';
@@ -54,7 +53,7 @@ export default function RassegnaStampa() {
       const query = { source_type: 'rassegna', status: 'published' };
       if (source !== 'all') query.source_name = source;
       if (category !== 'all') query.category = category;
-      return base44.entities.Post.filter(query, '-published_date', 100);
+      return sb44.entities.Post.filter(query, '-published_date', 100);
     },
     staleTime: 3 * 60 * 1000
   });

@@ -368,7 +368,7 @@ export default function Home() {
     queryFn: async () => {
       const [gd, ras] = await Promise.all([
       sb44.entities.Post.filter({ status: 'published', category: { $in: ['comunicato', 'news_gd', 'proposta', 'approfondimento'] } }, '-published_date', 50),
-      base44.entities.Post.filter({ status: 'published', category: { $in: ['politica_nazionale', 'politica_regionale', 'rassegna_stampa'] } }, '-published_date', 100)]
+      sb44.entities.Post.filter({ status: 'published', category: { $in: ['politica_nazionale', 'politica_regionale', 'rassegna_stampa'] } }, '-published_date', 100)]
       );
       return [...(gd || []), ...(ras || [])];
     },
