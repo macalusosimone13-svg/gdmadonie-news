@@ -109,12 +109,8 @@ export default function Settings() {
     e.preventDefault();
     setDeleting(true);
     try {
-      // Rimuove i dati del profilo lato utente; la cancellazione completa
-      // dell'account di autenticazione richiederà una funzione server-side
-      // dedicata (con permessi da amministratore) da collegare in seguito.
-      if (user?.id) {
-        try { await supabase.from('profiles').delete().eq('id', user.id); } catch (e) {}
-      }
+      const { error } = await supabase.functions.invoke('delete-account', {});
+      if (error) throw error;
       await supabaseLogout();
       window.location.href = '/login';
     } catch (e) {
