@@ -23,7 +23,7 @@ export default function EventDetail() {
         setEvent(e);
         if (e) markRead(e.id);
         try {
-          const mine = await sb44.entities.SavedEvent.filter({ event_id: id }, '-created_date', 1);
+          const mine = await sb44.entities.SavedEvent.filter({ event_id: id }, '-created_at', 1);
           setSaved(Array.isArray(mine) && mine.length > 0);
         } catch { /* utente non loggato: salva disattivato */ }
       } catch {}
@@ -36,7 +36,7 @@ export default function EventDetail() {
     setToggling(true);
     try {
       if (saved) {
-        const mine = await sb44.entities.SavedEvent.filter({ event_id: event.id }, '-created_date', 50);
+        const mine = await sb44.entities.SavedEvent.filter({ event_id: event.id }, '-created_at', 50);
         if (mine?.length) await sb44.entities.SavedEvent.delete(mine[0].id);
         setSaved(false);
         toast({ description: 'Evento rimosso dai salvati' });

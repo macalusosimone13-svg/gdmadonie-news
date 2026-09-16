@@ -60,11 +60,11 @@ export default function RassegnaStampa() {
   });
 
   const loadSaved = () => {
-    sb44.entities.SavedArticle.list('-created_date', 100).then((data) => setSaved(data || [])).catch(() => {});
+    sb44.entities.SavedArticle.list('-created_at', 100).then((data) => setSaved(data || [])).catch(() => {});
   };
 
   const loadFavSources = () => {
-    sb44.entities.FavoriteSource.list('-created_date', 100).then((data) => setFavSources(data || [])).catch(() => {});
+    sb44.entities.FavoriteSource.list('-created_at', 100).then((data) => setFavSources(data || [])).catch(() => {});
   };
 
   useEffect(() => {

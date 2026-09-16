@@ -68,7 +68,7 @@ export default function Admin() {
   const load = () => {
     setLoading(true);
     Promise.all([
-    sb44.entities.Post.filter({ source_type: 'gd_madonie' }, '-created_date', 30),
+    sb44.entities.Post.filter({ source_type: 'gd_madonie' }, '-created_at', 30),
     sb44.entities.Event.list('-date', 30)]
     ).then(([p, e]) => {setPosts(p || []);setEvents(e || []);setLoading(false);}).catch(() => setLoading(false));
   };
