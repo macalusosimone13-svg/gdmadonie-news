@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import { sb44 } from '@/api/supabaseEntities';
 import { Loader2, Upload, Save, Eye, EyeOff } from 'lucide-react';
 
@@ -51,7 +51,7 @@ export default function SplashConfigManager() {
     setUploadingLogo(true);
     setError('');
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await uploadFile(file);
       setForm((f) => ({ ...f, logo_url: file_url }));
     } catch {
       setError('Upload logo non riuscito');

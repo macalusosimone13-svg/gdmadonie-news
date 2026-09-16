@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import { sb44 } from '@/api/supabaseEntities';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ export default function EventForm({ onCreated, editEvent, onSaved }) {
 
   const upload = async (file) => {
     setUploading(true);
-    try { const compressed = await compressImage(file); const res = await base44.integrations.Core.UploadFile({ file: compressed }); setImageUrl(res.file_url); }
+    try { const compressed = await compressImage(file); const res = await uploadFile(compressed); setImageUrl(res.file_url); }
     catch { alert('Upload fallito'); }
     setUploading(false);
   };

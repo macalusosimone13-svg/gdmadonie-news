@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import { sb44 } from '@/api/supabaseEntities';
 import { buildPollChartBlob } from '@/lib/storyImage';
 import { Input } from '@/components/ui/input';
@@ -99,7 +99,7 @@ export default function PollShareConfigManager() {
   const uploadLogo = async (file) => {
     setUploading(true);
     try {
-      const res = await base44.integrations.Core.UploadFile({ file });
+      const res = await uploadFile(file);
       set('logo_url', res.file_url);
     } catch {
       alert('Caricamento fallito');

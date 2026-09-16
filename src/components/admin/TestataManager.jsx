@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import { sb44 } from '@/api/supabaseEntities';
 import { Plus, Trash2, Loader2, Pencil, X, Check, Power, Upload, ExternalLink } from 'lucide-react';
 
@@ -39,7 +39,7 @@ export default function TestataManager() {
     if (!file) return;
     setUploadingLogo(true); setError('');
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await uploadFile(file);
       setForm((f) => ({ ...f, logo_url: file_url }));
     } catch (err) {
       setError('Upload logo non riuscito');

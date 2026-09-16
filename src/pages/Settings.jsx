@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
+import { uploadFile } from '@/lib/uploadFile';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
 import { supabase } from '@/lib/supabaseClient';
 import { getCurrentUser, updateProfile, logout as supabaseLogout } from '@/lib/supabaseAuth';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
@@ -58,7 +58,7 @@ export default function Settings() {
     setUploading(true);
     try {
       const square = await cropToSquare(file);
-      const res = await base44.integrations.Core.UploadFile({ file: square });
+      const res = await uploadFile(square);
       await updateProfile({ image_url: res.file_url });
       setUser((u) => ({ ...u, image_url: res.file_url }));
     } catch (e) {

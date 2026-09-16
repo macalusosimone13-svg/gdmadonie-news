@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import { sb44 } from '@/api/supabaseEntities';
 import { Save, Loader2, Type, Upload, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -76,7 +76,7 @@ export default function ContentTextManager() {
     if (!file) return;
     setUploading(key);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await uploadFile(file);
       setValues((p) => ({ ...p, [key]: file_url }));
       const existing = records[key];
       if (existing) {

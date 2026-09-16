@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import { sb44 } from '@/api/supabaseEntities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,7 +57,7 @@ export default function PollManager() {
     setUploadingIdx(idx);
     try {
       const compressed = await compressImage(file, { maxDim: 300, quality: 0.85 });
-      const res = await base44.integrations.Core.UploadFile({ file: compressed });
+      const res = await uploadFile(compressed);
       updateRow(idx, 'logo_url', res.file_url);
     } catch {
       alert('Caricamento fallito');
@@ -150,7 +150,7 @@ export default function PollManager() {
         categoryGap: pollCfg.category_gap
       });
       const file = new File([blob], 'sondaggi-preview.png', { type: 'image/png' });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await uploadFile(file);
       const contentKey = `sondaggi_preview_image_url_${currentScope}`;
       const existing = await sb44.entities.SiteContent.filter({ key: contentKey }, '-updated_date', 1);
       if (existing?.[0]) await sb44.entities.SiteContent.update(existing[0].id, { value: file_url });

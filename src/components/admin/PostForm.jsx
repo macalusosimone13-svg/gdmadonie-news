@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import { sb44 } from '@/api/supabaseEntities';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ export function FramePicker({ url, onPick, onCancel }) {
       canvas.getContext('2d').drawImage(v, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.9));
       const file = new File([blob], 'poster.jpg', { type: 'image/jpeg' });
-      const res = await base44.integrations.Core.UploadFile({ file });
+      const res = await uploadFile(file);
       onPick(res.file_url);
     } catch (e) {
       alert('Impossibile catturare il fotogramma');
@@ -138,7 +138,7 @@ export default function PostForm({ onCreated, editPost, onSaved }) {
     try {
       for (const file of files) {
         const toUpload = file.type.startsWith('image/') ? await compressImage(file) : file;
-        const res = await base44.integrations.Core.UploadFile({ file: toUpload });
+        const res = await uploadFile(toUpload);
         const isVideo = file.type.startsWith('video/');
         const orientation = await detectOrientation(file);
         setMediaItems((prev) => [...prev, { url: res.file_url, type: isVideo ? 'video' : 'image', orientation }]);
@@ -314,7 +314,7 @@ export default function PostForm({ onCreated, editPost, onSaved }) {
         <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 dark:border-border rounded-xl py-6 cursor-pointer hover:border-primary text-sm text-slate-500 dark:text-muted-foreground">
             {uploading === 'attachment' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             Carica PDF
-            <input type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => e.target.files[0] && (async () => {setUploading('attachment');try {const res = await base44.integrations.Core.UploadFile({ file: e.target.files[0] });setAttachmentUrl(res.file_url);setAttachmentName(e.target.files[0].name);} catch (err) {alert('Upload fallito');}setUploading(false);})()} />
+            <input type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => e.target.files[0] && (async () => {setUploading('attachment');try {const res = await uploadFile(e.target.files[0]);setAttachmentUrl(res.file_url);setAttachmentName(e.target.files[0].name);} catch (err) {alert('Upload fallito');}setUploading(false);})()} />
           </label>
         }
       </div>
