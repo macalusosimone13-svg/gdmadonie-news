@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { sb44 } from '@/api/supabaseEntities';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Image } from '@/components/ui/image';
@@ -25,7 +25,7 @@ export default function RelatedPosts({ post }) {
   const { data, isLoading } = useQuery({
     queryKey: ['related-posts', post?.category, post?.id],
     queryFn: async () => {
-      const same = await base44.entities.Post.filter(
+      const same = await sb44.entities.Post.filter(
         { status: 'published', category: post.category },
         '-published_date',
         20
@@ -40,7 +40,7 @@ export default function RelatedPosts({ post }) {
       };
       (same || []).forEach(push);
       if (list.length < 3) {
-        const recent = await base44.entities.Post.filter(
+        const recent = await sb44.entities.Post.filter(
           { status: 'published' },
           '-published_date',
           20

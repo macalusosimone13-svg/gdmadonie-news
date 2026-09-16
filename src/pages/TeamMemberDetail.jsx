@@ -1,7 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Instagram, Facebook, Twitter, Linkedin, Mail } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -86,7 +85,7 @@ export default function TeamMemberDetail() {
 
   const { data: relatedNews } = useQuery({
     queryKey: ['profile-related-news', slot],
-    queryFn: () => base44.entities.Post.filter({ status: 'published' }, '-published_date', 3),
+    queryFn: () => sb44.entities.Post.filter({ status: 'published' }, '-published_date', 3),
     staleTime: 5 * 60 * 1000
   });
 
