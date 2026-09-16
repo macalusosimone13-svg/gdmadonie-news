@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { sb44 } from '@/api/supabaseEntities';
 import { RefreshCw, Loader2, CheckCircle2, AlertTriangle, XCircle, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -12,7 +13,14 @@ export default function ExecutionLogViewer() {
   const load = () => {
     setLoading(true);
     base44.entities.ExecutionLog.list('-run_date', 20)
-      .then((data) => setLogs(data || []))
+      .then(async (base44Logs) => {
+        let sbLogs = [];
+        try { sbLogs = await sb44.entities.ExecutionLog.list('-run_date', 20); } catch { /* ignora */ }
+        const merged = [...(sbLogs || []), ...(base44Logs || [])]
+          .sort((a, b) => new Date(b.run_date || 0) - new Date(a.run_date || 0))
+          .slice(0, 20);
+        setLogs(merged);
+      })
       .catch(() => setLogs([]))
       .finally(() => setLoading(false));
   };
