@@ -5,6 +5,7 @@ import { Link, useSearchParams, useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
 import { getCurrentUser } from '@/lib/supabaseAuth';
+import { supabase } from '@/lib/supabaseClient';
 import { RefreshCw, Bookmark, BookmarkCheck, ExternalLink, ChevronDown, ChevronUp, Check, Star, X, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -143,11 +144,12 @@ export default function RassegnaStampa() {
   const refresh = async () => {
     setRefreshing(true);setRefreshResult(null);
     try {
-      const res = await base44.functions.invoke('aggregateRSS', {});
-      setRefreshResult(res.data);
+      const { data, error } = await supabase.functions.invoke('aggregate-rss', {});
+      if (error) throw error;
+      setRefreshResult(data);
       await postsQuery.refetch();
     } catch (e) {
-      setRefreshResult({ error: e.response?.data?.error || e.message });
+      setRefreshResult({ error: e.message });
     }
     setRefreshing(false);
   };

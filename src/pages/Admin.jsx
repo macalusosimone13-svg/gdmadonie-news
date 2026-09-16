@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
+import { supabase } from '@/lib/supabaseClient';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { RefreshCw, Trash2, Loader2, FileText, Calendar, Download, Users, Send, Film, Pencil } from 'lucide-react';
@@ -110,9 +111,10 @@ export default function Admin() {
   const refreshRSS = async () => {
     setRefreshing(true);setRefreshResult(null);
     try {
-      const res = await base44.functions.invoke('aggregateRSS', {});
-      setRefreshResult(res.data);load();
-    } catch (e) {setRefreshResult({ error: e.response?.data?.error || e.message });}
+      const { data, error } = await supabase.functions.invoke('aggregate-rss', {});
+      if (error) throw error;
+      setRefreshResult(data);load();
+    } catch (e) {setRefreshResult({ error: e.message });}
     setRefreshing(false);
   };
 

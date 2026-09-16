@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
+import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -192,7 +193,7 @@ export default function PostForm({ onCreated, editPost, onSaved }) {
         source_type: 'gd_madonie'
       });
       if (status === 'published' && created?.id) {
-        try {await base44.functions.invoke('notifyNewPost', { post_id: created.id, app_url: window.location.origin });} catch (e) {}
+        try {await supabase.functions.invoke('notify-new-post', { body: { post_id: created.id, app_url: window.location.origin } });} catch (e) {}
       }
       setForm({ title: '', excerpt: '', content: '', category: 'comunicato', author: 'GD Madonie', external_link: '', published_date: new Date().toISOString().slice(0, 16) });
       setMediaItems([]);setAttachmentUrl('');setAttachmentName('');
