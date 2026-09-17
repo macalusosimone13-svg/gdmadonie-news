@@ -12,7 +12,7 @@ export default function AssistantChat({ title }) {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   const send = async () => {
@@ -50,8 +50,8 @@ export default function AssistantChat({ title }) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-13rem)]">
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1 -mr-1">
+    <div className="flex flex-col h-[calc(100vh-13rem)] h-[calc(100dvh-13rem)]">
+      <div className="flex-1 overflow-y-auto overscroll-contain space-y-4 pr-1 -mr-1">
         {messages.length === 0 && (
           <div className="text-center py-10">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 text-[#ff7124]">
