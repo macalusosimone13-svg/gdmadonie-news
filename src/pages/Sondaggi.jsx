@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useInView } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { sb44 } from '@/api/supabaseEntities';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, LabelList } from 'recharts';
@@ -34,14 +33,6 @@ export default function Sondaggi() {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
-
-  // Le barre dei due grafici si "riempiono" con l'animazione solo quando
-  // l'utente arriva davvero a guardarle scorrendo, invece di essere gia'
-  // piene appena la pagina si carica.
-  const mainChartRef = useRef(null);
-  const mainChartInView = useInView(mainChartRef, { once: true, margin: '-80px' });
-  const coalitionChartRef = useRef(null);
-  const coalitionChartInView = useInView(coalitionChartRef, { once: true, margin: '-80px' });
   const { data: entries, isLoading } = useQuery({
     queryKey: ['poll-entries', scope],
     queryFn: () => sb44.entities.PollEntry.filter({ scope }, 'survey_date', 1000),
@@ -328,9 +319,9 @@ export default function Sondaggi() {
             <p className="text-xs font-medium text-foreground">Variazione rispetto al sondaggio del {format(new Date(previous.date), 'd MMMM yyyy', { locale: it })}{previous.institute ? ` (${previous.institute})` : ''}:</p>
             }
             </div>
-            <div ref={mainChartRef} style={{ width: '100%', height: Math.max(isMobile ? 240 : 260, latestChartData.length * (isMobile ? 54 : 64)) }}>
+            <div style={{ width: '100%', height: Math.max(isMobile ? 240 : 260, latestChartData.length * (isMobile ? 54 : 64)) }}>
               <ResponsiveContainer>
-                <BarChart data={mainChartInView ? latestChartData : []} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 20 : 40, top: 4, bottom: 4 }}>
+                <BarChart data={latestChartData} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 20 : 40, top: 4, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                   <XAxis type="number" domain={[0, 'dataMax + 5']} tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 13 }} />
                   <YAxis type="category" dataKey="party" width={yAxisWidth} tick={renderPartyTick} />
@@ -376,9 +367,9 @@ export default function Sondaggi() {
                 <h2 className="relative text-base font-semibold text-foreground">Coalizioni</h2>
                 <p className="relative text-xs text-muted-foreground">Somma dei partiti di ciascun gruppo, ultima rilevazione.</p>
               </div>
-              <div ref={coalitionChartRef} style={{ width: '100%', height: Math.max(isMobile ? 160 : 180, coalitionTotals.length * (isMobile ? 56 : 64)) }}>
+              <div style={{ width: '100%', height: Math.max(isMobile ? 160 : 180, coalitionTotals.length * (isMobile ? 56 : 64)) }}>
                 <ResponsiveContainer>
-                  <BarChart data={coalitionChartInView ? coalitionTotals : []} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 44 : 60, top: 4, bottom: 4 }}>
+                  <BarChart data={coalitionTotals} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 44 : 60, top: 4, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                     <XAxis type="number" domain={[0, 'dataMax + 5']} tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 13 }} />
                     <YAxis type="category" dataKey="label" width={isMobile ? 130 : 190} tick={{ fontSize: isMobile ? 11.5 : 14, fontWeight: 500, fill: 'hsl(var(--foreground))' }} />
