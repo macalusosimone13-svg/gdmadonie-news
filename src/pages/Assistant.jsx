@@ -1,4 +1,4 @@
-import AgentChat from '@/components/AgentChat';
+import AssistantChat from '@/components/AssistantChat';
 import { Sparkles } from 'lucide-react';
 
 export default function Assistant() {
@@ -13,7 +13,7 @@ export default function Assistant() {
           <p className="text-xs text-muted-foreground mt-0.5">Scopri gli eventi e registrati con una chat</p>
         </div>
       </div>
-      <AgentChat agentName="event_assistant" title="Assistente Eventi" />
+      <AssistantChat title="Assistente Eventi" />
     </div>);
 
 }
