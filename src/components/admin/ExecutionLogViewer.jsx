@@ -10,19 +10,17 @@ export default function ExecutionLogViewer() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
 
-  const load = () => {
+  const load = async () => {
     setLoading(true);
-    base44.entities.ExecutionLog.list('-run_date', 20)
-      .then(async (base44Logs) => {
-        let sbLogs = [];
-        try { sbLogs = await sb44.entities.ExecutionLog.list('-run_date', 20); } catch { /* ignora */ }
-        const merged = [...(sbLogs || []), ...(base44Logs || [])]
-          .sort((a, b) => new Date(b.run_date || 0) - new Date(a.run_date || 0))
-          .slice(0, 20);
-        setLogs(merged);
-      })
-      .catch(() => setLogs([]))
-      .finally(() => setLoading(false));
+    let sbLogs = [];
+    let base44Logs = [];
+    try { sbLogs = await sb44.entities.ExecutionLog.list('-run_date', 20); } catch { /* ignora */ }
+    try { base44Logs = await base44.entities.ExecutionLog.list('-run_date', 20); } catch { /* Base44 non più raggiungibile: va bene, restano comunque i log di Supabase */ }
+    const merged = [...(sbLogs || []), ...(base44Logs || [])]
+      .sort((a, b) => new Date(b.run_date || 0) - new Date(a.run_date || 0))
+      .slice(0, 20);
+    setLogs(merged);
+    setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
