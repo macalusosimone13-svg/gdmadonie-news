@@ -8,6 +8,7 @@ import { CATEGORIES, getCategoryLabel } from '@/lib/categories';
 import { useSiteContent } from '@/lib/useSiteContent';
 import { getContent } from '@/lib/siteContent';
 import { useSEO } from '@/lib/useSEO';
+import { useJsonLd } from '@/lib/useJsonLd';
 import { useUxConfig } from '@/lib/UxConfigContext';
 import { Image } from '@/components/ui/image';
 
@@ -60,12 +61,28 @@ export default function TeamMemberDetail() {
   }].
   filter((s) => s.url);
 
+  const pageUrl = `https://www.gdmadonie-news.com/in-evidenza/${slot}`;
+
   useSEO({
-    title: name ? `${name} — GD Madonie News` : 'GD Madonie News',
+    title: name ? `${name}${caption ? ` — ${caption}` : ''} — GD Madonie News` : 'GD Madonie News',
     description: caption || 'Giovani Democratici Madonie',
     image: detailPhoto,
+    url: pageUrl,
     type: 'profile'
   });
+
+  // Dati strutturati "Persona": collegano esplicitamente nome, ruolo e questa
+  // pagina all'organizzazione, cosi' una ricerca come "segretario gd madonie"
+  // puo' portare direttamente qui.
+  useJsonLd(name ? {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name,
+    jobTitle: caption || undefined,
+    image: detailPhoto || undefined,
+    url: pageUrl,
+    memberOf: { '@id': 'https://www.gdmadonie-news.com/#organization' }
+  } : null);
 
   const otherProfiles = [1, 2, 3, 4].
   filter((i) => String(i) !== String(slot)).
