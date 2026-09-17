@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
 import { getCurrentUser } from '@/lib/supabaseAuth';
@@ -40,12 +39,6 @@ export default function PostDetail() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [fromSupabase, setFromSupabase] = useState(false);
-
-  // Effetto di profondita' sulla copertina dell'articolo: l'immagine si
-  // sposta leggermente più lentamente della pagina mentre si scorre.
-  const coverRef = useRef(null);
-  const { scrollYProgress: coverScroll } = useScroll({ target: coverRef, offset: ['start end', 'end start'] });
-  const coverY = useTransform(coverScroll, [0, 1], [-24, 24]);
   const { data: content } = useSiteContent();
 
   useEffect(() => {
@@ -291,10 +284,8 @@ export default function PostDetail() {
 
         }
         return (
-          <div ref={coverRef} className="-mt-5 -mx-4 lg:mt-0 lg:mx-0 lg:rounded-2xl overflow-hidden relative">
-            <motion.div style={{ y: coverY, scale: 1.08 }} className="will-change-transform">
-              <MediaCarousel items={items} alt={post.title} badge={{ label: getCategoryLabel(content, post.category), className: cat.badge }} />
-            </motion.div>
+          <div className="-mt-5 -mx-4 lg:mt-0 lg:mx-0 lg:rounded-2xl overflow-hidden relative">
+            <MediaCarousel items={items} alt={post.title} badge={{ label: getCategoryLabel(content, post.category), className: cat.badge }} />
             <button onClick={goBack} aria-label="Indietro" className="absolute top-3 left-3 z-[35] w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white/90 backdrop-blur-sm text-foreground shadow-md ring-1 ring-black/5 flex items-center justify-center hover:bg-white">
               <ArrowLeft className="w-5 h-5" />
             </button>
