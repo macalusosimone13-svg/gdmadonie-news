@@ -30,9 +30,10 @@
       gtag('js', new Date());
       gtag('config', 'G-2828Y5BJY7', { send_page_view: false });
     </script>
-    <!-- AdSense temporaneamente disabilitato per isolare un SyntaxError cross-origin -->
-    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2127033257720549"
-     crossorigin="anonymous"></script> -->
+    <!-- AdSense: caricato sempre (il tag script in sé è innocuo), ma gli
+         annunci compaiono solo quando ADS_ENABLED è true in src/lib/adsConfig.js -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2127033257720549"
+     crossorigin="anonymous"></script>
   </head>
   <body style="margin:0;background:#0F1B3A;">
     <div id="root"></div>
