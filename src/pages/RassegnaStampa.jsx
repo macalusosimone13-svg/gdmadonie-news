@@ -19,6 +19,7 @@ import { cleanExcerpt } from '@/lib/cleanText';
 import PullToRefresh from '@/components/PullToRefresh';
 import Pagination from '@/components/Pagination';
 import { useSEO } from '@/lib/useSEO';
+import Reveal from '@/components/Reveal';
 
 export default function RassegnaStampa() {
   const [searchParams] = useSearchParams();
@@ -256,7 +257,7 @@ export default function RassegnaStampa() {
               <div className="grid gap-3 lg:grid-cols-2">
                 {paged.map((p, i) =>
               <Fragment key={p.id}>
-                    <RassegnaCard post={p} saved={savedIds.has(p.id)} onToggleSave={toggleSave} />
+                    <Reveal><RassegnaCard post={p} saved={savedIds.has(p.id)} onToggleSave={toggleSave} /></Reveal>
                     {(i + 1) % 4 === 0 && ADS_ENABLED && <AdSlot slot="9679026925" />}
                   </Fragment>
               )}

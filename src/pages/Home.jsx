@@ -245,7 +245,8 @@ function GdMadonieSection({ posts, events, siteContent }) {
           {small.length > 0 &&
           <div className="grid sm:grid-cols-3 gap-4">
             {small.map((p) =>
-            <Link key={p.id} to={`/articolo/${p.id}`} style={cardStyle} className={`relative overflow-hidden block space-y-2 group border border-border rounded-xl p-3 ${cardStyle ? '' : 'bg-card'}`}>
+            <Reveal key={p.id}>
+              <Link to={`/articolo/${p.id}`} style={cardStyle} className={`relative overflow-hidden block space-y-2 group border border-border rounded-xl p-3 ${cardStyle ? '' : 'bg-card'}`}>
                 <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent" />
                 {p.image_url &&
               <div className="aspect-video rounded-lg overflow-hidden bg-muted">
@@ -254,6 +255,7 @@ function GdMadonieSection({ posts, events, siteContent }) {
               }
                 <h4 className="relative text-sm font-serif font-bold leading-snug text-foreground group-hover:text-[#ff7024] line-clamp-2">{p.title}</h4>
               </Link>
+            </Reveal>
             )}
           </div>
           }
@@ -317,7 +319,8 @@ function NewsSection({ title, categoryKey, posts, siteContent, linkTo }) {
           {small.length > 0 &&
           <div className="grid sm:grid-cols-3 gap-4">
             {small.map((p) =>
-            <Link key={p.id} to={`/articolo/${p.id}`} style={cardStyle} className={`relative overflow-hidden block space-y-2 group border border-border rounded-xl p-3 ${cardStyle ? '' : 'bg-card'}`}>
+            <Reveal key={p.id}>
+              <Link to={`/articolo/${p.id}`} style={cardStyle} className={`relative overflow-hidden block space-y-2 group border border-border rounded-xl p-3 ${cardStyle ? '' : 'bg-card'}`}>
                 <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent" />
                 {p.image_url &&
               <div className="aspect-video rounded-lg overflow-hidden bg-muted">
@@ -326,6 +329,7 @@ function NewsSection({ title, categoryKey, posts, siteContent, linkTo }) {
               }
                 <h4 className={`relative text-sm font-serif font-bold leading-snug text-foreground ${colors.groupHover} line-clamp-2`}>{p.title}</h4>
               </Link>
+            </Reveal>
             )}
           </div>
           }

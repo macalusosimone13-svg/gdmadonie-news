@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useInView } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { sb44 } from '@/api/supabaseEntities';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, LabelList } from 'recharts';
@@ -33,6 +34,14 @@ export default function Sondaggi() {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
+
+  // Le barre dei due grafici si "riempiono" con l'animazione solo quando
+  // l'utente arriva davvero a guardarle scorrendo, invece di essere gia'
+  // piene appena la pagina si carica.
+  const mainChartRef = useRef(null);
+  const mainChartInView = useInView(mainChartRef, { once: true, margin: '-80px' });
+  const coalitionChartRef = useRef(null);
+  const coalitionChartInView = useInView(coalitionChartRef, { once: true, margin: '-80px' });
   const { data: entries, isLoading } = useQuery({
     queryKey: ['poll-entries', scope],
     queryFn: () => sb44.entities.PollEntry.filter({ scope }, 'survey_date', 1000),
@@ -319,7 +328,8 @@ export default function Sondaggi() {
             <p className="text-xs font-medium text-foreground">Variazione rispetto al sondaggio del {format(new Date(previous.date), 'd MMMM yyyy', { locale: it })}{previous.institute ? ` (${previous.institute})` : ''}:</p>
             }
             </div>
-            <div style={{ width: '100%', height: Math.max(isMobile ? 240 : 260, latestChartData.length * (isMobile ? 54 : 64)) }}>
+            <div ref={mainChartRef} style={{ width: '100%', height: Math.max(isMobile ? 240 : 260, latestChartData.length * (isMobile ? 54 : 64)) }}>
+              {mainChartInView &&
               <ResponsiveContainer>
                 <BarChart data={latestChartData} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 20 : 40, top: 4, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
@@ -336,6 +346,7 @@ export default function Sondaggi() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              }
             </div>
             {previous &&
           <div className="space-y-2 pt-2 border-t border-border">
@@ -367,7 +378,8 @@ export default function Sondaggi() {
                 <h2 className="relative text-base font-semibold text-foreground">Coalizioni</h2>
                 <p className="relative text-xs text-muted-foreground">Somma dei partiti di ciascun gruppo, ultima rilevazione.</p>
               </div>
-              <div style={{ width: '100%', height: Math.max(isMobile ? 160 : 180, coalitionTotals.length * (isMobile ? 56 : 64)) }}>
+              <div ref={coalitionChartRef} style={{ width: '100%', height: Math.max(isMobile ? 160 : 180, coalitionTotals.length * (isMobile ? 56 : 64)) }}>
+                {coalitionChartInView &&
                 <ResponsiveContainer>
                   <BarChart data={coalitionTotals} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 44 : 60, top: 4, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
@@ -384,6 +396,7 @@ export default function Sondaggi() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                }
               </div>
               <div className="relative grid sm:grid-cols-2 gap-2 pt-2 border-t border-border">
                 {coalitionTotals.map((g) =>
