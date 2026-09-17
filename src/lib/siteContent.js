@@ -14,7 +14,7 @@ export async function loadSiteContent() {
 
 // Valori predefiniti usati quando un testo non è ancora stato configurato.
 export const CONTENT_DEFAULTS = {
-  site_logo_url: 'https://base44.app/api/apps/6a81b39b7d72fb1a125621b0/files/mp/public/6a81b39b7d72fb1a125621b0/a29952401_LogoGDMadonieconramodolivo2.png',
+  site_logo_url: 'https://pub-1b641aacf1b949cfadd9ca8ab453df1b.r2.dev/legacy/2026-09-16/f1422048-c330-4a0a-8892-0a85294ff01b.png',
   gd_title: 'GD Madonie',
   gd_subtitle: 'Attività, proposte e iniziative del circolo',
   gd_description: 'Il circolo territoriale dei Giovani Democratici della zona delle Madonie. Ci occupiamo di politiche per le aree interne, spopolamento, sanità territoriale, infrastrutture digitali e gestione faunistica, con attenzione alla politica locale e regionale siciliana.',

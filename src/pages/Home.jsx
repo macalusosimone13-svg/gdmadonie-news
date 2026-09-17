@@ -1,7 +1,6 @@
 import { Fragment, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
 import { Calendar, Instagram, Facebook, Twitter, Youtube, Globe, Send, Link as LinkIcon, Mail, Loader2, Check, FileText, CalendarDays, Share2 } from 'lucide-react';
 import EventCard from '@/components/EventCard';
@@ -82,7 +81,7 @@ function FollowUs() {
   const [shareState, setShareState] = useState('idle');
   const { data: socialLinks } = useQuery({
     queryKey: ['gd-social-links'],
-    queryFn: () => base44.entities.SocialLink.filter({ is_active: true }, 'sort_order', 10),
+    queryFn: () => sb44.entities.SocialLink.filter({ is_active: true }, 'sort_order', 10),
     staleTime: 10 * 60 * 1000
   });
 

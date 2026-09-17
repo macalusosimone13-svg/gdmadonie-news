@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
 import { supabase } from '@/lib/supabaseClient';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,7 +39,7 @@ export default function Admin() {
 
   const loadRegs = () => {
     setLoadingRegs(true);
-    base44.entities.EventRegistration.list('-created_date', 500).then((data) => setRegs(data || [])).catch(() => setRegs([])).finally(() => setLoadingRegs(false));
+    sb44.entities.EventRegistration.list('-created_at', 500).then((data) => setRegs(data || [])).catch(() => setRegs([])).finally(() => setLoadingRegs(false));
   };
 
   const downloadRegCSV = () => {

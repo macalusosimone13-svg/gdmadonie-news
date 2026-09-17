@@ -86,7 +86,7 @@ export default function EmailTemplateManager() {
 
         <div className="space-y-1.5">
           <Label>URL pubblico dell'app (produzione) *</Label>
-          <Input value={form.public_url} onChange={(e) => set('public_url', e.target.value)} placeholder="https://gd-madonie-news.base44.app" />
+          <Input value={form.public_url} onChange={(e) => set('public_url', e.target.value)} placeholder="https://www.gdmadonie-news.com" />
           <p className="text-xs text-muted-foreground">Dominio pubblico raggiungibile dai destinatari. Usato per generare i link dell'email. Lascia vuoto per usare il dominio da cui pubblichi.</p>
         </div>
 

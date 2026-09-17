@@ -4,7 +4,7 @@ import { sb44 } from '@/api/supabaseEntities';
 import { Loader2, Upload, Save, Eye, EyeOff } from 'lucide-react';
 
 const DEFAULTS = {
-  logo_url: 'https://base44.app/api/apps/6a81b39b7d72fb1a125621b0/files/mp/public/6a81b39b7d72fb1a125621b0/0c2473fb2_NeroModernoGioielliLogo.png',
+  logo_url: 'https://pub-1b641aacf1b949cfadd9ca8ab453df1b.r2.dev/legacy/2026-09-16/f1422048-c330-4a0a-8892-0a85294ff01b.png',
   background_color: '#0F1B3A',
   show_title: true,
   show_subtitle: true,

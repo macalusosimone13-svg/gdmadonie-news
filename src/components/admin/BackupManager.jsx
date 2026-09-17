@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { sb44 } from '@/api/supabaseEntities';
 import { Download, Loader2, ShieldCheck } from 'lucide-react';
 
 export default function BackupManager() {
@@ -11,11 +11,11 @@ export default function BackupManager() {
     setLastResult(null);
     try {
       const [posts, events, polls, subscribers, socialLinks] = await Promise.all([
-      base44.entities.Post.list('-created_date', 2000).catch(() => []),
-      base44.entities.Event.list('-date', 1000).catch(() => []),
-      base44.entities.PollEntry.list('-survey_date', 2000).catch(() => []),
-      base44.entities.NewsletterSubscriber.list('-subscribed_date', 5000).catch(() => []),
-      base44.entities.SocialLink.list('sort_order', 50).catch(() => [])]
+      sb44.entities.Post.list('-created_at', 5000).catch(() => []),
+      sb44.entities.Event.list('-date', 1000).catch(() => []),
+      sb44.entities.PollEntry.list('-survey_date', 2000).catch(() => []),
+      sb44.entities.NewsletterSubscriber.list('-subscribed_date', 5000).catch(() => []),
+      sb44.entities.SocialLink.list('sort_order', 50).catch(() => [])]
       );
       const backup = {
         exported_at: new Date().toISOString(),
