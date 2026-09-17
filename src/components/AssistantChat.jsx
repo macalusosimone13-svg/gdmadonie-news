@@ -91,6 +91,20 @@ export default function AssistantChat({ title }) {
   );
 }
 
+function ChatLink({ href, children }) {
+  const isExternal = /^https?:\/\//i.test(href || '');
+  return (
+    <a
+      href={href}
+      target={isExternal ? '_blank' : undefined}
+      rel={isExternal ? 'noopener noreferrer' : undefined}
+      className="inline-flex items-center gap-1 mt-1 mb-0.5 px-3 py-1.5 rounded-full bg-[#ff7124]/10 text-[#ff7124] text-xs font-semibold no-underline hover:bg-[#ff7124]/20 transition-colors"
+    >
+      {children}
+    </a>
+  );
+}
+
 function MessageBubble({ message }) {
   const isUser = message.role === 'user';
   return (
@@ -100,7 +114,7 @@ function MessageBubble({ message }) {
           <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 text-sm">{message.content}</div>
         ) : (
           <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 text-sm text-slate-800 prose prose-sm prose-p:my-0 prose-ul:my-1 prose-li:my-0 max-w-none">
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+            <ReactMarkdown components={{ a: ChatLink }}>{message.content}</ReactMarkdown>
           </div>
         )}
       </div>
