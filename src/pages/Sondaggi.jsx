@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useUxConfig } from '@/lib/UxConfigContext';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
+import AdSlot from '@/components/AdSlot';
+import { ADS_ENABLED } from '@/lib/adsConfig';
 
 const SCOPE_LABELS = {
   nazionale: 'Sondaggi Nazionali',
@@ -355,6 +357,8 @@ export default function Sondaggi() {
               </div>
           }
           </div>
+
+          {ADS_ENABLED && <AdSlot slot="6403185298" />}
 
           {coalitionTotals.length > 0 &&
         <div style={cardStyle} className={`relative overflow-hidden border border-border rounded-2xl p-5 space-y-4 ${cardStyle ? '' : 'bg-card'}`}>
