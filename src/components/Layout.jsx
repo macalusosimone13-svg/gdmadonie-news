@@ -60,7 +60,7 @@ export default function Layout() {
     return () => window.removeEventListener('scroll', onScroll);
   }, [isHome]);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'editor';
   const headerSolid = !isHome;
 
   // Header trasparente in home: una leggera sfumatura di colore dietro logo e

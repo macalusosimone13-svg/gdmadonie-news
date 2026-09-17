@@ -41,7 +41,7 @@ export default function PostDetail() {
   const { data: content } = useSiteContent();
 
   useEffect(() => {
-    getCurrentUser().then((u) => setIsAdmin(u?.role === 'admin')).catch(() => {});
+    getCurrentUser().then((u) => setIsAdmin(u?.role === 'admin' || u?.role === 'editor')).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function PostDetail() {
         }
         if (p && p.status === 'draft') {
           let admin = false;
-          try {const u = await getCurrentUser();admin = u?.role === 'admin';} catch {}
+          try {const u = await getCurrentUser();admin = u?.role === 'admin' || u?.role === 'editor';} catch {}
           if (!admin) {setPost(null);setLoading(false);return;}
         }
         setFromSupabase(onSupabase);

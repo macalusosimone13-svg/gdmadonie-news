@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { sb44 } from '@/api/supabaseEntities';
 import { supabase } from '@/lib/supabaseClient';
+import { getCurrentUser } from '@/lib/supabaseAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { RefreshCw, Trash2, Loader2, FileText, Calendar, Download, Users, Send, Film, Pencil } from 'lucide-react';
@@ -12,6 +13,7 @@ import ExecutionLogViewer from '@/components/admin/ExecutionLogViewer';
 import TestataManager from '@/components/admin/TestataManager';
 import SplashConfigManager from '@/components/admin/SplashConfigManager';
 import ContentTextManager from '@/components/admin/ContentTextManager';
+import MyTeamPageManager from '@/components/admin/MyTeamPageManager';
 import EmailTemplateManager from '@/components/admin/EmailTemplateManager';
 import CodeExporter from '@/components/admin/CodeExporter';
 import UxDesignManager from '@/components/admin/UxDesignManager';
@@ -36,6 +38,13 @@ export default function Admin() {
   const [pickingPosterId, setPickingPosterId] = useState(null);
   const [editingPost, setEditingPost] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    getCurrentUser().then((u) => setRole(u?.role || null)).catch(() => setRole(null));
+  }, []);
+  const isAdmin = role === 'admin';
+  const isEditor = role === 'editor';
 
   const loadRegs = () => {
     setLoadingRegs(true);
@@ -126,25 +135,26 @@ export default function Admin() {
       <Tabs defaultValue="post">
         <TabsList className="w-full flex overflow-x-auto scrollbar-hide bg-muted p-1 h-auto rounded-full">
           <TabsTrigger value="post" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Nuovo Post</TabsTrigger>
-          <TabsTrigger value="event" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Nuovo Evento</TabsTrigger>
+          {isAdmin && <TabsTrigger value="event" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Nuovo Evento</TabsTrigger>}
           <TabsTrigger value="manage" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Gestisci</TabsTrigger>
-          <TabsTrigger value="rss" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-[999px]">Rassegna RSS</TabsTrigger>
-          <TabsTrigger value="contatti" className="flex-1 text-xs py-2.5 min-h-[44px]">Contatti</TabsTrigger>
-          <TabsTrigger value="log" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Log</TabsTrigger>
-          <TabsTrigger value="splash" className="flex-1 text-xs py-2.5 min-h-[44px]">Splash</TabsTrigger>
-          <TabsTrigger value="testi" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Testi</TabsTrigger>
-          <TabsTrigger value="email" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Email</TabsTrigger>
-          <TabsTrigger value="ux" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Design UX</TabsTrigger>
-          <TabsTrigger value="storia" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Storia IG</TabsTrigger>
-          <TabsTrigger value="sondaggi" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Sondaggi</TabsTrigger>
-          <TabsTrigger value="coalizioni" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Coalizioni</TabsTrigger>
-          <TabsTrigger value="sondaggi-storia" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Storia Sondaggi</TabsTrigger>
-          <TabsTrigger value="iscrizioni" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Iscrizioni</TabsTrigger>
-          <TabsTrigger value="codice" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Codice</TabsTrigger>
-          <TabsTrigger value="backup" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Backup</TabsTrigger>
+          {isEditor && <TabsTrigger value="mia-pagina" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">La mia pagina</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="rss" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-[999px]">Rassegna RSS</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="contatti" className="flex-1 text-xs py-2.5 min-h-[44px]">Contatti</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="log" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Log</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="splash" className="flex-1 text-xs py-2.5 min-h-[44px]">Splash</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="testi" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Testi</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="email" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Email</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="ux" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Design UX</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="storia" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Storia IG</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="sondaggi" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Sondaggi</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="coalizioni" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Coalizioni</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="sondaggi-storia" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Storia Sondaggi</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="iscrizioni" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Iscrizioni</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="codice" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Codice</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="backup" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Backup</TabsTrigger>}
         </TabsList>
         <TabsContent value="post" className="mt-4"><PostForm onCreated={load} /></TabsContent>
-        <TabsContent value="event" className="mt-4"><EventForm onCreated={load} /></TabsContent>
+        {isAdmin && <TabsContent value="event" className="mt-4"><EventForm onCreated={load} /></TabsContent>}
         <TabsContent value="manage" className="mt-4 space-y-5">
           <div>
             <h3 className="font-semibold text-foreground mb-2 text-sm">Post ({posts.length})</h3>
@@ -174,6 +184,7 @@ export default function Admin() {
               </div>
             }
           </div>
+          {isAdmin &&
           <div>
             <h3 className="font-semibold text-foreground mb-2 text-sm">Eventi ({events.length})</h3>
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : events.length === 0 ? <p className="text-sm text-muted-foreground">Nessun evento.</p> :
@@ -192,7 +203,10 @@ export default function Admin() {
               </div>
             }
           </div>
+          }
         </TabsContent>
+        {isEditor && <TabsContent value="mia-pagina" className="mt-4"><MyTeamPageManager /></TabsContent>}
+        {isAdmin && <>
         <TabsContent value="rss" className="mt-4 space-y-4">
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-foreground mb-1">Aggregazione RSS</h3>
@@ -259,6 +273,7 @@ export default function Admin() {
         </TabsContent>
         <TabsContent value="codice" className="mt-4"><CodeExporter /></TabsContent>
         <TabsContent value="backup" className="mt-4"><BackupManager /></TabsContent>
+        </>}
       </Tabs>
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(open) => {if (!open) setPendingDelete(null);}}>

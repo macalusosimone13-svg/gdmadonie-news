@@ -12,13 +12,14 @@ export async function isAuthenticated() {
 export async function getCurrentUser() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) return null;
-  const { data: profile } = await supabase.from('profiles').select('role, image_url').eq('id', session.user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('role, image_url, team_slot').eq('id', session.user.id).single();
   return {
     id: session.user.id,
     email: session.user.email,
     full_name: session.user.user_metadata?.full_name || session.user.email,
     role: profile?.role || 'user',
-    image_url: profile?.image_url || null
+    image_url: profile?.image_url || null,
+    team_slot: profile?.team_slot ?? null
   };
 }
 
