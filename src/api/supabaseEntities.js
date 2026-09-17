@@ -97,6 +97,7 @@ export const sb44 = {
     SavedEvent: makeEntity('saved_events'),
     FavoriteSource: makeEntity('favorite_sources'),
     EventRegistration: makeEntity('event_registrations'),
+    Comment: makeEntity('comments'),
     RateLimit: makeEntity('rate_limits'),
     ExecutionLog: makeEntity('execution_logs')
   }

@@ -18,6 +18,7 @@ import { ADS_ENABLED } from '@/lib/adsConfig';
 import MediaCarousel from '@/components/MediaCarousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import RelatedPosts from '@/components/RelatedPosts';
+import Comments from '@/components/Comments';
 import { buildStoryBlob, STORY_DEFAULTS } from '@/lib/storyImage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
@@ -360,6 +361,7 @@ export default function PostDetail() {
         <button onClick={shareNative} className="text-xs font-medium bg-slate-800 text-white px-3 py-2.5 min-h-[44px] rounded-lg flex items-center">Copia link</button>
       </div>
       <RelatedPosts post={post} />
+      <Comments postId={post.id} />
 
       <Dialog open={shareChoiceOpen} onOpenChange={setShareChoiceOpen}>
         <DialogContent className="max-w-sm">
