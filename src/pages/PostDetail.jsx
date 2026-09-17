@@ -369,8 +369,8 @@ export default function PostDetail() {
         </button>
         <button onClick={shareNative} className="text-xs font-medium bg-slate-800 text-white px-3 py-2.5 min-h-[44px] rounded-lg flex items-center">Copia link</button>
       </div>
-      <RelatedPosts post={post} />
       <Comments postId={post.id} />
+      <RelatedPosts post={post} />
 
       <Dialog open={shareChoiceOpen} onOpenChange={setShareChoiceOpen}>
         <DialogContent className="max-w-sm">
