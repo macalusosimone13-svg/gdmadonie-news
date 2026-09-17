@@ -77,7 +77,7 @@ export default function AssistantChat({ title }) {
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           rows={1}
           placeholder="Scrivi un messaggio..."
-          className="flex-1 resize-none max-h-32 px-3 py-2.5 rounded-2xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+          className="flex-1 resize-none max-h-32 px-3 py-2.5 rounded-2xl border border-slate-200 bg-white text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         />
         <button
           onClick={send}
