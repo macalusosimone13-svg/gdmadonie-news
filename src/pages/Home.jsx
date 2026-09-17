@@ -9,6 +9,7 @@ import PullToRefresh from '@/components/PullToRefresh';
 import { CATEGORIES, getCategoryLabel } from '@/lib/categories';
 import { useSiteContent } from '@/lib/useSiteContent';
 import { useSEO } from '@/lib/useSEO';
+import { useJsonLd } from '@/lib/useJsonLd';
 import { useUxConfig } from '@/lib/UxConfigContext';
 import { Image } from '@/components/ui/image';
 import LazyVideo from '@/components/LazyVideo';
@@ -355,9 +356,32 @@ function NewsSection({ title, categoryKey, posts, siteContent, linkTo }) {
 
 export default function Home() {
   useSEO({
-    title: 'Ultime Notizie — GD Madonie News',
-    description: 'Politica nazionale, regionale e le attività del circolo GD Madonie. Communicati, proposte, approfondimenti e rassegna stampa.',
+    title: 'GD Madonie News — Giovani Democratici Madonie',
+    description: 'Il sito ufficiale dei Giovani Democratici Madonie: comunicati, proposte, approfondimenti, eventi e rassegna stampa di politica nazionale e regionale.',
     url: typeof window !== 'undefined' ? window.location.href : undefined
+  });
+  // Dice esplicitamente a Google chi e' il circolo (nome, sito, eventuale
+  // logo) cosi' la ricerca del solo nome "GD Madonie News" riconosce questo
+  // sito come l'entita' ufficiale, non solo come una pagina qualsiasi.
+  useJsonLd({
+    '@context': 'https://schema.org',
+    '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://www.gdmadonie-news.com/#organization',
+      name: 'Giovani Democratici Madonie',
+      alternateName: 'GD Madonie News',
+      url: 'https://www.gdmadonie-news.com/',
+      logo: 'https://pub-1b641aacf1b949cfadd9ca8ab453df1b.r2.dev/legacy/2026-09-16/f1422048-c330-4a0a-8892-0a85294ff01b.png'
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://www.gdmadonie-news.com/#website',
+      name: 'GD Madonie News',
+      url: 'https://www.gdmadonie-news.com/',
+      publisher: { '@id': 'https://www.gdmadonie-news.com/#organization' }
+    }]
+
   });
   const { config: ux } = useUxConfig();
   const { data: siteContent } = useSiteContent();
