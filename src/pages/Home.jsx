@@ -372,7 +372,11 @@ export default function Home() {
       name: 'Giovani Democratici Madonie',
       alternateName: 'GD Madonie News',
       url: 'https://www.gdmadonie-news.com/',
-      logo: 'https://pub-1b641aacf1b949cfadd9ca8ab453df1b.r2.dev/legacy/2026-09-16/f1422048-c330-4a0a-8892-0a85294ff01b.png'
+      logo: 'https://pub-1b641aacf1b949cfadd9ca8ab453df1b.r2.dev/legacy/2026-09-16/f1422048-c330-4a0a-8892-0a85294ff01b.png',
+      member: [
+      { '@type': 'Person', name: 'Simone Macaluso', jobTitle: 'Segretario' },
+      { '@type': 'Person', name: 'Filippo Fiorentino', jobTitle: 'Vice Segretario' }]
+
     },
     {
       '@type': 'WebSite',
