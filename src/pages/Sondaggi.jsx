@@ -329,9 +329,8 @@ export default function Sondaggi() {
             }
             </div>
             <div ref={mainChartRef} style={{ width: '100%', height: Math.max(isMobile ? 240 : 260, latestChartData.length * (isMobile ? 54 : 64)) }}>
-              {mainChartInView &&
               <ResponsiveContainer>
-                <BarChart data={latestChartData} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 20 : 40, top: 4, bottom: 4 }}>
+                <BarChart data={mainChartInView ? latestChartData : []} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 20 : 40, top: 4, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                   <XAxis type="number" domain={[0, 'dataMax + 5']} tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 13 }} />
                   <YAxis type="category" dataKey="party" width={yAxisWidth} tick={renderPartyTick} />
@@ -346,7 +345,6 @@ export default function Sondaggi() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-              }
             </div>
             {previous &&
           <div className="space-y-2 pt-2 border-t border-border">
@@ -379,9 +377,8 @@ export default function Sondaggi() {
                 <p className="relative text-xs text-muted-foreground">Somma dei partiti di ciascun gruppo, ultima rilevazione.</p>
               </div>
               <div ref={coalitionChartRef} style={{ width: '100%', height: Math.max(isMobile ? 160 : 180, coalitionTotals.length * (isMobile ? 56 : 64)) }}>
-                {coalitionChartInView &&
                 <ResponsiveContainer>
-                  <BarChart data={coalitionTotals} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 44 : 60, top: 4, bottom: 4 }}>
+                  <BarChart data={coalitionChartInView ? coalitionTotals : []} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 44 : 60, top: 4, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                     <XAxis type="number" domain={[0, 'dataMax + 5']} tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 13 }} />
                     <YAxis type="category" dataKey="label" width={isMobile ? 130 : 190} tick={{ fontSize: isMobile ? 11.5 : 14, fontWeight: 500, fill: 'hsl(var(--foreground))' }} />
@@ -396,7 +393,6 @@ export default function Sondaggi() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-                }
               </div>
               <div className="relative grid sm:grid-cols-2 gap-2 pt-2 border-t border-border">
                 {coalitionTotals.map((g) =>
