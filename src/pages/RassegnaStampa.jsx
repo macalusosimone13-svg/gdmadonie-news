@@ -18,6 +18,7 @@ import { isUnread } from '@/lib/readArticles';
 import { cleanExcerpt } from '@/lib/cleanText';
 import PullToRefresh from '@/components/PullToRefresh';
 import Pagination from '@/components/Pagination';
+import { useSEO } from '@/lib/useSEO';
 
 export default function RassegnaStampa() {
   const [searchParams] = useSearchParams();
@@ -39,6 +40,16 @@ export default function RassegnaStampa() {
   const [sourceOpen, setSourceOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const PER_PAGE = 30;
+
+  // Pagina di puro aggregatore (titoli, estratti e link verso altre testate):
+  // niente contenuto originale nostro, quindi fuori dall'indice di Google —
+  // stesso trattamento già riservato ai singoli articoli di rassegna, per
+  // non farla contare come "contenuto di scarso valore" nella revisione AdSense.
+  useSEO({
+    title: 'Rassegna Stampa — GD Madonie News',
+    description: 'Notizie di politica nazionale e regionale raccolte da altre testate.',
+    noindex: true
+  });
 
   useEffect(() => {
     setCategory(lockedCategory || (['politica_nazionale', 'politica_regionale'].includes(categoriaParam) ? categoriaParam : 'all'));
