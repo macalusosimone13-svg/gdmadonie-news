@@ -374,8 +374,8 @@ export default function Home() {
       url: 'https://www.gdmadonie-news.com/',
       logo: 'https://pub-1b641aacf1b949cfadd9ca8ab453df1b.r2.dev/legacy/2026-09-16/f1422048-c330-4a0a-8892-0a85294ff01b.png',
       member: [
-      { '@type': 'Person', name: 'Simone Macaluso', jobTitle: 'Segretario', url: 'https://www.gdmadonie-news.com/in-evidenza/1' },
-      { '@type': 'Person', name: 'Filippo Fiorentino', jobTitle: 'Vice Segretario', url: 'https://www.gdmadonie-news.com/in-evidenza/2' }]
+      { '@type': 'Person', name: 'Simone Macaluso', jobTitle: 'Segretario', url: 'https://www.gdmadonie-news.com/in-evidenza/1', sameAs: ['https://www.instagram.com/simone.mcls/', 'https://www.facebook.com/simone.macaluso.104?locale=it_IT'] },
+      { '@type': 'Person', name: 'Filippo Fiorentino', jobTitle: 'Vice Segretario', url: 'https://www.gdmadonie-news.com/in-evidenza/2', sameAs: ['https://www.instagram.com/filippofiorentino__/', 'https://www.facebook.com/filippo.fiorentino.10?locale=it_IT'] }]
 
     },
     {

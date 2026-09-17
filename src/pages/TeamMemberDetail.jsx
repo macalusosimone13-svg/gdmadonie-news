@@ -81,7 +81,8 @@ export default function TeamMemberDetail() {
     jobTitle: caption || undefined,
     image: detailPhoto || undefined,
     url: pageUrl,
-    memberOf: { '@id': 'https://www.gdmadonie-news.com/#organization' }
+    memberOf: { '@id': 'https://www.gdmadonie-news.com/#organization' },
+    sameAs: socials.filter((s) => s.key !== 'email').map((s) => s.url)
   } : null);
 
   const otherProfiles = [1, 2, 3, 4].
