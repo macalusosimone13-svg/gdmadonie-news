@@ -9,7 +9,10 @@ import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
-const GOOGLE_LOGIN_ENABLED = false;
+// Il login con Google richiede di configurare le credenziali OAuth su Google
+// Cloud Console e collegarle a Supabase Auth. Se non è ancora fatto, imposta
+// questo a false per nascondere il pulsante ed evitare un errore poco chiaro.
+const GOOGLE_LOGIN_ENABLED = true;
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -26,7 +29,7 @@ export default function Login() {
       await loginWithPassword(email, password);
       window.location.href = returnTo;
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(err.message || "Email o password non validi");
     } finally {
       setLoading(false);
     }
@@ -39,16 +42,16 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
+      title="Bentornato"
+      subtitle="Accedi al tuo account"
       footer={
       <>
-          Don't have an account?{" "}
+          Non hai un account?{" "}
           <Link
           to={"/register" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}
           className="font-medium hover:underline text-[#ff7124]">
           
-            Create one
+            Creane uno
           </Link>
         </>
       }>
@@ -60,7 +63,7 @@ export default function Login() {
         onClick={handleGoogle}>
         
         <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
+        Continua con Google
       </Button>
 
       <div className="relative mb-6">
@@ -68,7 +71,7 @@ export default function Login() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+          <span className="bg-card px-3 text-muted-foreground">oppure</span>
         </div>
       </div>
       </>}
@@ -89,7 +92,7 @@ export default function Login() {
               type="email"
               autoComplete="email"
               autoFocus
-              placeholder="you@example.com"
+              placeholder="tu@esempio.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-10 h-12"
@@ -101,7 +104,7 @@ export default function Login() {
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
             <Link to="/forgot-password" className="text-xs hover:underline text-[#ff7124]">
-              Forgot password?
+              Password dimenticata?
             </Link>
           </div>
           <div className="relative">
@@ -122,10 +125,10 @@ export default function Login() {
           {loading ?
           <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
+              Accesso in corso...
             </> :
 
-          "Log in"
+          "Accedi"
           }
         </Button>
       </form>
