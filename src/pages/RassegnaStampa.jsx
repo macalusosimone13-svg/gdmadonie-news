@@ -218,7 +218,7 @@ export default function RassegnaStampa() {
                   {sourceOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="p-1 max-h-[60vh] overflow-y-auto w-[var(--radix-popover-trigger-width)] rounded-2xl" align="start" sideOffset={4}>
+              <PopoverContent className="p-1 max-h-[60vh] overflow-y-auto overscroll-contain w-[var(--radix-popover-trigger-width)] rounded-2xl" align="start" sideOffset={4}>
                 <button onClick={() => {setSource('all');setSourceOpen(false);}} className={`flex items-center gap-3 w-full px-3 py-3 text-base font-medium transition-colors text-left rounded-[99999px] text-[hsl(var(--popover-foreground))] bg-gray-200 ${source === 'all' ? "" : 'hover:bg-gray-200 text-foreground'}`}>
                   <span className="truncate flex-1 font-serif font-normal">Tutte le fonti</span>
                   {source === 'all' && <Check className="w-5 h-5 shrink-0" />}
