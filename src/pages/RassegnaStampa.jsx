@@ -201,14 +201,13 @@ export default function RassegnaStampa() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cerca tra le notizie..."
-              className="w-full pl-11 pr-10 py-2.5 min-h-[44px] rounded-full bg-gray-200 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              className="w-full pl-11 pr-10 py-2.5 min-h-[44px] rounded-full bg-gray-200 text-base md:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
 
               {searchQuery &&
             <button onClick={() => setSearchQuery('')} aria-label="Cancella ricerca" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"><X className="w-4 h-4" /></button>
             }
             </div>
-            {!lockedCategory &&
-          <Popover open={sourceOpen} onOpenChange={setSourceOpen}>
+            <Popover open={sourceOpen} onOpenChange={setSourceOpen}>
               <PopoverTrigger asChild>
                 <button className="w-full inline-flex items-center justify-between gap-2 text-xs font-semibold px-4 py-2.5 min-h-[40px] rounded-full text-foreground transition bg-gray-200">
                   <span className="inline-flex items-center gap-2 min-w-0">
@@ -237,8 +236,7 @@ export default function RassegnaStampa() {
               )}
               </PopoverContent>
             </Popover>
-          }
-            {!lockedCategory && source !== 'all' && (() => {
+            {source !== 'all' && (() => {
             const t = testate.find((x) => x.name === source);
             return t?.web_url ?
             <a href={t.web_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline py-1">
