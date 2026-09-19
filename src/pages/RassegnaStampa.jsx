@@ -102,7 +102,8 @@ export default function RassegnaStampa() {
   const favSourceNames = new Set(favSources.map((f) => f.source_name));
   const posts = postsQuery.data || [];
   const loading = postsQuery.isLoading;
-  const sortedTestate = [...testate].sort((a, b) => {
+  const testateForView = lockedCategory ? testate.filter((t) => t.category === lockedCategory) : testate;
+  const sortedTestate = [...testateForView].sort((a, b) => {
     const fa = favSourceNames.has(a.name) ? 0 : 1;
     const fb = favSourceNames.has(b.name) ? 0 : 1;
     return fa - fb;
