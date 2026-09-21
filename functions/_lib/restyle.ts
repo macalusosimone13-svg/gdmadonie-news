@@ -21,8 +21,19 @@ const CSS = `<style>
   .foot { text-align: center; font-size: 12px; color: rgba(255,255,255,.6); margin-top: 20px; }
 </style>`;
 
+// WhatsApp non mostra l'anteprima se la foto pesa troppo (le foto originali
+// sono di parecchi MB) o se il sito che la ospita la blocca: si passa da un
+// servizio di ridimensionamento che la restituisce 1200x630, ~200 KB.
+function ogSized(url: string): string {
+  if (!/^https?:\/\//i.test(url) || url.includes('wsrv.nl')) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1200&h=630&fit=cover&a=attention&output=jpg&q=78`;
+}
+
 export function restyleShareHtml(html: string): string {
-  let out = html.replace(/<style>[\s\S]*?<\/style>/, CSS);
+  let out = html.replace(/(<meta (?:property|name)="(?:og:image|og:image:secure_url|twitter:image)" content=")([^"]+)(")/g,
+    (_m, a, u, c) => a + ogSized(u.replace(/&amp;/g, '&')).replace(/&/g, '&amp;') + c);
+  if (/og:image"/.test(out)) out = out.replace('</head>', '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta property="og:image:type" content="image/jpeg">\n</head>');
+  out = out.replace(/<style>[\s\S]*?<\/style>/, CSS);
   out = out.replace('<div class="wrap">', '<div class="wrap">\n  <div class="top"><div class="wm">GD MADONIE<span>NEWS</span></div></div>');
   out = out.replace('</head>', '<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@800;900&family=Figtree:wght@400;600&display=swap" rel="stylesheet">\n<meta name="theme-color" content="#0F1B3A">\n</head>');
   return out;
