@@ -205,13 +205,14 @@ export default function RassegnaStampa() {
               </div>
               <div className="source-chips">
                 {sources.map((s) =>
-              <button key={s.key} onClick={() => setSource(s.key)} className={`schip ${source === s.key ? 'active' : ''}`}>
-                    {s.key !== 'all' && sourceLogos[s.key] && <img className="schip-logo" src={sourceLogos[s.key]} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}{favSourceNames.has(s.key) && <Star size={11} style={{ display: 'inline', marginRight: 5, verticalAlign: '-1px' }} fill="currentColor" />}{s.label}
+              <button key={s.key} title={s.label} aria-label={s.label} onClick={() => setSource(s.key)} className={`schip ${source === s.key ? 'active' : ''}`}>
+                    {s.key !== 'all' && sourceLogos[s.key] && <img className="schip-logo" src={sourceLogos[s.key]} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}{favSourceNames.has(s.key) && <Star size={11} style={{ display: 'inline', marginRight: 5, verticalAlign: '-1px' }} fill="currentColor" />}<span className="schip-label">{s.label}</span>
                   </button>
               )}
               </div>
               {source !== 'all' &&
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', margin: '4px 0 6px', fontSize: 13, fontWeight: 700 }}>
+                  <span className="sel-source">{source}</span>
                   <button onClick={() => toggleFavSource(source)} style={{ color: 'var(--acc)' }}>{activeFav ? '★ Togli dalle preferite' : '☆ Aggiungi alle preferite'}</button>
                   {siteTestata?.web_url && <a href={siteTestata.web_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--acc)' }}>Visita il sito <ExternalLink size={12} style={{ display: 'inline' }} /></a>}
                 </div>}

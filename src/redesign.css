@@ -372,3 +372,15 @@
   .schip-logo{ width:22px; height:22px; border-radius:50%; object-fit:contain; background:#fff; flex-shrink:0; }
   .rd .schip.active .schip-logo{ box-shadow:0 0 0 2px rgba(255,255,255,.55); }
   @media (max-width:700px){ .rd .source-chips{ gap:6px; padding-top:16px; } .rd .schip{ padding:4px 11px 4px 5px; font-size:12px; gap:6px; } .schip-logo{ width:20px; height:20px; } }
+  .sel-source{ display:none; font-weight:800; color:var(--notte); }
+  /* telefono: tutte le testate visibili insieme, come griglia di loghi (nome nel titolo/selezione) */
+  @media (max-width:700px){
+    .rd .source-chips{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; padding-top:16px; margin-inline:0; overflow:visible; }
+    .rd .schip{ padding:0; aspect-ratio:1; justify-content:center; border-radius:18px; border:1.5px solid rgba(28,34,51,.14); background:#fff; }
+    .rd .schip:first-child{ grid-column:1 / -1; aspect-ratio:auto; padding:10px 16px; border-radius:999px; }
+    .rd .schip:not(:first-child) .schip-label{ display:none; }
+    .rd .schip:not(:first-child) svg{ display:none; }
+    .schip-logo{ width:70%; height:70%; border-radius:10px; }
+    .rd .schip.active{ background:var(--acc); }
+    .sel-source{ display:inline; }
+  }
