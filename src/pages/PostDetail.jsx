@@ -20,7 +20,7 @@ import MediaCarousel from '@/components/MediaCarousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import RelatedPosts from '@/components/RelatedPosts';
 import Comments from '@/components/Comments';
-import { buildStoryBlob, STORY_DEFAULTS } from '@/lib/storyImage';
+import { buildStoryBlob, STORY_DEFAULTS, viaProxy } from '@/lib/storyImage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Film, Image as ImageIcon } from 'lucide-react';
@@ -38,6 +38,7 @@ export default function PostDetail() {
   const [cleanShare, setCleanShare] = useState(false);
   const [prepared, setPrepared] = useState({});
   const [prepFailed, setPrepFailed] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const [shareMsg, setShareMsg] = useState('');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -142,12 +143,13 @@ export default function PostDetail() {
     let cancelled = false;
     setPrepared({});
     setPrepFailed(false);
+    setVideoFailed(false);
     const run = async (key, fn) => {
       for (let attempt = 0; attempt < 2; attempt++) {
         try { const f = await fn(); if (!cancelled) setPrepared((p) => ({ ...p, [key]: f })); return; }
         catch { await new Promise((r) => setTimeout(r, 400)); }
       }
-      if (!cancelled && key !== 'video') setPrepFailed(true);
+      if (!cancelled) { if (key === 'video') setVideoFailed(true); else setPrepFailed(true); }
     };
     const imgSource = isVideo ? post.poster_url : post.image_url;
     run('story', () => buildBrandedFile(imgSource, 'story', isAdmin && cleanShare));
@@ -246,7 +248,7 @@ export default function PostDetail() {
   };
 
   const buildVideoFile = async () => {
-    const res = await fetch(videoUrl);
+    const res = await fetch(viaProxy(videoUrl));
     const videoBlob = await res.blob();
     const ext = videoUrl.split('.').pop()?.split('?')[0] || 'mp4';
     return new File([videoBlob], `gdmadonie-video.${ext}`, { type: videoBlob.type || 'video/mp4' });
@@ -379,7 +381,7 @@ export default function PostDetail() {
               <span><b>Foto pulita (solo admin)</b><small>Niente titolo o categoria sopra la foto: resta solo l'indirizzo del sito.</small></span>
             </label>}
             {[
-            ...(isVideo ? [['video', 'Video vero', 'Si muove e ha l\'audio, senza testo sopra', Film]] : []),
+            ...(isVideo && !videoFailed ? [['video', 'Video vero', 'Si muove e ha l\'audio, senza testo sopra', Film]] : []),
             ['story', 'Immagine per le Storie', 'Verticale 9:16, per Storie Instagram, Facebook e WhatsApp', ImageIcon],
             ['post', 'Immagine per il Feed', 'Più quadrata 4:5, per un post normale', ImageIcon]].
             map(([key, title, desc, Icon]) =>

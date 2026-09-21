@@ -47,13 +47,24 @@ export const STORY_DEFAULTS = {
   category_gap: 40
 };
 
-function loadImageOnce(url) {
+// Foto e video su altri domini (R2, testate) passano dal proxy del sito, che
+// le serve dallo stesso dominio: cosi' il canvas non risulta "sporco".
+export function viaProxy(url) {
+  if (!url || /^(data:|blob:)/.test(url)) return url;
+  try {
+    const u = new URL(url, window.location.href);
+    if (u.origin === window.location.origin) return url;
+    return `/functions/mediaProxy?u=${encodeURIComponent(u.toString())}`;
+  } catch { return url; }
+}
+
+function loadImageOnce(url, proxied = true) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = reject;
-    img.src = url;
+    img.src = proxied ? viaProxy(url) : url;
   });
 }
 
@@ -65,7 +76,8 @@ async function loadImage(url) {
     return await loadImageOnce(url);
   } catch (e) {
     if (/^data:|^blob:/.test(url)) throw e;
-    return await loadImageOnce(url + (url.includes('?') ? '&' : '?') + '_cors=' + Date.now());
+    try { return await loadImageOnce(url, false); } catch {}
+    return await loadImageOnce(url + (url.includes('?') ? '&' : '?') + '_cors=' + Date.now(), false);
   }
 }
 
