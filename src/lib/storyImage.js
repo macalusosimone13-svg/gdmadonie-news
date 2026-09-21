@@ -585,7 +585,11 @@ export async function buildStoryBlob({
       // ridotta: cosi' una foto orizzontale prende tutta la larghezza e restano
       // scoperti solo i margini sopra e sotto (riempiti dallo sfondo sfocato),
       // invece di venire rimpicciolita per stare dentro uno spazio piu' stretto.
-      const fitScale = Math.min(W / img.width, H / img.height);
+      let fitScale = Math.min(W / img.width, H / img.height);
+      // Se la foto ha quasi le proporzioni della tela, la si riempie del tutto
+      // (taglio minimo, max ~12%) invece di lasciare strisce scure ai lati.
+      const coverS = Math.max(W / img.width, H / img.height);
+      if (coverS / fitScale <= 1.12) fitScale = coverS;
       const dw = img.width * fitScale;
       const dh = img.height * fitScale;
       ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
@@ -611,7 +615,17 @@ export async function buildStoryBlob({
     drawBase(ctx, W, H, primaryColor, bgGradientStart, bgGradientEnd);
     drawTextOnlyCard(ctx, W, H, { category, title, bodyText, domain, categoryBg, categoryText, titleColor, showCategory, showDomain });
   }
-  if (!clean) await drawBrandBadge(ctx, logoUrl, brandTitle, brandSubtitle, logoSize);
+  if (!clean) {
+    if (photoDrawn) {
+      // Velo blu notte dietro il logo: resta leggibile su qualsiasi foto.
+      const g = ctx.createLinearGradient(0, 0, 0, 340);
+      g.addColorStop(0, 'rgba(10,18,38,0.88)');
+      g.addColorStop(1, 'rgba(10,18,38,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, 340);
+    }
+    await drawBrandBadge(ctx, logoUrl, brandTitle, brandSubtitle, logoSize);
+  }
 
   try {
     return await canvasToBlob(canvas);

@@ -192,7 +192,7 @@ export default function PostDetail() {
     navigate('/');
   };
   const shareUrl = shareLink;
-  const shareWa = `https://wa.me/?text=${encodeURIComponent(post.title + ' ' + shareUrl)}`;
+  const shareWa = `https://wa.me/?text=${encodeURIComponent(`📰 *${post.title}*\n\nLeggi su GD Madonie News:\n${shareUrl}`)}`;
   const shareFb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
   const shareNative = async () => {
     if (navigator.share) {try {await navigator.share({ title: post.title, url: shareUrl });} catch (e) {}} else

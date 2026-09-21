@@ -304,7 +304,7 @@ export default function Sondaggi() {
     }
   };
 
-  const shareWa = `https://wa.me/?text=${encodeURIComponent('Sondaggi politici · ' + shareLinkUrl)}`;
+  const shareWa = `https://wa.me/?text=${encodeURIComponent(`📊 *Sondaggi politici*\n\nLe ultime rilevazioni su GD Madonie News:\n${shareLinkUrl}`)}`;
   const shareFb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLinkUrl)}`;
 
   const pctTxt = (n) => `${Number(n).toFixed(1).replace('.', ',')}%`;
