@@ -138,7 +138,7 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light" enableSystem={false}>
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
           <SplashScreen />

@@ -445,3 +445,17 @@
 .rd .assist-logo{ display:block; margin-bottom:14px; position:relative; }
 .rd .icon-btn.assist-btn:hover{ background:#dfe6f8; }
 .rd .icon-btn.assist-btn{ transition:background .2s, transform .2s ease; } .rd .icon-btn.assist-btn:hover{ transform:scale(1.12); }
+
+/* ===== Admin: moduli (post, evento e altri) ===== */
+.rd .adm-main form{ background:#fff; border:1px solid rgba(15,27,58,.08); border-radius:24px; padding:28px; box-shadow:0 1px 3px rgba(15,27,58,.06); }
+.rd .adm-main label, .rd .adm-main [data-label]{ font-family:'Figtree',sans-serif; font-weight:700; font-size:14px; color:#0F1B3A; }
+.rd .adm-main input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), .rd .adm-main textarea, .rd .adm-main select, .rd .adm-main [role=combobox]{
+  background:#fff; border:1.5px solid rgba(15,27,58,.18); border-radius:12px; font-size:15px; color:#0F1B3A; }
+.rd .adm-main input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), .rd .adm-main [role=combobox]{ min-height:46px; }
+.rd .adm-main textarea{ padding:12px 14px; line-height:1.5; }
+.rd .adm-main input:focus-visible, .rd .adm-main textarea:focus-visible, .rd .adm-main [role=combobox]:focus-visible{ outline:none; border-color:#2F5BD8; box-shadow:0 0 0 4px rgba(47,91,216,.15); }
+.rd .adm-main form label.border-dashed, .rd .adm-main label[class*="border-dashed"]{ background:#F4F7FE; border-color:rgba(47,91,216,.35); border-radius:16px; color:#2F5BD8; font-weight:700; }
+.rd .adm-main label[class*="border-dashed"]:hover{ background:#EAF0FD; border-color:#2F5BD8; }
+.rd .adm-main form button[type=submit]{ min-height:50px; border-radius:999px; font:800 15px 'Figtree',sans-serif; letter-spacing:.02em; }
+.rd .adm-main form button[type=button][class*="outline"]:not([role=combobox]), .rd .adm-main form button[type=button].w-full:not([role=combobox]){ min-height:50px; border-radius:999px; border:1.5px solid #0F1B3A; color:#0F1B3A; background:#fff; font-weight:800; }
+@media (max-width:860px){ .rd .adm-main form{ padding:18px; border-radius:20px; } }
