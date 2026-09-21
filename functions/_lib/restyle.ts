@@ -48,11 +48,15 @@ export async function bridge(context: any, slug: string): Promise<Response> {
     headers: { 'x-app-origin': url.host },
     redirect: 'manual',
   });
-  const type = resp.headers.get('content-type') || '';
-  if (resp.status !== 200 || !type.includes('text/html')) {
+  // Il gateway Supabase serve l'HTML come text/plain: WhatsApp allora non
+  // legge i meta tag. Si rilegge il corpo e si rimanda come text/html.
+  if (resp.status !== 200) {
     return new Response(resp.body, { status: resp.status, headers: resp.headers });
   }
   const html = await resp.text();
+  if (!/^\s*<!doctype html/i.test(html)) {
+    return new Response(html, { status: 200, headers: { 'content-type': resp.headers.get('content-type') || 'text/plain' } });
+  }
   const headers = new Headers(resp.headers);
   headers.delete('content-length');
   headers.set('content-type', 'text/html; charset=utf-8');
