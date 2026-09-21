@@ -329,3 +329,7 @@
   .rd .news-body .tab { background:var(--tint); }
   .rd .news-body .tab.active { background:var(--blu); }
   .rd .tabs .tab { text-decoration:none; display:inline-block; }
+  .rd .article-detail { padding-top:26px; }
+  .rd .article-detail h1 { font-size:clamp(1.7rem,4.4vw,2.6rem); line-height:1; margin:6px 0 4px; text-transform:none; }
+  .rd .article-detail .ad-content p { font-size:18px; line-height:1.7; opacity:.9; white-space:pre-line; margin:0 0 16px; }
+  .rd .article-detail .ad-external { margin-top:6px; }

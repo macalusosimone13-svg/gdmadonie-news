@@ -271,7 +271,7 @@ export default function PostDetail() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="article-detail space-y-5">
       {(() => {
         const items = post.media && post.media.length ? post.media : post.image_url ? [{ url: post.image_url, type: post.media_type, orientation: post.media_orientation, poster_url: post.poster_url }] : [];
         if (!items.length) {
@@ -284,7 +284,7 @@ export default function PostDetail() {
 
         }
         return (
-          <div className="-mt-5 -mx-4 lg:mt-0 lg:mx-0 lg:rounded-2xl overflow-hidden relative">
+          <div className="rounded-[28px] overflow-hidden relative">
             <MediaCarousel items={items} alt={post.title} badge={{ label: getCategoryLabel(content, post.category), className: cat.badge }} />
             <button onClick={goBack} aria-label="Indietro" className="absolute top-3 left-3 z-[35] w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white/90 backdrop-blur-sm text-foreground shadow-md ring-1 ring-black/5 flex items-center justify-center hover:bg-white">
               <ArrowLeft className="w-5 h-5" />
@@ -294,7 +294,7 @@ export default function PostDetail() {
       })()}
       <div className="space-y-2">
         {post.source_name && <SourceBadge post={post} />}
-        <h1 className="text-2xl font-bold text-foreground leading-tight">{post.title}</h1>
+        <h1>{post.title}</h1>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           {date && <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{date}</span>}
           {post.author && <span className="flex items-center gap-1 font-serif font-normal"><User className="w-3.5 h-3.5" />{post.author}</span>}
@@ -339,7 +339,7 @@ export default function PostDetail() {
       </div>
       }
       {post.excerpt && !isGD && <p className="text-base text-muted-foreground leading-relaxed font-medium">{cleanExcerpt(post.excerpt)}</p>}
-      {post.content && <div className="text-[15px] text-foreground leading-relaxed whitespace-pre-line">{post.content}</div>}
+      {post.content && <div className="ad-content"><p>{post.content}</p></div>}
       {ADS_ENABLED && <AdSlot slot="1020089079" />}
       {post.attachment_url &&
       <a href={post.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-medium text-primary bg-primary/5 px-4 py-3 rounded-xl hover:bg-primary/10">
@@ -347,7 +347,7 @@ export default function PostDetail() {
         </a>
       }
       {post.external_link &&
-      <a href={post.external_link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full text-primary-foreground py-3 rounded-xl hover:bg-primary/90 font-serif font-normal bg-[#0f1b3a]">
+      <a href={post.external_link} target="_blank" rel="noopener noreferrer" className="ad-external">
           Leggi l'articolo completo su {post.source_name} <ExternalLink className="w-4 h-4" />
         </a>
       }
