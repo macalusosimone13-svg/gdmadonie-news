@@ -395,3 +395,21 @@
   .rd .event-info-row{ display:flex; align-items:center; gap:12px; font-weight:700; color:var(--notte); font-size:16px; }
   .rd .event-info-row svg{ color:var(--acc); flex-shrink:0; }
   .rd .event-desc{ margin-top:24px; font-size:17px; line-height:1.75; white-space:pre-line; }
+
+  /* Assistente: a tutta altezza, con la chat sempre visibile (input incluso) */
+  .rd .assist-page{ max-width:1320px; margin:0 auto; padding:20px 20px 24px; display:grid; grid-template-columns:minmax(0,380px) minmax(0,1fr); gap:24px; height:calc(100dvh - 73px); min-height:520px; }
+  .rd .assist-side{ position:relative; overflow:hidden; background:var(--tint); border-radius:28px; padding:34px 30px; align-self:stretch; }
+  .rd .assist-side .hero-glow{ width:300px; height:300px; top:-110px; right:-90px; }
+  .rd .assist-side > *{ position:relative; }
+  .rd .assist-side .hero-glow{ position:absolute; }
+  .rd .assist-side h1{ font-size:clamp(2.2rem,4vw,3.2rem); color:var(--notte); margin:6px 0 12px; }
+  .rd .assist-side p{ margin:0; opacity:.7; line-height:1.5; }
+  .rd .assist-card{ background:#fff; border:1px solid rgba(28,34,51,.1); border-radius:28px; padding:22px; min-height:0; display:flex; flex-direction:column; box-shadow:0 10px 34px rgba(15,27,58,.06); }
+  .rd .assist-card > div{ flex:1; min-height:0; }
+  @media (max-width:900px){
+    .rd .assist-page{ grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr); gap:14px; padding:14px 14px 16px; height:calc(100dvh - 73px); }
+    .rd .assist-side{ padding:18px 20px; border-radius:22px; }
+    .rd .assist-side h1{ font-size:1.8rem; margin:2px 0 4px; }
+    .rd .assist-side p{ font-size:14px; }
+    .rd .assist-card{ padding:14px; border-radius:22px; }
+  }
