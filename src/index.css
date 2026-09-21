@@ -155,3 +155,24 @@
 .mn-auth-logo span{display:block;color:#5C86F2;font-size:13px;letter-spacing:.32em;margin-top:8px}
 .mn-auth-card button[type=submit],.mn-auth-card button.w-full{border-radius:999px;font-family:'Rubik',sans-serif;font-weight:700;letter-spacing:.02em}
 .mn-auth-card input{border-radius:14px}
+
+/* Condivisione (redesign) */
+.share-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding-top:20px;margin-top:6px;border-top:1px solid rgba(28,34,51,.1)}
+.share-label{display:inline-flex;align-items:center;gap:6px;font-family:'Rubik',sans-serif;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#0F1B3A;margin-right:4px}
+.share-btn{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 20px;border-radius:999px;border:1.5px solid rgba(15,27,58,.22);background:#fff;color:#0F1B3A;font-family:'Rubik',sans-serif;font-weight:700;font-size:13px;transition:all .2s ease}
+.share-btn:hover{border-color:#2F5BD8;color:#2F5BD8}
+.share-primary{background:#2F5BD8;border-color:#2F5BD8;color:#fff}
+.share-primary:hover{background:#0F1B3A;border-color:#0F1B3A;color:#fff}
+.share-dialog{border-radius:26px!important;padding:26px!important}
+.share-dialog h2{font-family:'Rubik',sans-serif;font-weight:900;text-transform:uppercase;color:#0F1B3A;font-size:1.3rem}
+.share-options{display:grid;gap:10px;padding-top:6px}
+.share-option{display:flex;align-items:center;gap:14px;text-align:left;padding:14px;border-radius:18px;border:1.5px solid rgba(15,27,58,.14);background:#fff;transition:all .2s ease}
+.share-option:not(:disabled):hover{border-color:#2F5BD8;background:#F2F5FF}
+.share-option:disabled{opacity:.6}
+.share-option b,.share-check b{display:block;font-family:'Rubik',sans-serif;font-weight:800;color:#0F1B3A;font-size:15px}
+.share-option small,.share-check small{display:block;font-size:12.5px;color:rgba(15,27,58,.62);margin-top:2px;line-height:1.4}
+.share-ico{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:14px;background:#2F5BD8;color:#fff}
+.share-check{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:16px;background:#F2F5FF;cursor:pointer}
+.share-check input{margin-top:3px;width:16px;height:16px;accent-color:#2F5BD8}
+.share-msg{font-size:13px;line-height:1.5;color:#0F1B3A;background:#F2F5FF;border-radius:14px;padding:12px 14px}
+.share-dl{font-weight:700;font-size:13px;color:#2F5BD8;text-align:center;padding:6px}

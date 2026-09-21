@@ -34,9 +34,11 @@ export default function PostDetail() {
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState('');
   const [savingNote, setSavingNote] = useState(false);
-  const [sharingStory, setSharingStory] = useState(false);
-  const [shareChoiceOpen, setShareChoiceOpen] = useState(false);
+    const [shareChoiceOpen, setShareChoiceOpen] = useState(false);
   const [cleanShare, setCleanShare] = useState(false);
+  const [prepared, setPrepared] = useState({});
+  const [prepFailed, setPrepFailed] = useState(false);
+  const [shareMsg, setShareMsg] = useState('');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [fromSupabase, setFromSupabase] = useState(false);
@@ -135,6 +137,22 @@ export default function PostDetail() {
   }, [post]);
 
   useEffect(() => { setBackTarget(sectionForPost(post)); return () => setBackTarget(null); }, [post?.category, post?.source_type]);
+  useEffect(() => {
+    if (!shareChoiceOpen || !post) return;
+    let cancelled = false;
+    setPrepared({});
+    setPrepFailed(false);
+    const run = async (key, fn) => {
+      try { const f = await fn(); if (!cancelled) setPrepared((p) => ({ ...p, [key]: f })); }
+      catch { if (!cancelled && key !== 'video') setPrepFailed(true); }
+    };
+    const imgSource = isVideo ? post.poster_url : post.image_url;
+    run('story', () => buildBrandedFile(imgSource, 'story', isAdmin && cleanShare));
+    run('post', () => buildBrandedFile(imgSource, 'post', isAdmin && cleanShare));
+    if (isVideo && videoUrl) run('video', buildVideoFile);
+    return () => { cancelled = true; };
+  }, [shareChoiceOpen, cleanShare, post?.id]);
+
   if (loading) return (
     <div className="space-y-5">
       <Skeleton className="h-4 w-20 rounded-full" />
@@ -176,12 +194,12 @@ export default function PostDetail() {
     {navigator.clipboard?.writeText(shareUrl);alert('Link copizzato');}
   };
 
-  const generateBrandedImage = async (imageUrl, imgFormat) => {
-    const storyCfg = { ...STORY_DEFAULTS };
-    try {
-      const cfgs = await sb44.entities.StoryShareConfig.filter({ key: 'main' }, '-updated_date', 1);
-      if (cfgs?.[0]) Object.assign(storyCfg, cfgs[0]);
-    } catch {}
+  const isVideo = post ? (post.media?.[0]?.type || post.media_type) === 'video' : false;
+  const videoUrl = post ? post.media?.[0]?.url || (post.media_type === 'video' ? post.image_url : null) : null;
+
+  // Palette del redesign: si ignorano colori/logo salvati in passato (avevano l'arancione).
+  const buildBrandedFile = async (imageUrl, imgFormat, minimal) => {
+    const storyCfg = { ...STORY_DEFAULTS, bg_gradient_start: '#1B3A8C', bg_gradient_end: '#0A1226', category_bg_color: '#2F5BD8', category_text_color: '#FFFFFF', brand_title: 'GD Madonie News', brand_subtitle: 'Giovani Democratici Madonie' };
     const blob = await buildStoryBlob({
       imageUrl,
       format: imgFormat,
@@ -190,7 +208,7 @@ export default function PostDetail() {
       bodyText: (post.excerpt || post.content || '').replace(/\s+/g, ' ').trim(),
       domain: isGD ? storyCfg.domain_text_gd : `${storyCfg.domain_text_rassegna_prefix} ${post.source_name || 'GD Madonie News'}`,
       primaryColor: '#0F1B3A',
-      logoUrl: storyCfg.logo_url || getContent(content, 'site_logo_url'),
+      logoUrl: null,
       brandTitle: storyCfg.brand_title,
       brandSubtitle: storyCfg.brand_subtitle,
       bgGradientStart: storyCfg.bg_gradient_start,
@@ -201,75 +219,65 @@ export default function PostDetail() {
       overlayIntensity: storyCfg.overlay_intensity,
       showCategory: storyCfg.show_category,
       showDomain: storyCfg.show_domain,
-      minimal: isAdmin && cleanShare,
+      minimal,
       topBandEnabled: storyCfg.top_band_enabled,
       topBandColor: storyCfg.top_band_color,
       topBandOpacity: storyCfg.top_band_opacity,
       logoSize: storyCfg.logo_size,
       categoryGap: storyCfg.category_gap
     });
-    const file = new File([blob], 'condivisione.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: post.title });
-    } else {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'condivisione-gdmadonie.png';
-      a.click();
-      URL.revokeObjectURL(url);
-      alert('Immagine scaricata e link copiato: aprila in WhatsApp, Instagram o Facebook, e incolla il link nello sticker "Link" se stai facendo una storia.');
-    }
+    // JPEG: più leggero e più compatibile con le Storie di Instagram del PNG.
+    let out = blob;
+    try {
+      const bmp = await createImageBitmap(blob);
+      const c = document.createElement('canvas');
+      c.width = bmp.width; c.height = bmp.height;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0A1226'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(bmp, 0, 0);
+      const jpg = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.92));
+      if (jpg) out = jpg;
+    } catch {}
+    const ext = out.type === 'image/jpeg' ? 'jpg' : 'png';
+    return new File([out], `gdmadonie-${imgFormat}.${ext}`, { type: out.type || 'image/png' });
   };
 
-  const shareRawVideo = async (videoUrl) => {
+  const buildVideoFile = async () => {
     const res = await fetch(videoUrl);
     const videoBlob = await res.blob();
     const ext = videoUrl.split('.').pop()?.split('?')[0] || 'mp4';
-    const videoFile = new File([videoBlob], `video.${ext}`, { type: videoBlob.type || 'video/mp4' });
-    if (navigator.canShare && navigator.canShare({ files: [videoFile] })) {
-      await navigator.share({ files: [videoFile], title: post.title });
-      return;
-    }
-    const url = URL.createObjectURL(videoBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `video-gdmadonie.${ext}`;
-    a.click();
-    URL.revokeObjectURL(url);
-    alert('Video scaricato e link copiato: aprilo in WhatsApp, Instagram o Facebook, e incolla il link nello sticker "Link" se stai facendo una storia.');
+    return new File([videoBlob], `gdmadonie-video.${ext}`, { type: videoBlob.type || 'video/mp4' });
   };
 
-  const isVideo = post ? (post.media?.[0]?.type || post.media_type) === 'video' : false;
-  const videoUrl = post ? post.media?.[0]?.url || (post.media_type === 'video' ? post.image_url : null) : null;
+  // I file si preparano appena si apre la finestra: il tocco sul bottone
+  // deve chiamare navigator.share() SUBITO, altrimenti il browser lo rifiuta
+  // (era l'errore al primo tentativo).
 
   const shareStory = () => {
-    if (!post || sharingStory) return;
+    if (!post) return;
     setShareChoiceOpen(true);
   };
 
-  const pickShareChoice = async (choice) => {
-    setShareChoiceOpen(false);
-    setSharingStory(true);
-    try {await navigator.clipboard?.writeText(shareUrl);} catch {}
-    try {
-      if (choice === 'video') {
-        try {
-          await shareRawVideo(videoUrl);
-          setSharingStory(false);
-          return;
-        } catch {
-          await generateBrandedImage(post.poster_url, 'story');
-          setSharingStory(false);
-          return;
-        }
-      }
-      const imgSource = isVideo ? post.poster_url : post.image_url;
-      await generateBrandedImage(imgSource, choice);
-    } catch (e) {
-      alert('Non sono riuscito a preparare la condivisione. Riprova.');
+  const pickShareChoice = (choice) => {
+    const file = prepared[choice];
+    if (!file) return;
+    try { navigator.clipboard?.writeText(shareUrl).catch(() => {}); } catch {}
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      // Solo il file (senza titolo/testo): Instagram lo carica più volentieri.
+      navigator.share({ files: [file] }).
+      then(() => setShareChoiceOpen(false)).
+      catch((e) => { if (e?.name !== 'AbortError') setShareMsg('Non è stato possibile aprire la condivisione. Usa "Scarica" e caricala a mano.'); });
+    } else {
+      downloadFile(file);
     }
-    setSharingStory(false);
+  };
+
+  const downloadFile = (file) => {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url; a.download = file.name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    setShareMsg('File scaricato e link copiato: aprilo in Instagram, Facebook o WhatsApp e incolla il link con lo sticker "Link".');
   };
 
   return (
@@ -346,57 +354,41 @@ export default function PostDetail() {
           Leggi l'articolo completo su {post.source_name} <ExternalLink className="w-4 h-4" />
         </a>
       }
-      <div className="flex items-center gap-2 pt-2 border-t border-border flex-wrap">
-        <span className="text-xs text-muted-foreground mr-1 flex items-center gap-1"><Share2 className="w-3.5 h-3.5" /> Condividi:</span>
-        <a href={shareWa} target="_blank" rel="noopener noreferrer" className="text-xs font-medium bg-[#25D366] text-white px-3 py-2.5 min-h-[44px] rounded-lg flex items-center">WhatsApp</a>
-        <button onClick={shareStory} disabled={sharingStory} className="text-xs font-medium text-white px-3 py-2.5 min-h-[44px] rounded-lg flex items-center" style={{ backgroundColor: '#1877F2' }}>Facebook</button>
-        <button onClick={shareStory} disabled={sharingStory} className="text-xs font-medium text-white px-3 py-2.5 min-h-[44px] rounded-lg flex items-center gap-1.5 disabled:opacity-60 bg-gradient-to-tr from-[#f58529] via-[#dd2a7b] to-[#8134af]">
-          {sharingStory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Instagram className="w-3.5 h-3.5" />} Condividi
-        </button>
-        <button onClick={shareNative} className="text-xs font-medium bg-slate-800 text-white px-3 py-2.5 min-h-[44px] rounded-lg flex items-center">Copia link</button>
+      <div className="share-row">
+        <span className="share-label"><Share2 className="w-4 h-4" /> Condividi</span>
+        <a href={shareWa} target="_blank" rel="noopener noreferrer" className="share-btn">WhatsApp</a>
+        <button onClick={shareStory} className="share-btn share-primary"><Instagram className="w-4 h-4" /> Storie e Post</button>
+        <button onClick={shareNative} className="share-btn">Copia link</button>
       </div>
       <Comments postId={post.id} />
       <RelatedPosts post={post} />
 
-      <Dialog open={shareChoiceOpen} onOpenChange={setShareChoiceOpen}>
-        <DialogContent className="max-w-sm">
+      <Dialog open={shareChoiceOpen} onOpenChange={(o) => { setShareChoiceOpen(o); if (!o) setShareMsg(''); }}>
+        <DialogContent className="max-w-sm share-dialog">
           <DialogHeader>
-            <DialogTitle>Come vuoi condividere?</DialogTitle>
-            <DialogDescription>Scegli il formato più adatto a dove la pubblichi.</DialogDescription>
+            <DialogTitle>Condividi la notizia</DialogTitle>
+            <DialogDescription>Scegli il formato: si apre la condivisione del telefono, poi scegli Instagram, Facebook o WhatsApp.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 pt-1">
+          <div className="share-options">
             {isAdmin &&
-            <label className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/40 cursor-pointer">
-                <input type="checkbox" checked={cleanShare} onChange={(e) => setCleanShare(e.target.checked)} className="mt-0.5 w-4 h-4 shrink-0 accent-[#0f1b3a]" />
-                <span>
-                  <span className="block text-sm font-semibold text-foreground">Foto pulita (solo admin)</span>
-                  <span className="block text-xs text-muted-foreground mt-0.5">Niente logo, categoria o titolo sopra la foto: resta solo l'indirizzo del sito in basso. Usalo quando l'immagine ha già la sua grafica.</span>
-                </span>
-              </label>
-            }
-            {isVideo &&
-            <button onClick={() => pickShareChoice('video')} className="w-full flex items-start gap-3 text-left p-4 rounded-xl border border-border hover:bg-muted transition-colors">
-                <Film className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <span>
-                  <span className="block font-semibold text-foreground">Video vero</span>
-                  <span className="block text-xs text-muted-foreground mt-0.5">Si muove e ha l'audio, ma senza logo o testo sopra</span>
-                </span>
-              </button>
-            }
-            <button onClick={() => pickShareChoice('story')} className="w-full flex items-start gap-3 text-left p-4 rounded-xl border border-border hover:bg-muted transition-colors">
-              <img src={getContent(content, 'site_logo_url')} alt="" className="w-9 h-9 rounded-lg object-contain bg-muted border border-border shrink-0" />
-              <span>
-                <span className="block font-semibold text-foreground">Immagine per le Storie</span>
-                <span className="block text-xs text-muted-foreground mt-0.5">Verticale e stretta, formato Storie WhatsApp/Instagram/Facebook</span>
-              </span>
+            <label className="share-check">
+              <input type="checkbox" checked={cleanShare} onChange={(e) => setCleanShare(e.target.checked)} />
+              <span><b>Foto pulita (solo admin)</b><small>Niente titolo o categoria sopra la foto: resta solo l'indirizzo del sito.</small></span>
+            </label>}
+            {[
+            ...(isVideo ? [['video', 'Video vero', 'Si muove e ha l\'audio, senza testo sopra', Film]] : []),
+            ['story', 'Immagine per le Storie', 'Verticale 9:16, per Storie Instagram, Facebook e WhatsApp', ImageIcon],
+            ['post', 'Immagine per il Feed', 'Più quadrata 4:5, per un post normale', ImageIcon]].
+            map(([key, title, desc, Icon]) =>
+            <button key={key} onClick={() => pickShareChoice(key)} disabled={!prepared[key]} className="share-option">
+              <span className="share-ico">{prepared[key] ? <Icon className="w-5 h-5" /> : <Loader2 className="w-5 h-5 animate-spin" />}</span>
+              <span><b>{title}</b><small>{prepared[key] ? desc : 'Preparo il file…'}</small></span>
             </button>
-            <button onClick={() => pickShareChoice('post')} className="w-full flex items-start gap-3 text-left p-4 rounded-xl border border-border hover:bg-muted transition-colors">
-              <img src={getContent(content, 'site_logo_url')} alt="" className="w-9 h-9 rounded-lg object-contain bg-muted border border-border shrink-0" />
-              <span>
-                <span className="block font-semibold text-foreground">Immagine per il Feed</span>
-                <span className="block text-xs text-muted-foreground mt-0.5">Più quadrata, pensata per un post normale (non taglia logo/testo)</span>
-              </span>
-            </button>
+            )}
+            {prepFailed && <p className="share-msg">Non riesco a preparare l'immagine di questa notizia. Riprova tra poco.</p>}
+            {shareMsg && <p className="share-msg">{shareMsg}</p>}
+            {Object.values(prepared).length > 0 && !shareMsg &&
+            <button className="share-dl" onClick={() => { const f = prepared.story || prepared.post; if (f) downloadFile(f); }}>Oppure scarica l'immagine</button>}
           </div>
         </DialogContent>
       </Dialog>
