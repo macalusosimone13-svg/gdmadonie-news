@@ -319,7 +319,7 @@ function drawTextBlock(ctx, W, H, { category, title, domain, categoryBg, categor
 
   if (title) {
     ctx.fillStyle = titleColor || '#ffffff';
-    ctx.font = '700 52px Georgia, serif';
+    ctx.font = '800 50px Rubik, Arial, sans-serif';
     const lines = wrapText(ctx, title, W - 128).slice(0, 4);
     y -= (lines.length - 1) * 62;
     const titleTop = y;
@@ -384,7 +384,7 @@ async function renderPollChart(ctx, W, H, { category, title, subtitle, items, do
 
   if (title) {
     ctx.fillStyle = titleColor || mainText;
-    ctx.font = '700 54px Georgia, serif';
+    ctx.font = '800 52px Rubik, Arial, sans-serif';
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left';
     y += 54;
