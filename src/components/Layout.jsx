@@ -74,9 +74,8 @@ export default function Layout() {
             {showNews &&
             <div className="nav-dropdown" ref={ddRef}>
                 <NavLink to="/rassegna-stampa" className={linkCls}>News</NavLink>
-                <span className="nav-dropdown-chevron" role="button" aria-label="Scegli tra GD Madonie, Nazionale o Regionale" onClick={(e) => { e.stopPropagation(); setNewsOpen((o) => !o); }}>▾</span>
+                <span className="nav-dropdown-chevron" role="button" aria-label="Scegli tra Nazionale o Regionale" onClick={(e) => { e.stopPropagation(); setNewsOpen((o) => !o); }}>▾</span>
                 <div className={`nav-dropdown-menu ${newsOpen ? 'open' : ''}`}>
-                  <a onClick={() => navigate('/gd-madonie')}>GD Madonie</a>
                   <a onClick={() => navigate('/rassegna-stampa/nazionale')}>Nazionale</a>
                   <a onClick={() => navigate('/rassegna-stampa/regionale')}>Regionale</a>
                 </div>
