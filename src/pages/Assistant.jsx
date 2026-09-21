@@ -1,19 +1,16 @@
 import AssistantChat from '@/components/AssistantChat';
-import { Sparkles } from 'lucide-react';
 
 export default function Assistant() {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-[#2F5BD8]">
-          <Sparkles className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground tracking-tight leading-none">Assistente Eventi</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Scopri gli eventi e registrati con una chat</p>
-        </div>
+    <div>
+      <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
+        <span className="section-kicker">Chiedi al circolo</span>
+        <h1>ASSISTENTE EVENTI</h1>
+        <p>Scopri gli eventi e registrati con una chat.</p>
+      </div></div>
+      <div className="wrap" style={{ maxWidth: 820, paddingTop: 30, paddingBottom: 72 }}>
+        <AssistantChat title="Assistente Eventi" />
       </div>
-      <AssistantChat title="Assistente Eventi" />
     </div>);
 
 }

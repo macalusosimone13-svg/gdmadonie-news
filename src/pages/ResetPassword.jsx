@@ -16,7 +16,7 @@ export default function ResetPassword() {
     e.preventDefault();
     setError("");
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Le password non coincidono");
       return;
     }
     setLoading(true);
@@ -33,8 +33,8 @@ export default function ResetPassword() {
   return (
     <AuthLayout
       icon={Lock}
-      title="New password"
-      subtitle="Enter your new password below">
+      title="Nuova password"
+      subtitle="Scegli la tua nuova password">
       
       {error &&
       <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
@@ -43,7 +43,7 @@ export default function ResetPassword() {
       }
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="password">New Password</Label>
+          <Label htmlFor="password">Nuova password</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -60,7 +60,7 @@ export default function ResetPassword() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
+          <Label htmlFor="confirm">Conferma password</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -75,14 +75,14 @@ export default function ResetPassword() {
             
           </div>
         </div>
-        <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
+        <Button type="submit" className="w-full h-12 font-medium bg-[#2F5BD8]" disabled={loading}>
           {loading ?
           <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Resetting...
+              Salvataggio in corso...
             </> :
 
-          "Reset password"
+          "Salva la nuova password"
           }
         </Button>
       </form>

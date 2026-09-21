@@ -128,11 +128,13 @@ export default function Settings() {
 
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl text-foreground tracking-tight font-serif font-normal">Impostazioni</h1>
-        <p className="text-sm text-muted-foreground mt-0.5 font-serif font-normal">Gestisci il tuo account e le preferenze</p>
-      </div>
+    <div>
+      <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
+        <span className="section-kicker">Il tuo account</span>
+        <h1>IMPOSTAZIONI</h1><p>Gestisci il tuo account e le preferenze.</p>
+      </div></div>
+      <div className="wrap" style={{ maxWidth: 820, paddingTop: 36, paddingBottom: 72 }}>
+      <div className="space-y-5">
 
       <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
@@ -259,6 +261,8 @@ export default function Settings() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      </div>
+      </div>
       </div>
     </div>);
 

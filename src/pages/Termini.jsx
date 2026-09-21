@@ -10,12 +10,13 @@ export default function Termini() {
   });
 
   return (
-    <div className="space-y-5 max-w-2xl mx-auto">
-      <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
-        <ArrowLeft className="w-4 h-4" /> Torna alla home
-      </Link>
-      <h1 className="text-2xl font-bold text-foreground">Termini di Servizio</h1>
-      <div className="prose prose-sm max-w-none text-foreground space-y-4 leading-relaxed">
+    <div>
+      <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
+        <span className="section-kicker">Giovani Democratici Madonie</span>
+        <h1>TERMINI DI SERVIZIO</h1>
+      </div></div>
+      <div className="wrap" style={{ maxWidth: 820, paddingTop: 36, paddingBottom: 72 }}>
+      <div className="prose prose-sm max-w-none text-foreground space-y-4 leading-relaxed legal-text">
         <p><em>Ultimo aggiornamento: [05/09/26]</em></p>
         <h2 className="text-lg font-semibold">Natura del sito</h2>
         <p>GD Madonie News è un sito di informazione gestito da Giovani Democratici Madonie che pubblica comunicati ed eventi propri e aggrega, a scopo informativo, notizie politiche da fonti terze tramite feed RSS pubblici, con link diretto alla fonte originale.</p>
@@ -23,6 +24,7 @@ export default function Termini() {
         <p>Gli articoli contrassegnati con il nome della testata di provenienza restano di proprietà dei rispettivi editori. GD Madonie News non ne rivendica la paternità e riporta solo titolo ed estratto, rimandando all'articolo completo sul sito originale.</p>
         <h2 className="text-lg font-semibold">Limitazione di responsabilità</h2>
         <p>GD Madonie News non è responsabile per l'accuratezza dei contenuti pubblicati da fonti terze aggregate.</p>
+      </div>
       </div>
     </div>
   );

@@ -10,12 +10,13 @@ export default function Privacy() {
   });
 
   return (
-    <div className="space-y-5 max-w-2xl mx-auto">
-      <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
-        <ArrowLeft className="w-4 h-4" /> Torna alla home
-      </Link>
-      <h1 className="text-2xl font-bold text-foreground">Privacy Policy</h1>
-      <div className="prose prose-sm max-w-none text-foreground space-y-4 leading-relaxed">
+    <div>
+      <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
+        <span className="section-kicker">Giovani Democratici Madonie</span>
+        <h1>PRIVACY POLICY</h1>
+      </div></div>
+      <div className="wrap" style={{ maxWidth: 820, paddingTop: 36, paddingBottom: 72 }}>
+      <div className="prose prose-sm max-w-none text-foreground space-y-4 leading-relaxed legal-text">
         <p><em>Ultimo aggiornamento: [05/09/26]</em></p>
 
         <h2 className="text-lg font-semibold">Titolare del trattamento</h2>
@@ -35,6 +36,7 @@ export default function Privacy() {
 
         <h2 className="text-lg font-semibold">Diritti dell'utente</h2>
         <p>L'utente può cancellare in autonomia il proprio account e i dati collegati in qualsiasi momento dalla sezione del proprio profilo, tramite l'opzione "Elimina account". Per richieste di accesso o rettifica dei dati, può scrivere a gdmadonie@gmail.com.</p>
+      </div>
       </div>
     </div>
   );
