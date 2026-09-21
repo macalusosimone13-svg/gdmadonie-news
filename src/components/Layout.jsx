@@ -87,7 +87,7 @@ export default function Layout() {
             {isAdmin && <NavLink to="/admin" className={linkCls}>Admin</NavLink>}
           </nav>
           <div className="header-actions">
-            <NavLink to="/assistente" aria-label="Assistente eventi" title="Assistente eventi" className="icon-btn"><AssistantLogo size={24} /></NavLink>
+            <NavLink to="/assistente" aria-label="Assistente eventi" title="Assistente eventi" className="icon-btn assist-btn"><AssistantLogo size={24} /></NavLink>
             {authChecked && user ?
             <NavLink to="/impostazioni" aria-label="Impostazioni account" title="Impostazioni" className="icon-btn" style={{ background: 'none' }}>
                 <UserAvatar user={user} src={user?.image_url} size={40} />

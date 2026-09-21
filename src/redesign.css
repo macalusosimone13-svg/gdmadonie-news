@@ -443,3 +443,4 @@
 @media (max-width:760px){ .rd .ev-poster{ padding:0; } .rd .ev-poster img{ width:100%; max-height:none; border-radius:0; } }
 .rd .logo-news-only b{font-weight:900}
 .rd .assist-logo{ display:block; margin-bottom:14px; position:relative; }
+.rd .icon-btn.assist-btn:hover{ background:#dfe6f8; }
