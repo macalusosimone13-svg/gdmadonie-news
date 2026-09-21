@@ -185,7 +185,7 @@ export default function Admin() {
             )}
           </div>
         </nav>
-        <section className="adm-main">
+        <div className="adm-main">
           {current && <header className="adm-title"><h2>{current.label}</h2><p>{current.desc}</p></header>}
           <Tabs value={current?.id} onValueChange={setTab}>
         <TabsContent value="post" className="mt-0"><PostForm onCreated={load} /></TabsContent>
@@ -310,7 +310,7 @@ export default function Admin() {
         <TabsContent value="backup" className="mt-0"><BackupManager /></TabsContent>
         </>}
           </Tabs>
-        </section>
+        </div>
       </div>
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(open) => {if (!open) setPendingDelete(null);}}>
