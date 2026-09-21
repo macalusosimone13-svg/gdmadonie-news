@@ -114,10 +114,6 @@ export default function TeamMemberDetail() {
             <div className="bio-empty"><h3>Il profilo è in preparazione</h3><p>{name} non ha ancora pubblicato la sua presentazione. Nel frattempo trovi qui sotto le sue notizie.</p></div>}
           </div>
           <aside className="prof-aside">
-            {socials.length > 0 &&
-            <div className="side-box"><div className="side-title">Contatti</div>
-                <div className="info-list">{socials.map((s) => <div key={s.key}><b>{s.label}</b><a href={s.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 800, color: 'var(--acc)' }}>Apri ↗</a></div>)}</div>
-              </div>}
             {otherProfiles.length > 0 &&
             <div className="side-box"><div className="side-title">{content?.team_related_label || 'Altri profili'}</div>
                 {otherProfiles.map((p) =>
