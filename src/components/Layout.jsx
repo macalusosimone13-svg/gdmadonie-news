@@ -65,7 +65,9 @@ export default function Layout() {
         <div className="header-inner">
           {location.pathname !== '/' && <Link to={location.pathname.startsWith('/evento') ? '/gd-madonie' : (/^\/(post|articolo)\//.test(location.pathname) && backTarget) || '/'} className={`back-feed ${/^\/(post|articolo|evento)\//.test(location.pathname) ? 'always' : ''}`} aria-label={/^\/(post|articolo|evento)\//.test(location.pathname) ? 'Torna alla sezione' : 'Torna al Feed'}><ArrowLeft size={20} /></Link>}
           <Link to="/" className="logo" aria-label="GD Madonie News - Feed">
-            <div className="logo-text">GD MADONIE<span>NEWS</span></div>
+            {(location.pathname.startsWith('/rassegna-stampa') || location.pathname.startsWith('/articolo') || (location.pathname.startsWith('/post/') && backTarget && backTarget !== '/gd-madonie'))
+              ? <div className="logo-text logo-news-only"><b>NEWS</b></div>
+              : <div className="logo-text">GD MADONIE<span>NEWS</span></div>}
           </Link>
           <nav className="main-nav" aria-label="Navigazione principale">
             <NavLink to="/" end className={linkCls}>Feed</NavLink>
