@@ -1,5 +1,6 @@
+import AssistantLogo from '@/components/AssistantLogo';
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, LogIn, Sparkles, Instagram, Facebook, Send, Twitter, Youtube, Globe, Mail, Link as LinkIcon, ArrowUp, Menu, X } from 'lucide-react';
+import { ArrowLeft, LogIn, Instagram, Facebook, Send, Twitter, Youtube, Globe, Mail, Link as LinkIcon, ArrowUp, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { getCurrentUser } from '@/lib/supabaseAuth';
 import { sb44 } from '@/api/supabaseEntities';
@@ -86,7 +87,7 @@ export default function Layout() {
             {isAdmin && <NavLink to="/admin" className={linkCls}>Admin</NavLink>}
           </nav>
           <div className="header-actions">
-            <NavLink to="/assistente" aria-label="Assistente eventi" title="Assistente eventi" className="icon-btn"><Sparkles size={19} /></NavLink>
+            <NavLink to="/assistente" aria-label="Assistente eventi" title="Assistente eventi" className="icon-btn"><AssistantLogo size={24} /></NavLink>
             {authChecked && user ?
             <NavLink to="/impostazioni" aria-label="Impostazioni account" title="Impostazioni" className="icon-btn" style={{ background: 'none' }}>
                 <UserAvatar user={user} src={user?.image_url} size={40} />

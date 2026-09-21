@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Send, Loader2, Sparkles } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
+import AssistantLogo from '@/components/AssistantLogo';
 import { supabase } from '@/lib/supabaseClient'; // client Supabase già esistente nel progetto
 
 const FUNCTION_URL = 'https://fxfckcpdxuyrhuinkyxq.supabase.co/functions/v1/assistant-chat';
@@ -75,7 +76,7 @@ export default function AssistantChat({ title }) {
       <div className="flex-1 overflow-y-auto overscroll-contain space-y-4 pr-1 -mr-1">
         <div className="flex justify-start">
           <div className="max-w-[92%] w-full">
-            <div className="flex items-center gap-2 mb-1.5 text-[11px] font-extrabold tracking-wider uppercase text-[#2F5BD8]"><Sparkles className="w-3.5 h-3.5" /> Assistente GD Madonie</div>
+            <div className="flex items-center gap-2 mb-1.5 text-[11px] font-extrabold tracking-wider uppercase text-[#2F5BD8]"><AssistantLogo size={16} /> Assistente GD Madonie</div>
             {greeting_typing ?
             <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 inline-flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#2F5BD8]/60 animate-bounce" /><span className="w-2 h-2 rounded-full bg-[#2F5BD8]/60 animate-bounce" style={{ animationDelay: '.15s' }} /><span className="w-2 h-2 rounded-full bg-[#2F5BD8]/60 animate-bounce" style={{ animationDelay: '.3s' }} />
