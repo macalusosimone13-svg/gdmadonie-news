@@ -10,6 +10,7 @@ import { useJsonLd } from '@/lib/useJsonLd';
 import AdSlot from '@/components/AdSlot';
 import Reveal from '@/components/Reveal';
 import { ADS_ENABLED } from '@/lib/adsConfig';
+import { sized, fallbackTo } from '@/lib/imgSize';
 import { Card, Lead, TrendBox, postImg, fmtDate, postLink, metaSource } from '@/components/redesign/Cards';
 import { Newsletter, FollowStats } from '@/components/redesign/SideBoxes';
 import { format } from 'date-fns';
@@ -34,7 +35,7 @@ function Featured({ post, isEvent, siteContent }) {
           <span className="date">{date}{isEvent && post.location ? ` · ${post.location}` : ''}</span>
           <span className="feat-cta">{isEvent ? "Scopri l'evento" : 'Leggi la notizia'} →</span>
         </div>
-        <div className="featured-img"><img src={img} alt="" fetchpriority="high" /></div>
+        <div className="featured-img"><img src={sized(img, 1000)} onError={fallbackTo(img)} alt="" fetchpriority="high" decoding="async" /></div>
       </Link>
     </div></div>);
 }

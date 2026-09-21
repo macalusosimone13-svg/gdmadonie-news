@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
@@ -43,29 +44,47 @@ export default function PostDetail() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [fromSupabase, setFromSupabase] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const queryClient = useQueryClient();
   const { data: content } = useSiteContent();
 
   useEffect(() => {
     getCurrentUser().then((u) => setIsAdmin(u?.role === 'admin' || u?.role === 'editor')).catch(() => {});
   }, []);
 
+  // Se l'articolo e' gia' arrivato con una lista (Feed, News, GD Madonie) si
+  // mostra subito, senza attendere: poi si aggiorna in silenzio.
   useEffect(() => {
+    if (post) return;
+    try {
+      for (const q of queryClient.getQueryCache().getAll()) {
+        const d = q.state.data;
+        const list = Array.isArray(d) ? d : Array.isArray(d?.pages) ? d.pages.flat() : null;
+        const hit = list?.find?.((x) => x && x.id === id && x.title && x._type !== 'event');
+        if (hit && hit.status !== 'draft') { setPost(hit); setLoading(false); break; }
+      }
+    } catch {}
+  }, [id]);
+
+  const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+
+  useEffect(() => {
+    setLoadError(false);
     (async () => {
       try {
-        let p = await sb44.entities.Post.get(id).catch(() => null);
+        let p = await withTimeout(sb44.entities.Post.get(id), 9000).catch(() => null);
         let onSupabase = !!p;
         if (!p) {
-          p = await base44.entities.Post.get(id);
+          p = await withTimeout(base44.entities.Post.get(id), 6000).catch(() => null);
           onSupabase = false;
         }
+        if (!p) { setLoadError(true); }
         if (p && p.status === 'draft') {
           let admin = false;
           try {const u = await getCurrentUser();admin = u?.role === 'admin' || u?.role === 'editor';} catch {}
           if (!admin) {setPost(null);setLoading(false);return;}
         }
-        setFromSupabase(onSupabase);
-        setPost(p);
-        setNoteDraft(p?.editorial_note || '');
+        if (p) { setFromSupabase(onSupabase); setPost(p); setNoteDraft(p.editorial_note || ''); setLoadError(false); }
         if (p) markRead(p.id);
       } catch {}
       setLoading(false);
@@ -182,6 +201,11 @@ export default function PostDetail() {
       </div>
     </div>);
 
+  if (!post && loadError) return (
+    <div className="text-center py-20" style={{ display: 'grid', gap: 14, justifyItems: 'center' }}>
+      <p className="text-muted-foreground">Non riesco a caricare la notizia. Controlla la connessione e riprova.</p>
+      <button onClick={() => window.location.reload()} className="btn-pill btn-blu">Riprova</button>
+    </div>);
   if (!post) return <div className="text-center py-20 text-muted-foreground">Notizia non trovata. <Link to="/" className="text-primary underline">Torna alla home</Link></div>;
 
   const cat = CATEGORIES[post.category] || CATEGORIES.rassegna_stampa;

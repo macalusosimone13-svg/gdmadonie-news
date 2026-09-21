@@ -1,3 +1,4 @@
+import { sized, fallbackTo } from '@/lib/imgSize';
 import { useState, useEffect, useCallback } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { Image } from '@/components/ui/image';
@@ -41,7 +42,7 @@ export default function MediaCarousel({ items = [], alt = 'Media', fit = false, 
               <Image src={m.url} fittingType="fit" alt={alt} className="w-full h-full" />
             </div> :
 
-          <img src={m.url} alt={alt} draggable={false} style={{ WebkitUserDrag: 'none', WebkitTouchCallout: 'none' }} className="w-full h-auto block bg-muted mx-auto lg:w-auto lg:max-h-[80vh] lg:max-w-full" loading="lazy" />
+          <img src={sized(m.url, 1100)} onError={fallbackTo(m.url)} alt={alt} draggable={false} style={{ WebkitUserDrag: 'none', WebkitTouchCallout: 'none' }} className="w-full h-auto block bg-muted mx-auto lg:w-auto lg:max-h-[80vh] lg:max-w-full" loading="lazy" />
           }
           {badge && m.type !== 'video' &&
           <span className={`absolute left-3 bottom-3 z-20 text-xs font-semibold px-2.5 py-1 rounded-full bg-[#0f1b3a] ${badge.className} shadow-sm`}>{badge.label}</span>
@@ -67,7 +68,7 @@ export default function MediaCarousel({ items = [], alt = 'Media', fit = false, 
                     <Image src={m.url} fittingType="fit" alt={items.length > 1 ? `${alt} ${idx + 1}` : alt} className="w-full h-full" />
                   </div> :
 
-              <img src={m.url} alt={items.length > 1 ? `${alt} ${idx + 1}` : alt} draggable={false} style={{ WebkitUserDrag: 'none', WebkitTouchCallout: 'none' }} className="w-full h-auto block bg-muted mx-auto lg:w-auto lg:max-h-[80vh] lg:max-w-full" loading="lazy" />
+              <img src={sized(m.url, 1100)} onError={fallbackTo(m.url)} alt={items.length > 1 ? `${alt} ${idx + 1}` : alt} draggable={false} style={{ WebkitUserDrag: 'none', WebkitTouchCallout: 'none' }} className="w-full h-auto block bg-muted mx-auto lg:w-auto lg:max-h-[80vh] lg:max-w-full" loading="lazy" />
               }
               </div>
             )}

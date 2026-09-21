@@ -1,3 +1,4 @@
+import { sized, fallbackTo } from '@/lib/imgSize';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -25,7 +26,7 @@ export function Card({ post, siteContent }) {
   const img = postImg(post);
   return (
     <Link to={postLink(post)} className={`article-card${img ? '' : ' noimg'}`}>
-      {img && <div className="card-media"><img src={img} alt="" loading="lazy" decoding="async" />{post.media_type === 'video' && <span className="vid-badge">▶</span>}</div>}
+      {img && <div className="card-media"><img src={sized(img, 640)} onError={fallbackTo(img)} alt="" loading="lazy" decoding="async" />{post.media_type === 'video' && <span className="vid-badge">▶</span>}</div>}
       <div className="card-body">
         <div className="meta-line">{metaSource(post, siteContent)} <span className="d">· {fmtDate(post.published_date)}</span></div>
         <h3>{post.title}</h3>
@@ -45,7 +46,7 @@ export function Lead({ post, siteContent, wide, label }) {
         <div className="meta-line">{metaSource(post, siteContent)} <span className="d">· {fmtDate(post.published_date)}</span></div>
         {post.excerpt && <p>{post.excerpt}</p>}
       </div>
-      {img && <div className="lead-media"><img src={img} alt="" loading="lazy" decoding="async" /></div>}
+      {img && <div className="lead-media"><img src={sized(img, 1000)} onError={fallbackTo(img)} alt="" loading="lazy" decoding="async" /></div>}
     </Link>);
 }
 

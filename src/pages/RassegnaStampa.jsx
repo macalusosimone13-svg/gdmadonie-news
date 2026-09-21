@@ -1,3 +1,4 @@
+import { sized, fallbackTo } from '@/lib/imgSize';
 // force retransform: chunk invalidate v3
 import { Fragment, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -254,7 +255,7 @@ function RassegnaCard({ post, saved, onToggleSave }) {
   return (
     <article className={`article-card${img ? '' : ' noimg'}`} style={{ position: 'relative', height: '100%' }}>
       <Link to={`/articolo/${post.id}`} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        {img && <div className="card-media"><img src={img} alt="" loading="lazy" decoding="async" /></div>}
+        {img && <div className="card-media"><img src={sized(img, 640)} onError={fallbackTo(img)} alt="" loading="lazy" decoding="async" /></div>}
         <div className="card-body" style={{ paddingBottom: 56 }}>
           <div className="meta-line">{post.source_name} <span className="d">· {date}</span>{isUnread(post.id) && <span className="chip-blu" style={{ marginLeft: 8, padding: '2px 8px', fontSize: 10 }}>Nuovo</span>}</div>
           <h3>{post.title}</h3>
