@@ -29,7 +29,7 @@ export default function ForgotPassword() {
       title="Reset password"
       subtitle="We'll send you a link to reset it"
       footer={
-      <Link to="/login" className="font-medium hover:underline text-[#ff7124]">
+      <Link to="/login" className="font-medium hover:underline text-[#2F5BD8]">
           <ArrowLeft className="w-3 h-3 inline mr-1" />Back to log in
         </Link>
       }>
@@ -57,7 +57,7 @@ export default function ForgotPassword() {
             
             </div>
           </div>
-          <Button type="submit" className="w-full h-12 font-medium bg-[#ff7124]" disabled={loading}>
+          <Button type="submit" className="w-full h-12 font-medium bg-[#2F5BD8]" disabled={loading}>
             {loading ?
           <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

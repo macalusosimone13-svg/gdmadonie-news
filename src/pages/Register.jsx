@@ -134,7 +134,7 @@ export default function Register() {
           Hai già un account?{" "}
           <Link
           to={"/login" + (safeReturnTo() !== "/" ? "?returnTo=" + encodeURIComponent(safeReturnTo()) : "")}
-          className="font-medium hover:underline text-[#ff7124]">
+          className="font-medium hover:underline text-[#2F5BD8]">
           
             Accedi
           </Link>
@@ -217,7 +217,7 @@ export default function Register() {
             
           </div>
         </div>
-        <Button type="submit" className="w-full h-12 font-medium bg-[#ff7124]" disabled={loading}>
+        <Button type="submit" className="w-full h-12 font-medium bg-[#2F5BD8]" disabled={loading}>
           {loading ?
           <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

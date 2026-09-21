@@ -49,7 +49,7 @@ export default function Login() {
           Non hai un account?{" "}
           <Link
           to={"/register" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}
-          className="font-medium hover:underline text-[#ff7124]">
+          className="font-medium hover:underline text-[#2F5BD8]">
           
             Creane uno
           </Link>
@@ -103,7 +103,7 @@ export default function Login() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs hover:underline text-[#ff7124]">
+            <Link to="/forgot-password" className="text-xs hover:underline text-[#2F5BD8]">
               Password dimenticata?
             </Link>
           </div>
@@ -121,7 +121,7 @@ export default function Login() {
             
           </div>
         </div>
-        <Button type="submit" className="w-full h-12 font-medium bg-[#ff7124]" disabled={loading}>
+        <Button type="submit" className="w-full h-12 font-medium bg-[#2F5BD8]" disabled={loading}>
           {loading ?
           <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

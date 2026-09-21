@@ -5,7 +5,7 @@ export default function Assistant() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-[#ff7124]">
+        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-[#2F5BD8]">
           <Sparkles className="w-5 h-5" />
         </div>
         <div>

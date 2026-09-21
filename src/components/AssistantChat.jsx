@@ -54,7 +54,7 @@ export default function AssistantChat({ title }) {
       <div className="flex-1 overflow-y-auto overscroll-contain space-y-4 pr-1 -mr-1">
         {messages.length === 0 && (
           <div className="text-center py-10">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 text-[#ff7124]">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 text-[#2F5BD8]">
               <Sparkles className="w-6 h-6" />
             </div>
             <p className="text-sm text-slate-500">Chiedimi quali eventi ci sono o registrati a un evento del circolo.</p>
@@ -82,7 +82,7 @@ export default function AssistantChat({ title }) {
         <button
           onClick={send}
           disabled={!input.trim() || sending}
-          className="flex-shrink-0 w-10 h-10 rounded-full text-primary-foreground flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 bg-[#ff7124]"
+          className="flex-shrink-0 w-10 h-10 rounded-full text-primary-foreground flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 bg-[#2F5BD8]"
         >
           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </button>
@@ -98,7 +98,7 @@ function ChatLink({ href, children }) {
       href={href}
       target={isExternal ? '_blank' : undefined}
       rel={isExternal ? 'noopener noreferrer' : undefined}
-      className="inline-flex items-center gap-1 mt-1 mb-0.5 px-3 py-1.5 rounded-full bg-[#ff7124]/10 text-[#ff7124] text-xs font-semibold no-underline hover:bg-[#ff7124]/20 transition-colors"
+      className="inline-flex items-center gap-1 mt-1 mb-0.5 px-3 py-1.5 rounded-full bg-[#2F5BD8]/10 text-[#2F5BD8] text-xs font-semibold no-underline hover:bg-[#2F5BD8]/20 transition-colors"
     >
       {children}
     </a>

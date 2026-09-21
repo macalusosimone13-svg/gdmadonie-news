@@ -20,7 +20,7 @@ const SCOPE_LABELS = {
   candidati_sicilia: 'Intenzioni di voto regionali siciliane - candidati'
 };
 
-const FALLBACK_COLORS = ['#0F1B3A', '#ff7024', '#0ea5e9', '#16a34a', '#a8262c', '#7c3aed', '#ca8a04', '#0d9488'];
+const FALLBACK_COLORS = ['#0F1B3A', '#2F5BD8', '#0ea5e9', '#16a34a', '#a8262c', '#7c3aed', '#ca8a04', '#0d9488'];
 
 export default function Sondaggi() {
   const [scope, setScope] = useState('nazionale');

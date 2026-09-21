@@ -334,7 +334,7 @@ export default function PostForm({ onCreated, editPost, onSaved }) {
               {saving === 'draft' ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {done === 'draft' ? 'Bozza salvata!' : 'Salva bozza'}
             </Button>
-            <Button type="submit" disabled={!!saving} className="w-full bg-[#ff7124]">
+            <Button type="submit" disabled={!!saving} className="w-full bg-[#2F5BD8]">
               {saving === 'published' ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {done === 'published' ? 'Pubblicato!' : 'Pubblica post'}
             </Button>

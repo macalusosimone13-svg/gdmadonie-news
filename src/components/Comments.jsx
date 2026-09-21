@@ -81,7 +81,7 @@ export default function Comments({ postId }) {
           <button
             onClick={send}
             disabled={!text.trim() || sending}
-            className="flex-shrink-0 w-10 h-10 rounded-full text-primary-foreground flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 bg-[#ff7124]"
+            className="flex-shrink-0 w-10 h-10 rounded-full text-primary-foreground flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 bg-[#2F5BD8]"
             aria-label="Invia commento"
           >
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

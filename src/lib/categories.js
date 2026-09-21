@@ -1,7 +1,7 @@
 export const CATEGORIES = {
-  comunicato: { label: 'Comunicato GD', badge: 'bg-[#ff7024] text-white', group: 'gd' },
+  comunicato: { label: 'Comunicato GD', badge: 'bg-[#2F5BD8] text-white', group: 'gd' },
   news_gd: { label: 'News GD', badge: 'bg-emerald-600 text-white', group: 'gd' },
-  proposta: { label: 'Proposta', badge: 'bg-[#ff7024] text-white', group: 'gd' },
+  proposta: { label: 'Proposta', badge: 'bg-[#2F5BD8] text-white', group: 'gd' },
   approfondimento: { label: 'Approfondimento', badge: 'bg-amber-600 text-white', group: 'gd' },
   politica_nazionale: { label: 'Politica Naz.', badge: 'bg-blue-700 text-white', group: 'rassegna' },
   politica_regionale: { label: 'Politica Reg.', badge: 'bg-sky-600 text-white', group: 'rassegna' },
