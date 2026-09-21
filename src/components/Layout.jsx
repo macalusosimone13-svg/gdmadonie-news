@@ -102,7 +102,6 @@ export default function Layout() {
       <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
         <Link to="/">Feed</Link>
         {showNews && <Link to="/rassegna-stampa">News</Link>}
-        <Link className="sub" to="/gd-madonie">GD Madonie</Link>
         <Link className="sub" to="/rassegna-stampa/nazionale">Nazionale</Link>
         <Link className="sub" to="/rassegna-stampa/regionale">Regionale</Link>
         <Link to="/sondaggi">Sondaggi</Link>
