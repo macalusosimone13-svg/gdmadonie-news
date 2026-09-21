@@ -216,12 +216,8 @@ export default function Sondaggi() {
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/sondaggi` : '';
   const shareLinkUrl = typeof window !== 'undefined' ? `${window.location.origin}/functions/shareSondaggi?scope=${scope}` : shareUrl;
 
-  const generatePollImage = async (imgFormat) => {
-    const pollCfg = { brand_title: 'Madonie News', brand_subtitle: 'Giovani Democratici Madonie', logo_url: '', logo_size: 140, background_color: '#f5f5f5', title_color: '', category_bg_color: '#ffffff', category_text_color: '#0F1B3A', domain_text: 'gdmadonie-news.com', show_category: true, show_domain: true, top_band_enabled: false, top_band_color: '#000000', top_band_opacity: 0.35, category_gap: 28 };
-    try {
-      const cfgs = await sb44.entities.StoryShareConfig.filter({ key: 'poll_share' }, '-updated_date', 1);
-      if (cfgs?.[0]) Object.assign(pollCfg, cfgs[0]);
-    } catch {}
+  const buildPollFile = async (imgFormat) => {
+    const pollCfg = { brand_title: 'GD Madonie News', brand_subtitle: 'Giovani Democratici Madonie', logo_url: '', logo_size: 140, background_color: '#f5f5f5', title_color: '', category_bg_color: '#2F5BD8', category_text_color: '#FFFFFF', domain_text: 'gdmadonie-news.com', show_category: true, show_domain: true, top_band_enabled: false, top_band_color: '#000000', top_band_opacity: 0.35, category_gap: 28 };
     const subtitle = [
     format(new Date(latest.date), 'd MMMM yyyy', { locale: it }),
     latest.institute,
@@ -235,7 +231,7 @@ export default function Sondaggi() {
       items: latestChartData,
       domain: pollCfg.domain_text || getContent(siteContent, 'site_domain') || 'gdmadonie-news.com',
       primaryColor: pollCfg.background_color || '#f5f5f5',
-      logoUrl: pollCfg.logo_url || getContent(siteContent, 'site_logo_url'),
+      logoUrl: null,
       brandTitle: pollCfg.brand_title,
       brandSubtitle: pollCfg.brand_subtitle,
       bgGradientStart: pollCfg.background_color || '#f5f5f5',
@@ -251,39 +247,61 @@ export default function Sondaggi() {
       topBandOpacity: pollCfg.top_band_opacity,
       categoryGap: pollCfg.category_gap
     });
-    const file = new File([blob], 'sondaggio.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Sondaggi politici' });
-    } else {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'sondaggio-gdmadonie.png';
-      a.click();
-      URL.revokeObjectURL(url);
-      alert('Immagine scaricata e link copiato: aprila in Instagram/Facebook/WhatsApp.');
-    }
+    let out = blob;
+    try {
+      const bmp = await createImageBitmap(blob);
+      const c = document.createElement('canvas');
+      c.width = bmp.width; c.height = bmp.height;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(bmp, 0, 0);
+      const jpg = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.92));
+      if (jpg) out = jpg;
+    } catch {}
+    return new File([out], `sondaggio-${imgFormat}.${out.type === 'image/jpeg' ? 'jpg' : 'png'}`, { type: out.type || 'image/png' });
   };
+
+  // File pronti prima del tocco: navigator.share() deve partire subito.
+  const [preparedPoll, setPreparedPoll] = useState({});
+  const [pollShareMsg, setPollShareMsg] = useState('');
+  useEffect(() => {
+    if (!shareChoiceOpen || !latest) return;
+    let cancelled = false;
+    setPreparedPoll({}); setPollShareMsg('');
+    ['story', 'post'].forEach(async (key) => {
+      for (let i = 0; i < 2; i++) {
+        try { const f = await buildPollFile(key); if (!cancelled) setPreparedPoll((p) => ({ ...p, [key]: f })); return; }
+        catch { await new Promise((r) => setTimeout(r, 400)); }
+      }
+      if (!cancelled) setPollShareMsg('Non riesco a preparare l\'immagine. Riprova tra poco.');
+    });
+    return () => { cancelled = true; };
+  }, [shareChoiceOpen, scope, latest?.id]);
 
   const shareStory = () => {
     if (!latest || sharingPoll) return;
     setShareChoiceOpen(true);
   };
 
-  const pickShareChoice = async (imgFormat) => {
-    setShareChoiceOpen(false);
-    setSharingPoll(true);
-    try {await navigator.clipboard?.writeText(shareLinkUrl);} catch {}
-    try {
-      await generatePollImage(imgFormat);
-    } catch {
-      try {
-        await generatePollImage(imgFormat);
-      } catch {
-        alert('Non sono riuscito a preparare la condivisione. Riprova.');
-      }
+  const downloadPoll = (file) => {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url; a.download = file.name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    setPollShareMsg('Immagine scaricata e link copiato: aprila in Instagram, Facebook o WhatsApp.');
+  };
+
+  const pickShareChoice = (imgFormat) => {
+    const file = preparedPoll[imgFormat];
+    if (!file) return;
+    try { navigator.clipboard?.writeText(shareLinkUrl).catch(() => {}); } catch {}
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file] }).
+      then(() => setShareChoiceOpen(false)).
+      catch((e) => { if (e?.name !== 'AbortError') setPollShareMsg('Non è stato possibile aprire la condivisione. Usa "Scarica".'); });
+    } else {
+      downloadPoll(file);
     }
-    setSharingPoll(false);
   };
 
   const shareWa = `https://wa.me/?text=${encodeURIComponent('Sondaggi politici · ' + shareLinkUrl)}`;
@@ -415,30 +433,27 @@ export default function Sondaggi() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingTop: 8 }}>
               <span style={{ fontSize: 13, fontWeight: 700, opacity: .6, display: 'flex', alignItems: 'center', gap: 6 }}><Share2 size={14} /> Condividi:</span>
-              <a href={shareWa} target="_blank" rel="noopener noreferrer" className="btn-pill" style={{ background: '#25D366', color: '#fff', padding: '11px 20px', fontSize: 13 }}>WhatsApp</a>
-              <a href={shareFb} target="_blank" rel="noopener noreferrer" className="btn-pill" style={{ background: '#1877F2', color: '#fff', padding: '11px 20px', fontSize: 13 }}>Facebook</a>
-              <button onClick={shareStory} disabled={sharingPoll} className="btn-pill" style={{ background: 'linear-gradient(45deg,#f58529,#dd2a7b,#8134af)', color: '#fff', padding: '11px 20px', fontSize: 13, opacity: sharingPoll ? .6 : 1 }}>
-                {sharingPoll ? <Loader2 size={14} className="animate-spin" /> : <Instagram size={14} style={{ marginRight: 6 }} />} Condividi
-              </button>
+              <a href={shareWa} target="_blank" rel="noopener noreferrer" className="share-btn">WhatsApp</a>
+              <button onClick={shareStory} className="share-btn share-primary"><Instagram size={16} /> Storie e Post</button>
             </div>
           </>}
       </div>
 
-      <Dialog open={shareChoiceOpen} onOpenChange={setShareChoiceOpen}>
-        <DialogContent className="max-w-sm">
+      <Dialog open={shareChoiceOpen} onOpenChange={(o) => { setShareChoiceOpen(o); if (!o) setPollShareMsg(''); }}>
+        <DialogContent className="max-w-sm share-dialog">
           <DialogHeader>
-            <DialogTitle>Come vuoi condividere?</DialogTitle>
-            <DialogDescription>Scegli il formato più adatto a dove la pubblichi.</DialogDescription>
+            <DialogTitle>Condividi il sondaggio</DialogTitle>
+            <DialogDescription>Scegli il formato: si apre la condivisione del telefono, poi scegli Instagram, Facebook o WhatsApp.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 pt-1">
-            <button onClick={() => pickShareChoice('story')} className="w-full flex items-start gap-3 text-left p-4 rounded-xl border border-border hover:bg-muted transition-colors">
-              <ImageIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-              <span><span className="block font-semibold text-foreground">Immagine per le Storie</span><span className="block text-xs text-muted-foreground mt-0.5">Verticale e stretta, formato Storie Instagram/Facebook/WhatsApp</span></span>
+          <div className="share-options">
+            {[['story', 'Immagine per le Storie', 'Verticale 9:16, per Storie Instagram, Facebook e WhatsApp'], ['post', 'Immagine per il Feed', 'Più quadrata 4:5, per un post normale']].map(([key, title, desc]) =>
+            <button key={key} onClick={() => pickShareChoice(key)} disabled={!preparedPoll[key]} className="share-option">
+              <span className="share-ico">{preparedPoll[key] ? <ImageIcon className="w-5 h-5" /> : <Loader2 className="w-5 h-5 animate-spin" />}</span>
+              <span><b>{title}</b><small>{preparedPoll[key] ? desc : 'Preparo il file…'}</small></span>
             </button>
-            <button onClick={() => pickShareChoice('post')} className="w-full flex items-start gap-3 text-left p-4 rounded-xl border border-border hover:bg-muted transition-colors">
-              <ImageIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-              <span><span className="block font-semibold text-foreground">Immagine per il Feed</span><span className="block text-xs text-muted-foreground mt-0.5">Più quadrata, pensata per un post normale</span></span>
-            </button>
+            )}
+            {pollShareMsg && <p className="share-msg">{pollShareMsg}</p>}
+            {(preparedPoll.story || preparedPoll.post) && !pollShareMsg && <button className="share-dl" onClick={() => downloadPoll(preparedPoll.story || preparedPoll.post)}>Oppure scarica l'immagine</button>}
           </div>
         </DialogContent>
       </Dialog>

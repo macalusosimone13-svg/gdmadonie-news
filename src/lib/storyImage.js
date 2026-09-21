@@ -47,7 +47,7 @@ export const STORY_DEFAULTS = {
   category_gap: 40
 };
 
-function loadImage(url) {
+function loadImageOnce(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -55,6 +55,18 @@ function loadImage(url) {
     img.onerror = reject;
     img.src = url;
   });
+}
+
+// Se la foto era gia' nella cache del browser senza gli header CORS (perche'
+// mostrata in pagina con un normale <img>), il primo caricamento "anonymous"
+// puo' fallire. Si riprova aggirando la cache con un parametro in piu'.
+async function loadImage(url) {
+  try {
+    return await loadImageOnce(url);
+  } catch (e) {
+    if (/^data:|^blob:/.test(url)) throw e;
+    return await loadImageOnce(url + (url.includes('?') ? '&' : '?') + '_cors=' + Date.now());
+  }
 }
 
 // Controlla SUBITO se un'immagine gia' caricata puo' essere letta dal canvas

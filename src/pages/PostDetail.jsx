@@ -143,8 +143,11 @@ export default function PostDetail() {
     setPrepared({});
     setPrepFailed(false);
     const run = async (key, fn) => {
-      try { const f = await fn(); if (!cancelled) setPrepared((p) => ({ ...p, [key]: f })); }
-      catch { if (!cancelled && key !== 'video') setPrepFailed(true); }
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try { const f = await fn(); if (!cancelled) setPrepared((p) => ({ ...p, [key]: f })); return; }
+        catch { await new Promise((r) => setTimeout(r, 400)); }
+      }
+      if (!cancelled && key !== 'video') setPrepFailed(true);
     };
     const imgSource = isVideo ? post.poster_url : post.image_url;
     run('story', () => buildBrandedFile(imgSource, 'story', isAdmin && cleanShare));
