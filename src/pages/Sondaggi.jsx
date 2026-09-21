@@ -1,15 +1,14 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sb44 } from '@/api/supabaseEntities';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { Loader2, ArrowUp, ArrowDown, Minus, Instagram, Image as ImageIcon, Share2 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { Loader2, Instagram, Image as ImageIcon, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { useSiteContent } from '@/lib/useSiteContent';
 import { getContent } from '@/lib/siteContent';
 import { buildPollChartBlob } from '@/lib/storyImage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useUxConfig } from '@/lib/UxConfigContext';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
 import AdSlot from '@/components/AdSlot';
@@ -184,8 +183,6 @@ export default function Sondaggi() {
   };
 
   const { data: siteContent } = useSiteContent();
-  const { config: ux } = useUxConfig();
-  const cardStyle = ux.team_cards_bg_color ? { backgroundColor: ux.team_cards_bg_color } : undefined;
 
   useSEO({
     title: `${SCOPE_LABELS[scope] || 'Sondaggi'} — GD Madonie News`,
@@ -286,200 +283,127 @@ export default function Sondaggi() {
   const shareWa = `https://wa.me/?text=${encodeURIComponent('Sondaggi politici · ' + shareLinkUrl)}`;
   const shareFb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLinkUrl)}`;
 
+  const pctTxt = (n) => `${Number(n).toFixed(1).replace('.', ',')}%`;
+  const Delta = ({ d }) => {
+    if (d == null) return <span className="delta flat">—</span>;
+    const c = d > 0 ? 'up' : d < 0 ? 'down' : 'flat';
+    const ar = d > 0 ? '▲' : d < 0 ? '▼' : '—';
+    return <span className={`delta ${c}`}>{ar} {d > 0 ? '+' : ''}{d.toFixed(1).replace('.', ',')}</span>;
+  };
+  const maxPct = latestChartData.length ? Math.max(...latestChartData.map((d) => d.percentage)) : 1;
+  const scopeTabs = [['nazionale', 'Nazionale'], ['regionale', 'Regionale (liste)'], ['candidati_sicilia', 'Candidati Sicilia']];
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-serif font-bold text-foreground">Sondaggi politici</h1>
-        <p className="text-sm text-muted-foreground mt-1">Rilevazioni sulle intenzioni di voto, nazionali e regionali.</p>
-      </div>
-
-      <div className="flex bg-muted rounded-full p-1 text-sm font-medium w-fit flex-wrap gap-1">
-        <button onClick={() => setScope('nazionale')} className={`px-4 py-2 rounded-full transition-all border ${scope === 'nazionale' ? 'bg-card shadow-sm text-foreground border-transparent scale-[1.04]' : 'text-muted-foreground border-border/50'}`}>Nazionale</button>
-        <button onClick={() => setScope('regionale')} className={`px-4 py-2 rounded-full transition-all border ${scope === 'regionale' ? 'bg-card shadow-sm text-foreground border-transparent scale-[1.04]' : 'text-muted-foreground border-border/50'}`}>Regionale (liste)</button>
-        <button onClick={() => setScope('candidati_sicilia')} className={`px-4 py-2 rounded-full transition-all border ${scope === 'candidati_sicilia' ? 'bg-card shadow-sm text-foreground border-transparent scale-[1.04]' : 'text-muted-foreground border-border/50'}`}>Intenzioni di voto regionali siciliane - candidati</button>
-      </div>
-
-      {isLoading ?
-      <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div> :
-      !latest ?
-      <p className="text-sm text-muted-foreground py-8 text-center">Nessun sondaggio {scope} ancora inserito.</p> :
-
-      <>
-          <div style={cardStyle} className={`relative overflow-hidden border border-border rounded-2xl p-5 space-y-4 ${cardStyle ? '' : 'bg-card'}`}>
-            <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent" />
-            <div>
-              <h2 className="text-base font-semibold text-foreground">Ultima rilevazione</h2>
-              <p className="text-xs text-muted-foreground">
-                {format(new Date(latest.date), 'd MMMM yyyy', { locale: it })}
-                {latest.institute ? ` · ${latest.institute}` : ''}
-                {latest.turnout ? ` · affluenza stimata ${latest.turnout}` : ''}
-                {latest.undecided ? ` · non si esprime ${latest.undecided}` : ''}
-              </p>
-              {previous &&
-            <p className="text-xs font-medium text-foreground">Variazione rispetto al sondaggio del {format(new Date(previous.date), 'd MMMM yyyy', { locale: it })}{previous.institute ? ` (${previous.institute})` : ''}:</p>
-            }
-            </div>
-            <div style={{ width: '100%', height: Math.max(isMobile ? 240 : 260, latestChartData.length * (isMobile ? 54 : 64)) }}>
-              <ResponsiveContainer>
-                <BarChart data={latestChartData} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 20 : 40, top: 4, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                  <XAxis type="number" domain={[0, 'dataMax + 5']} tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 13 }} />
-                  <YAxis type="category" dataKey="party" width={yAxisWidth} tick={renderPartyTick} />
-                  <Bar dataKey="percentage" radius={[0, 6, 6, 0]} barSize={isMobile ? 22 : 36}>
-                    {latestChartData.map((d, i) => <Cell key={i} fill={d.color || colorFor(d.party, i)} />)}
-                    <LabelList
-                    dataKey="percentage"
-                    position="right"
-                    formatter={(v) => `${v}%`}
-                    style={{ fill: 'hsl(var(--foreground))', fontSize: isMobile ? 11 : 15, fontWeight: 700 }} />
-
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            {previous &&
-          <div className="space-y-2 pt-2 border-t border-border">
-                {latestChartData.map((d) =>
-            <div key={d.party} className="flex items-center justify-between text-base px-1">
-                    <span className="flex items-center gap-2.5 text-foreground font-medium">
-                      {d.logo_url && <img src={d.logo_url} alt="" className="w-8 h-8 sm:w-11 sm:h-11 rounded-full object-cover shrink-0" />}
-                      {d.party.replace('\n', ' ')}
-                    </span>
-                    <span className={`flex items-center gap-1 font-semibold text-base ${d.delta > 0 ? 'text-emerald-600' : d.delta < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                      {d.delta == null ? '—' :
-                d.delta > 0 ? <ArrowUp className="w-4 h-4" /> :
-                d.delta < 0 ? <ArrowDown className="w-4 h-4" /> :
-                <Minus className="w-4 h-4" />}
-                      {d.delta != null && `${d.delta > 0 ? '+' : ''}${d.delta} pt`}
-                    </span>
-                  </div>
-            )}
-              </div>
-          }
-          </div>
-
-          {ADS_ENABLED && <AdSlot slot="6403185298" />}
-
-          {coalitionTotals.length > 0 &&
-        <div style={cardStyle} className={`relative overflow-hidden border border-border rounded-2xl p-5 space-y-4 ${cardStyle ? '' : 'bg-card'}`}>
-              <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent" />
-              <div>
-                <h2 className="relative text-base font-semibold text-foreground">Coalizioni</h2>
-                <p className="relative text-xs text-muted-foreground">Somma dei partiti di ciascun gruppo, ultima rilevazione.</p>
-              </div>
-              <div style={{ width: '100%', height: Math.max(isMobile ? 160 : 180, coalitionTotals.length * (isMobile ? 56 : 64)) }}>
-                <ResponsiveContainer>
-                  <BarChart data={coalitionTotals} layout="vertical" margin={{ left: isMobile ? 0 : 8, right: isMobile ? 44 : 60, top: 4, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                    <XAxis type="number" domain={[0, 'dataMax + 5']} tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 13 }} />
-                    <YAxis type="category" dataKey="label" width={isMobile ? 130 : 190} tick={{ fontSize: isMobile ? 11.5 : 14, fontWeight: 500, fill: 'hsl(var(--foreground))' }} />
-                    <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={isMobile ? 26 : 38}>
-                      {coalitionTotals.map((g, i) => <Cell key={i} fill={g.color} />)}
-                      <LabelList
-                      dataKey="value"
-                      position="right"
-                      formatter={(v) => `${v}%`}
-                      style={{ fill: 'hsl(var(--foreground))', fontSize: isMobile ? 12 : 15, fontWeight: 700 }} />
-
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="relative grid sm:grid-cols-2 gap-2 pt-2 border-t border-border">
-                {coalitionTotals.map((g) =>
-            <div key={g.key} className="flex items-center justify-between gap-2 px-1">
-                    <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: g.color }} />
-                      {g.label}
-                    </span>
-                    {g.delta != null &&
-              <span className={`flex items-center gap-0.5 text-xs font-semibold shrink-0 ${g.delta > 0 ? 'text-emerald-600' : g.delta < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                        {g.delta > 0 ? <ArrowUp className="w-3.5 h-3.5" /> : g.delta < 0 ? <ArrowDown className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
-                        {g.delta > 0 ? '+' : ''}{g.delta} pt
-                      </span>
-              }
-                  </div>
-            )}
-              </div>
-            </div>
-        }
-
-          {coalitionTrendData.length > 1 && coalitionGroups?.length > 0 &&
-        <div style={cardStyle} className={`relative overflow-hidden border border-border rounded-2xl p-5 space-y-5 ${cardStyle ? '' : 'bg-card'}`}>
-              <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent" />
-              <div>
-                <h2 className="text-base font-semibold text-foreground">Coalizioni nel tempo</h2>
-                <p className="text-xs text-muted-foreground">Stesso andamento, sommato per coalizione invece che per singolo partito.</p>
-              </div>
-              <div style={{ width: '100%', height: isMobile ? 260 : 340 }}>
-                <ResponsiveContainer>
-                  <LineChart data={coalitionTrendData} margin={{ left: isMobile ? 0 : -8, right: isMobile ? 24 : 40, top: 8, bottom: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" tick={{ fontSize: isMobile ? 9 : 13 }} interval={isMobile ? 'preserveStartEnd' : 0} />
-                    <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 13 }} width={isMobile ? 46 : 44} />
-                    {coalitionGroups.map((g) =>
-                <Line key={g.id} type="monotone" dataKey={g.label} stroke={g.color || '#0F1B3A'} strokeWidth={isMobile ? 2 : 3} dot={renderCoalitionDot(g.color || '#0F1B3A')} activeDot={false} connectNulls />
-                )}
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2 pt-2 border-t border-border">
-                {coalitionGroups.map((g) =>
-            <div key={g.id} className="flex items-center gap-2.5 text-sm">
-                    <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: g.color || '#0F1B3A' }} />
-                    <span className="text-foreground font-medium truncate">{g.label}</span>
-                  </div>
-            )}
-              </div>
-            </div>
-        }
-
-          {surveys.length > 1 &&
-        <div style={cardStyle} className={`relative overflow-hidden border border-border rounded-2xl p-5 space-y-5 ${cardStyle ? '' : 'bg-card'}`}>
-              <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent" />
-              <div>
-                <h2 className="text-base font-semibold text-foreground">Andamento nel tempo</h2>
-                <p className="text-xs text-muted-foreground">{surveys.length} sondaggi raccolti, dal {format(new Date(surveys[0].date), 'd MMMM yyyy', { locale: it })} a oggi.</p>
-              </div>
-              <div style={{ width: '100%', height: isMobile ? 340 : 460 }}>
-                <ResponsiveContainer>
-                  <LineChart data={trendData} margin={{ left: isMobile ? 0 : -8, right: isMobile ? 24 : 40, top: 8, bottom: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" tick={{ fontSize: isMobile ? 9 : 13 }} interval={isMobile ? 'preserveStartEnd' : 0} />
-                    <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 13 }} width={isMobile ? 46 : 44} />
-                    {partiesOrdered.map((party, i) =>
-                <Line key={party} type="monotone" dataKey={party} stroke={colorFor(party, i)} strokeWidth={isMobile ? 2 : 3} dot={renderLineDot(colorFor(party, i))} activeDot={false} connectNulls />
-                )}
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2.5 pt-2 border-t border-border">
-                {partiesOrdered.map((party, i) =>
-            <div key={party} className="flex items-center gap-2.5 text-sm">
-                    {logoFor(party) ?
-              <img src={logoFor(party)} alt="" className="w-6 h-6 rounded-full object-cover shrink-0 border" style={{ borderColor: colorFor(party, i) }} /> :
-
-              <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: colorFor(party, i) }} />
-              }
-                    <span className="text-foreground font-medium truncate">{party.replace('\n', ' ')}</span>
-                  </div>
-            )}
-              </div>
-            </div>
-        }
-        </>
-      }
-
-      {latest &&
-      <div className="flex items-center gap-2 flex-wrap pt-2">
-          <span className="text-xs text-muted-foreground mr-1 flex items-center gap-1"><Share2 className="w-3.5 h-3.5" /> Condividi:</span>
-          <a href={shareWa} target="_blank" rel="noopener noreferrer" className="text-xs font-medium bg-[#25D366] text-white px-3 py-2.5 min-h-[44px] rounded-lg flex items-center">WhatsApp</a>
-          <a href={shareFb} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-white px-3 py-2.5 min-h-[44px] rounded-lg flex items-center" style={{ backgroundColor: '#1877F2' }}>Facebook</a>
-          <button onClick={shareStory} disabled={sharingPoll} className="text-xs font-medium text-white px-3 py-2.5 min-h-[44px] rounded-lg flex items-center gap-1.5 disabled:opacity-60 bg-gradient-to-tr from-[#f58529] via-[#dd2a7b] to-[#8134af]">
-            {sharingPoll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Instagram className="w-3.5 h-3.5" />} Condividi
-          </button>
+    <div className="rd-page">
+      <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
+        <span className="section-kicker">Intenzioni di voto</span>
+        <h1>SONDAGGI<br />POLITICI</h1>
+        <p>Le ultime rilevazioni nazionali e regionali, con variazioni e andamento nel tempo.</p>
+        <div className="tabs">
+          {scopeTabs.map(([k, l]) => <button key={k} onClick={() => setScope(k)} className={`tab ${scope === k ? 'active' : ''}`}>{l}</button>)}
         </div>
-      }
+      </div></div>
+
+      <div className="wrap-wide sond-body">
+        {isLoading ?
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}><Loader2 className="w-6 h-6 animate-spin" style={{ opacity: .5 }} /></div> :
+        !latest ?
+        <p style={{ textAlign: 'center', padding: '32px 0', opacity: .6 }}>Nessun sondaggio {scope} ancora inserito.</p> :
+        <>
+            {coalitionTotals.length > 0 &&
+          <div className="coal-tiles">
+                {coalitionTotals.map((c) =>
+            <div key={c.key} className="coal-tile" style={{ '--c': c.color === '#0F2A5C' || c.color === '#0F1B3A' ? '#2F5BD8' : c.color }}>
+                    <span className="coal-name">{c.label}</span>
+                    <span className="coal-pct">{pctTxt(c.value)}</span>
+                    <span style={{ textAlign: 'left', display: 'block' }}><Delta d={c.delta} /></span>
+                  </div>
+            )}
+              </div>}
+
+            <div className="sond-grid">
+              <div>
+                <div className="sondaggi-card">
+                  <h2>Ultima rilevazione</h2>
+                  <div className="card-meta">
+                    {format(new Date(latest.date), 'd MMMM yyyy', { locale: it })}
+                    {latest.institute ? ` · ${latest.institute}` : ''}
+                    {latest.turnout ? ` · affluenza stimata ${latest.turnout}` : ''}
+                    {latest.undecided ? ` · non si esprime ${latest.undecided}` : ''}
+                  </div>
+                  {latestChartData.map((d, i) =>
+                <div className="poll-item" key={d.party}>
+                      <div className="poll-row">
+                        {d.logo_url ? <img src={d.logo_url} alt="" style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover' }} /> : <span className="poll-dot" style={{ background: d.color || colorFor(d.party, i) }} />}
+                        <span className="poll-party">{d.party.replace('\n', ' ')}</span>
+                        <span className="poll-pct">{pctTxt(d.percentage)}</span>
+                        {previous && <Delta d={d.delta} />}
+                      </div>
+                      <div className="poll-track"><div className="poll-fill" style={{ width: `${d.percentage / maxPct * 100}%`, background: d.color || colorFor(d.party, i) }} /></div>
+                    </div>
+                )}
+                </div>
+                {ADS_ENABLED && <AdSlot slot="6403185298" />}
+              </div>
+
+              <div>
+                {coalitionTrendData.length > 1 && coalitionGroups?.length > 0 &&
+              <div className="sondaggi-card">
+                    <h2>Coalizioni nel tempo</h2>
+                    <div className="card-meta">Andamento, somma dei partiti di ciascuna coalizione</div>
+                    <div style={{ width: '100%', height: isMobile ? 240 : 300 }}>
+                      <ResponsiveContainer>
+                        <LineChart data={coalitionTrendData} margin={{ left: isMobile ? 0 : -8, right: isMobile ? 16 : 24, top: 8, bottom: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(28,34,51,.1)" />
+                          <XAxis dataKey="label" tick={{ fontSize: isMobile ? 9 : 12 }} interval={isMobile ? 'preserveStartEnd' : 0} />
+                          <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 12 }} width={isMobile ? 46 : 44} />
+                          {coalitionGroups.map((g) => <Line key={g.id} type="monotone" dataKey={g.label} stroke={g.color || '#0F1B3A'} strokeWidth={isMobile ? 2 : 3} dot={renderCoalitionDot(g.color || '#0F1B3A')} activeDot={false} connectNulls />)}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="trend-legend">{coalitionGroups.map((g) => <span key={g.id}><i style={{ background: g.color || '#0F1B3A' }} />{g.label}</span>)}</div>
+                  </div>}
+
+                {surveys.length > 1 &&
+              <div className="sondaggi-card">
+                    <h2>Andamento nel tempo</h2>
+                    <div className="card-meta">{surveys.length} sondaggi raccolti, dal {format(new Date(surveys[0].date), 'd MMMM yyyy', { locale: it })} a oggi.</div>
+                    <div style={{ width: '100%', height: isMobile ? 300 : 380 }}>
+                      <ResponsiveContainer>
+                        <LineChart data={trendData} margin={{ left: isMobile ? 0 : -8, right: isMobile ? 16 : 24, top: 8, bottom: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(28,34,51,.1)" />
+                          <XAxis dataKey="label" tick={{ fontSize: isMobile ? 9 : 12 }} interval={isMobile ? 'preserveStartEnd' : 0} />
+                          <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: isMobile ? 10 : 12 }} width={isMobile ? 46 : 44} />
+                          {partiesOrdered.map((party, i) => <Line key={party} type="monotone" dataKey={party} stroke={colorFor(party, i)} strokeWidth={isMobile ? 2 : 3} dot={renderLineDot(colorFor(party, i))} activeDot={false} connectNulls />)}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="trend-legend">{partiesOrdered.map((party, i) => <span key={party}><i style={{ background: colorFor(party, i) }} />{party.replace('\n', ' ')}</span>)}</div>
+                  </div>}
+
+                <div className="sondaggi-card">
+                  <h2>Scheda rilevazione</h2>
+                  <div className="card-meta">Dettagli</div>
+                  <div className="info-list">
+                    <div><b>Istituto</b><span>{latest.institute || '—'}</span></div>
+                    <div><b>Data</b><span>{format(new Date(latest.date), 'd MMMM yyyy', { locale: it })}</span></div>
+                    {previous && <div><b>Confronto con</b><span>{format(new Date(previous.date), 'd MMMM yyyy', { locale: it })}</span></div>}
+                    <div><b>Ambito</b><span>{SCOPE_LABELS[scope]}</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingTop: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, opacity: .6, display: 'flex', alignItems: 'center', gap: 6 }}><Share2 size={14} /> Condividi:</span>
+              <a href={shareWa} target="_blank" rel="noopener noreferrer" className="btn-pill" style={{ background: '#25D366', color: '#fff', padding: '11px 20px', fontSize: 13 }}>WhatsApp</a>
+              <a href={shareFb} target="_blank" rel="noopener noreferrer" className="btn-pill" style={{ background: '#1877F2', color: '#fff', padding: '11px 20px', fontSize: 13 }}>Facebook</a>
+              <button onClick={shareStory} disabled={sharingPoll} className="btn-pill" style={{ background: 'linear-gradient(45deg,#f58529,#dd2a7b,#8134af)', color: '#fff', padding: '11px 20px', fontSize: 13, opacity: sharingPoll ? .6 : 1 }}>
+                {sharingPoll ? <Loader2 size={14} className="animate-spin" /> : <Instagram size={14} style={{ marginRight: 6 }} />} Condividi
+              </button>
+            </div>
+          </>}
+      </div>
 
       <Dialog open={shareChoiceOpen} onOpenChange={setShareChoiceOpen}>
         <DialogContent className="max-w-sm">
@@ -490,17 +414,11 @@ export default function Sondaggi() {
           <div className="space-y-3 pt-1">
             <button onClick={() => pickShareChoice('story')} className="w-full flex items-start gap-3 text-left p-4 rounded-xl border border-border hover:bg-muted transition-colors">
               <ImageIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-              <span>
-                <span className="block font-semibold text-foreground">Immagine per le Storie</span>
-                <span className="block text-xs text-muted-foreground mt-0.5">Verticale e stretta, formato Storie Instagram/Facebook/WhatsApp</span>
-              </span>
+              <span><span className="block font-semibold text-foreground">Immagine per le Storie</span><span className="block text-xs text-muted-foreground mt-0.5">Verticale e stretta, formato Storie Instagram/Facebook/WhatsApp</span></span>
             </button>
             <button onClick={() => pickShareChoice('post')} className="w-full flex items-start gap-3 text-left p-4 rounded-xl border border-border hover:bg-muted transition-colors">
               <ImageIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-              <span>
-                <span className="block font-semibold text-foreground">Immagine per il Feed</span>
-                <span className="block text-xs text-muted-foreground mt-0.5">Più quadrata, pensata per un post normale</span>
-              </span>
+              <span><span className="block font-semibold text-foreground">Immagine per il Feed</span><span className="block text-xs text-muted-foreground mt-0.5">Più quadrata, pensata per un post normale</span></span>
             </button>
           </div>
         </DialogContent>
