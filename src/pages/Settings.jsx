@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { getCurrentUser, updateProfile, logout as supabaseLogout } from '@/lib/supabaseAuth';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, Trash2, Camera, X, LogOut, Share2, Facebook, Copy } from 'lucide-react';
+import { Loader2, Trash2, Sun, Moon, Monitor, Camera, X, LogOut, Share2, Facebook, Copy } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { useToast } from '@/components/ui/use-toast';
 import UserAvatar from '@/components/UserAvatar';
 
@@ -14,10 +15,13 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
   useEffect(() => {
+    setMounted(true);
     getCurrentUser().then((u) => setUser(u)).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
@@ -117,7 +121,10 @@ export default function Settings() {
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div></div>;
 
-
+  const themes = [
+  { value: 'system', icon: Monitor, label: 'Sistema' },
+  { value: 'light', icon: Sun, label: 'Chiaro' },
+  { value: 'dark', icon: Moon, label: 'Scuro' }];
 
 
   return (
@@ -161,6 +168,23 @@ export default function Settings() {
               <X className="w-4 h-4" />
             </button>
           }
+        </div>
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
+        <h2 className="text-lg text-foreground mb-3 font-serif font-normal">Tema</h2>
+        <div className="flex gap-2">
+          {mounted && themes.map(({ value, icon: Icon, label }) =>
+          <button
+            key={value}
+            onClick={() => setTheme(value)}
+            aria-label={`Tema ${label}`}
+            className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border text-sm font-medium transition-colors min-h-[44px] text-[#005eff] ${theme === value ? "border-primary bg-primary/10" : 'border-border text-muted-foreground hover:bg-muted'}`}>
+            
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          )}
         </div>
       </div>
 

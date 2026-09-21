@@ -1,0 +1,127 @@
+/* Tema scuro del redesign. Si attiva con la classe .dark sul <html> (scelta dell'utente o impostazione del telefono). */
+.dark .rd{
+  --crema:#0A1128; --tint:#111B3A; --caldo:#16213F; --testo:#E6ECFF;
+  --acc:#6F95FF; --chiaro:#9DB8FF; --notte:#060B1C; --blu:#1B2C63;
+  --card:#131E3F; --line:rgba(255,255,255,.1); --txt-strong:#FFFFFF;
+  color-scheme:dark;
+}
+/* testi forti che nel chiaro usano il navy */
+.dark .rd .hero h1, .dark .rd .page-head h1, .dark .rd .logo-text, .dark .rd .counters b,
+.dark .rd .persona-card .profilo, .dark .rd .soc, .dark .rd .icon-btn, .dark .rd .login-pill,
+.dark .rd .btn-outline, .dark .rd .back-feed, .dark .rd .back-feed.always, .dark .rd .adm-item,
+.dark .rd .adm-title h2, .dark .rd .adm-main label, .dark .rd .event-title{ color:var(--txt-strong); }
+.dark .rd .btn-outline{ border-color:rgba(255,255,255,.7); }
+.dark .rd .hero-glow{ background:radial-gradient(circle,rgba(111,149,255,.28) 0%,rgba(111,149,255,0) 70%); }
+/* header e menu */
+.dark .rd header.site{ background:rgba(10,17,40,.86); border-bottom-color:var(--line); }
+.dark .rd .mobile-menu{ background:#0E1735; border-bottom-color:var(--line); box-shadow:0 24px 40px rgba(0,0,0,.5); }
+.dark .rd .mobile-menu a{ border-bottom-color:var(--line); }
+.dark .rd .nav-dropdown-menu{ background:#16213F; box-shadow:0 20px 40px rgba(0,0,0,.5); }
+.dark .rd .nav-dropdown-menu a:hover{ background:#1E2C58; }
+.dark .rd .burger{ color:#fff; }
+.dark .rd .icon-btn:hover, .dark .rd .login-pill:hover{ background:#26397A; color:#fff; }
+.dark .rd .icon-btn.assist-btn:hover{ background:#26397A; }
+/* superfici che nel chiaro sono bianche */
+.dark .rd .lead, .dark .rd .article-card, .dark .rd .side-box, .dark .rd .sondaggi-card, .dark .rd .ev-card,
+.dark .rd .topic, .dark .rd .contact-row, .dark .rd .ev-mini, .dark .rd .tab, .dark .rd .search-box, .dark .rd .assist-card{
+  background:var(--card); box-shadow:0 1px 3px rgba(0,0,0,.4); }
+.dark .rd .assist-card{ border-color:var(--line); }
+.dark .rd .news-body .tab{ background:var(--card); }
+.dark .rd .tab:hover{ border-color:var(--acc); }
+.dark .rd .tab.active, .dark .rd .news-body .tab.active{ background:var(--acc); color:#0A1128; }
+.dark .rd .lead:hover, .dark .rd .article-card:hover{ box-shadow:0 22px 40px rgba(0,0,0,.55); }
+/* bordi e linee */
+.dark .rd .news-block + .news-block, .dark .rd .trend-item, .dark .rd .info-list div, .dark .rd .mini-profile,
+.dark .rd .rd .gd-reveal ~ .gd-reveal .news-block, .dark .rd .wrap > .gd-reveal ~ .gd-reveal .news-block{ border-color:var(--line); }
+.dark .rd .schip, .dark .rd .chip-out, .dark .rd .nl-input{ border-color:rgba(255,255,255,.22); }
+.dark .rd .schip:hover{ border-color:var(--acc); }
+.dark .rd .schip.active{ background:var(--acc); border-color:var(--acc); color:#0A1128; }
+.dark .rd .org-card.empty{ border-color:rgba(255,255,255,.22); }
+.dark .rd .nl-input{ background:#0E1735; color:#fff; }
+.dark .rd .search-box input{ color:#fff; }
+/* superfici scure "di brand": restano scure ma un po' più chiare della pagina, per staccarsi */
+.dark .rd .featured, .dark .rd .cta-final, .dark .rd .cta-band, .dark .rd .org-card, .dark .rd .prof-hero, .dark .rd .banner{
+  background:linear-gradient(160deg,#1E3170,#14224F); }
+.dark .rd .marquee{ background:#14224F; }
+.dark .rd .btn-blu, .dark .rd .nl-btn, .dark .rd .ad-external, .dark .rd .to-top{ background:var(--acc); color:#0A1128; }
+.dark .rd .ad-external:hover, .dark .rd .back-link:hover{ background:#8FB0FF; color:#0A1128; }
+.dark .rd .cta-final .btn-pill, .dark .rd .cta-band .btn-pill{ background:#fff; color:#14224F; }
+.dark .rd .featured-label{ background:#fff; color:#14224F; }
+.dark .rd .prof-pills a:hover{ background:#fff; color:#14224F; }
+.dark .rd .coal-tile{ background:#0E1735; }
+.dark .rd .poll-fill{ background:var(--acc); }
+.dark .rd .ev-date, .dark .rd .ev-mini .d{ background:#1E3170; }
+.dark .rd .coal-member span{ color:var(--acc); }
+/* chiaro/scuro su testi grigi */
+.dark .rd .adm-group-title, .dark .rd .adm-select span{ color:#93A2C9; }
+.dark .rd .adm-title{ border-bottom-color:var(--line); }
+.dark .rd .adm-title p{ color:#A9B6D8; }
+.dark .rd .adm-item:hover{ background:rgba(111,149,255,.14); }
+.dark .rd .adm-item.on{ background:var(--acc); color:#0A1128; }
+.dark .rd .adm-select select{ background:#0E1735; color:#fff; border-color:rgba(255,255,255,.22); }
+/* moduli admin */
+.dark .rd .adm-main form{ background:var(--card); border-color:var(--line); }
+.dark .rd .adm-main input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), .dark .rd .adm-main textarea,
+.dark .rd .adm-main select, .dark .rd .adm-main [role=combobox]{ background:#0E1735; border-color:rgba(255,255,255,.2); color:#fff; }
+.dark .rd .adm-main label[class*="border-dashed"]{ background:#0E1735; border-color:rgba(111,149,255,.5); color:var(--acc); }
+.dark .rd .adm-main label[class*="border-dashed"]:hover{ background:#16244E; }
+.dark .rd .adm-main form button[type=button][class*="outline"]:not([role=combobox]), .dark .rd .adm-main form button[type=button].w-full:not([role=combobox]){ background:transparent; color:#fff; border-color:rgba(255,255,255,.6); }
+/* piccoli dettagli */
+.dark .rd .schip-logo{ background:#fff; }
+.dark .rd .up{ color:#4ADE80; } .dark .rd .down{ color:#FF7A7A; }
+.dark .rd .msg.ok{ color:#4ADE80; } .dark .rd .msg.err{ color:#FF7A7A; }
+.dark .rd .skel{ background:#16213F; }
+.dark .rd .section-link:hover{ color:var(--acc); }
+.dark .rd .event-info, .dark .rd .assist-side, .dark .rd .bio-empty{ background:var(--tint); }
+.dark .rd .ev-poster{ background:var(--tint); }
+.dark .rd footer.site-footer{ background:#060B1C; }
+.dark .rd .legal-text{ color:var(--testo); }
+.dark .rd footer.site-footer{ color:#E6ECFF; }
+.dark .rd footer .footer-bottom{ border-top-color:rgba(255,255,255,.14); }
+.dark .rd .al-a{ fill:#C9D8FF; }
+
+/* Assistente */
+.dark .rd .assist-side h1{ color:#fff; }
+.dark .rd .assist-card .bg-white{ background:#1B2850; }
+.dark .rd .assist-card .border-slate-200{ border-color:rgba(255,255,255,.16); }
+.dark .rd .assist-card .text-slate-800, .dark .rd .assist-card .prose{ color:#E6ECFF; --tw-prose-body:#E6ECFF; --tw-prose-bold:#fff; --tw-prose-links:#8FB0FF; }
+.dark .rd .assist-card .text-slate-400{ color:#93A2C9; }
+.dark .rd .assist-card button.bg-white{ color:#9DB8FF; border-color:rgba(157,184,255,.5); }
+.dark .rd .assist-card button.bg-white:hover{ background:#6F95FF; color:#0A1128; }
+.dark .rd .assist-card textarea{ background:#0E1735; color:#fff; border-color:rgba(255,255,255,.2); }
+.dark .rd .assist-card .bg-primary{ background:#2F5BD8; color:#fff; }
+
+/* Accesso e registrazione (fuori dal contenitore .rd) */
+.dark .mn-auth-card{ background:#131E3F; border-color:rgba(255,255,255,.12); }
+.dark .mn-auth-card .bg-card{ background:#131E3F; }
+.dark .mn-auth-card input{ background:#0E1735; border-color:rgba(255,255,255,.2); color:#fff; }
+.dark .mn-auth-card button[type=submit]{ background:#6F95FF; color:#0A1128; }
+.dark .mn-auth-card button.w-full:not([type=submit]){ background:transparent; color:#fff; border-color:rgba(255,255,255,.3); }
+.dark .mn-auth-card a{ color:#8FB0FF; }
+
+/* Condivisione (le finestre si aprono fuori da .rd) */
+.dark .share-row{ border-top-color:rgba(255,255,255,.12); }
+.dark .share-label, .dark .share-dialog h2{ color:#fff; }
+.dark .share-btn{ background:#16213F; border-color:rgba(255,255,255,.22); color:#fff; }
+.dark .share-btn:hover{ border-color:#8FB0FF; color:#8FB0FF; }
+.dark .share-primary{ background:#6F95FF; border-color:#6F95FF; color:#0A1128; }
+.dark .share-primary:hover{ background:#8FB0FF; border-color:#8FB0FF; color:#0A1128; }
+.dark .share-dialog{ background:#0E1735; border-color:rgba(255,255,255,.14); }
+.dark .share-option{ background:#16213F; border-color:rgba(255,255,255,.16); color:#E6ECFF; }
+.dark .share-option:not(:disabled):hover{ background:#1E2C58; border-color:#8FB0FF; }
+
+/* Colori di base dei componenti (bottoni, schede, finestre): palette blu notte invece del nero */
+.dark{
+  --background:226 60% 10%; --foreground:225 100% 95%;
+  --card:226 50% 17%; --card-foreground:225 100% 95%;
+  --popover:226 50% 14%; --popover-foreground:225 100% 95%;
+  --primary:223 100% 72%; --primary-foreground:226 60% 10%;
+  --secondary:226 40% 22%; --secondary-foreground:225 100% 95%;
+  --muted:226 45% 15%; --muted-foreground:225 30% 72%;
+  --accent:226 45% 22%; --accent-foreground:225 100% 95%;
+  --destructive:0 72% 52%; --destructive-foreground:0 0% 100%;
+  --border:226 30% 26%; --input:226 30% 26%; --ring:223 100% 72%;
+}
+.dark .rd .adm-main form button.w-full:not([role=combobox]):not([type=submit]){ color:#fff !important; background:transparent; }
+.dark .rd .adm-main form button[type=submit]{ background:#6F95FF; color:#0A1128; }
+.dark .rd .bg-card{ background:var(--card); }
