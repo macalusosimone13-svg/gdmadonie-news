@@ -57,8 +57,10 @@ export async function bridge(context: any, slug: string): Promise<Response> {
   if (!/^\s*<!doctype html/i.test(html)) {
     return new Response(html, { status: 200, headers: { 'content-type': resp.headers.get('content-type') || 'text/plain' } });
   }
-  const headers = new Headers(resp.headers);
-  headers.delete('content-length');
-  headers.set('content-type', 'text/html; charset=utf-8');
-  return new Response(restyleShareHtml(html), { status: 200, headers });
+  // Intestazioni nuove: quelle di Supabase includono una CSP "sandbox" che
+  // bloccherebbe stile e reindirizzamento della pagina.
+  return new Response(restyleShareHtml(html), {
+    status: 200,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' },
+  });
 }
