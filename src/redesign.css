@@ -351,3 +351,10 @@
   .rd .persona-card .ruolo{ color:#cfdcff; }
   .rd .persona-card .profilo{ margin-top:12px; margin-bottom:26px; color:#fff; }
   @media (max-width:700px){ .rd .persone-grid{grid-template-columns:1fr} .rd .persona-card{min-height:380px} }
+
+  /* mobile: freccia per tornare al Feed dalle pagine interne */
+  .rd .back-feed{ display:none; }
+  @media (max-width:900px){
+    .rd .back-feed{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%; background:var(--tint); color:var(--notte); margin-right:10px; flex-shrink:0; }
+    .rd .back-feed + .logo{ margin-right:auto; }
+  }

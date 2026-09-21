@@ -1,5 +1,5 @@
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogIn, Sparkles, Instagram, Facebook, Send, Twitter, Youtube, Globe, Mail, Link as LinkIcon, ArrowUp, Menu, X } from 'lucide-react';
+import { ArrowLeft, LogIn, Sparkles, Instagram, Facebook, Send, Twitter, Youtube, Globe, Mail, Link as LinkIcon, ArrowUp, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { getCurrentUser } from '@/lib/supabaseAuth';
 import { sb44 } from '@/api/supabaseEntities';
@@ -61,6 +61,7 @@ export default function Layout() {
       {ux.show_banner && ux.banner_text && <div className="banner">{ux.banner_text}</div>}
       <header className="site" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="header-inner">
+          {location.pathname !== '/' && <Link to="/" className="back-feed" aria-label="Torna al Feed"><ArrowLeft size={20} /></Link>}
           <Link to="/" className="logo" aria-label="GD Madonie News - Feed">
             <div className="logo-text">GD MADONIE<span>NEWS</span></div>
           </Link>
