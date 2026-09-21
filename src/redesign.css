@@ -339,3 +339,15 @@
     .rd .hero h1{ font-size:clamp(2.6rem,min(9vw,13.5vh),5.6rem); }
     .rd .hero-actions{ margin-top:clamp(18px,4vh,40px); }
   }
+
+  /* Feed: persone dietro le notizie - card blu con foto a figura intera, niente cerchi */
+  .rd .persone-grid{ max-width:none; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+  .rd .persona-card{ position:relative; display:flex; flex-direction:column; justify-content:flex-end; background:var(--blu); color:#fff; border-radius:26px; padding:0; overflow:hidden; min-height:420px; text-align:left; }
+  .rd .persona-card .persona-photo{ position:absolute; inset:0; width:100%; max-width:none; aspect-ratio:auto; margin:0; border-radius:0; background:var(--blu); }
+  .rd .persona-card .persona-photo img{ object-fit:cover; object-position:50% 10%; }
+  .rd .persona-card::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top,rgba(15,27,58,.92) 0%,rgba(15,27,58,.55) 38%,rgba(15,27,58,0) 65%); pointer-events:none; }
+  .rd .persona-card h3, .rd .persona-card .ruolo, .rd .persona-card .profilo{ position:relative; z-index:2; margin-left:26px; margin-right:26px; color:#fff; }
+  .rd .persona-card h3{ font-size:1.6rem; margin-bottom:4px; }
+  .rd .persona-card .ruolo{ color:#cfdcff; }
+  .rd .persona-card .profilo{ margin-top:12px; margin-bottom:26px; color:#fff; }
+  @media (max-width:700px){ .rd .persone-grid{grid-template-columns:1fr} .rd .persona-card{min-height:380px} }
