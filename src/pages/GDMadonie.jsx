@@ -37,8 +37,8 @@ function EventRow({ event }) {
           {d && <span><Clock size={13} style={{ display: 'inline', verticalAlign: '-2px' }} /> {format(d, "d MMMM yyyy 'alle' HH:mm", { locale: it })}</span>}
         </div>
         {event.image_url && <button type="button" className="btn-pill btn-blu ev-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open}>{open ? 'Nascondi locandina' : 'Vedi locandina'}</button>}
-        {open && <img src={event.image_url} alt={`Locandina — ${event.title}`} loading="lazy" style={{ borderRadius: 18, marginTop: 8, maxHeight: '80vh', width: 'auto', maxWidth: '100%' }} />}
       </div>
+      {open && <div className="ev-poster"><img src={event.image_url} alt={`Locandina — ${event.title}`} loading="lazy" /></div>}
     </article>);
 }
 
