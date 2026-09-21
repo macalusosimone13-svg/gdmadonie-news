@@ -188,7 +188,7 @@
   .sond-body { padding-block:26px 100px; }
   .coal-tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
   @media (max-width:860px){ .coal-tiles{grid-template-columns:repeat(2,1fr)} }
-  .coal-tile { background:var(--notte); color:#fff; border-radius:24px; padding:22px 20px 20px; border-top:7px solid var(--c); }
+  .coal-tile { text-align:left; cursor:pointer; font:inherit; border-left:0; border-right:0; border-bottom:0; transition:transform .2s ease; background:var(--notte); color:#fff; border-radius:24px; padding:22px 20px 20px; border-top:7px solid var(--c); }
   .coal-name { font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:.09em; opacity:.8; display:block; }
   .coal-pct { display:block; font-family:'Rubik',sans-serif; font-weight:900; font-size:clamp(2rem,4.4vw,3rem); line-height:1; margin:10px 0 8px; }
   .sond-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:22px; align-items:start; }
@@ -358,3 +358,10 @@
     .rd .back-feed{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%; background:var(--tint); color:var(--notte); margin-right:10px; flex-shrink:0; }
     .rd .back-feed + .logo{ margin-right:auto; }
   }
+
+  .coal-tile:hover{ transform:translateY(-3px); }
+  .coal-more{ display:block; margin-top:10px; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; opacity:.75; }
+  .coal-members{ display:grid; gap:0; }
+  .coal-member{ display:flex; justify-content:space-between; gap:12px; padding:13px 0; border-top:1px solid rgba(28,34,51,.1); font-size:16px; }
+  .coal-member:first-child{ border-top:none; }
+  .coal-member b{ font-weight:800; } .coal-member span{ font-weight:800; color:#2F5BD8; }

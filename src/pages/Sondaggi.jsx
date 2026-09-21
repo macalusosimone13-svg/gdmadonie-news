@@ -38,6 +38,7 @@ export default function Sondaggi() {
     staleTime: 5 * 60 * 1000
   });
 
+  const [openCoal, setOpenCoal] = useState(null);
   const { data: coalitionGroups } = useQuery({
     queryKey: ['coalition-groups'],
     queryFn: () => sb44.entities.CoalitionGroup.list('sort_order', 50),
@@ -102,7 +103,12 @@ export default function Sondaggi() {
       const value = sumFor(latest, names);
       const prevValue = sumFor(previous, names);
       const delta = value != null && prevValue != null ? +(value - prevValue).toFixed(1) : null;
-      return { key: g.id, label: g.label, color: g.color || '#0F1B3A', value, delta };
+      const members = (latest.rows || []).
+      map((r) => ({ name: (r.party || '').split('\n')[0].trim(), pct: r.percentage })).
+      filter((m) => names.includes(m.name)).
+      sort((a, b) => b.pct - a.pct);
+      const missing = names.filter((n) => !members.some((m) => m.name === n));
+      return { key: g.id, label: g.label, color: g.color || '#0F1B3A', value, delta, members, missing };
     }).
     filter((g) => g.value != null).
     sort((a, b) => b.value - a.value);
@@ -313,13 +319,26 @@ export default function Sondaggi() {
             {coalitionTotals.length > 0 &&
           <div className="coal-tiles">
                 {coalitionTotals.map((c) =>
-            <div key={c.key} className="coal-tile" style={{ '--c': c.color === '#0F2A5C' || c.color === '#0F1B3A' ? '#2F5BD8' : c.color }}>
+            <button type="button" key={c.key} className="coal-tile" onClick={() => setOpenCoal(c)} aria-label={`Vedi i partiti di ${c.label}`} style={{ '--c': c.color === '#0F2A5C' || c.color === '#0F1B3A' ? '#2F5BD8' : c.color }}>
                     <span className="coal-name">{c.label}</span>
                     <span className="coal-pct">{pctTxt(c.value)}</span>
                     <span style={{ textAlign: 'left', display: 'block' }}><Delta d={c.delta} /></span>
-                  </div>
+                    <span className="coal-more">Vedi i partiti →</span>
+                  </button>
             )}
               </div>}
+            <Dialog open={!!openCoal} onOpenChange={(o) => { if (!o) setOpenCoal(null); }}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{openCoal?.label}</DialogTitle>
+                  <DialogDescription>Partiti che ne fanno parte · totale {openCoal ? pctTxt(openCoal.value) : ''}</DialogDescription>
+                </DialogHeader>
+                <div className="coal-members">
+                  {openCoal?.members.map((m) => <div key={m.name} className="coal-member"><b>{m.name}</b><span>{pctTxt(m.pct)}</span></div>)}
+                  {openCoal?.missing.map((n) => <div key={n} className="coal-member" style={{ opacity: .55 }}><b>{n}</b><span>n.d.</span></div>)}
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <div className="sond-grid">
               <div>
