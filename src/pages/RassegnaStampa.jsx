@@ -206,7 +206,7 @@ export default function RassegnaStampa() {
               <div className="source-chips">
                 {sources.map((s) =>
               <button key={s.key} onClick={() => setSource(s.key)} className={`schip ${source === s.key ? 'active' : ''}`}>
-                    {favSourceNames.has(s.key) && <Star size={11} style={{ display: 'inline', marginRight: 5, verticalAlign: '-1px' }} fill="currentColor" />}{s.label}
+                    {s.key !== 'all' && sourceLogos[s.key] && <img className="schip-logo" src={sourceLogos[s.key]} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}{favSourceNames.has(s.key) && <Star size={11} style={{ display: 'inline', marginRight: 5, verticalAlign: '-1px' }} fill="currentColor" />}{s.label}
                   </button>
               )}
               </div>
