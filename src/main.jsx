@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
+import '@/redesign.css'
 import { setupEdgeSwipeGuard } from '@/lib/edgeSwipeGuard'
 
 // Blocca lo swipe laterale "torna indietro" di Safari iOS (cronologia).
