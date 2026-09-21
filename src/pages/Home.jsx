@@ -63,7 +63,6 @@ function NewsBlock({ kicker, title, to, lead, cards, side, siteContent, aside })
     <div className="news-block">
       <div className="section-head-row">
         <div><span className="section-kicker">{kicker}</span><h2 className="section-title"><Link to={to}>{title}</Link></h2></div>
-        <Link className="section-link" to={to}>Vedi tutto →</Link>
       </div>
       <div className="feed-layout">
         <div>
