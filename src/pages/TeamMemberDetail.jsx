@@ -66,7 +66,7 @@ export default function TeamMemberDetail() {
 
   const otherProfiles = [1, 2, 3, 4].
   filter((i) => String(i) !== String(slot)).
-  map((i) => ({ slot: i, photo: content?.[`team_${i}_photo`], name: content?.[`team_${i}_name`], caption: content?.[`team_${i}_caption`] })).
+  map((i) => ({ slot: i, photo: content?.[`team_${i}_detail_photo`] || content?.[`team_${i}_photo`], name: content?.[`team_${i}_name`], caption: content?.[`team_${i}_caption`] })).
   filter((t) => t.photo);
 
   const { data: ownPosts } = useQuery({

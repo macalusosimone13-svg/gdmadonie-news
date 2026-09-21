@@ -123,7 +123,7 @@ export default function Home() {
   const upcomingEvents = posts.filter((p) => p._type === 'event' && p !== heroPost).slice(0, 3);
 
   const team = [1, 2, 3, 4].
-  map((i) => ({ slot: i, photo: siteContent?.[`team_${i}_photo`], prefix: siteContent?.[`team_${i}_prefix`], name: siteContent?.[`team_${i}_name`], caption: siteContent?.[`team_${i}_caption`] })).
+  map((i) => ({ slot: i, photo: siteContent?.[`team_${i}_detail_photo`] || siteContent?.[`team_${i}_photo`], prefix: siteContent?.[`team_${i}_prefix`], name: siteContent?.[`team_${i}_name`], caption: siteContent?.[`team_${i}_caption`] })).
   filter((t) => t.photo);
 
   return (

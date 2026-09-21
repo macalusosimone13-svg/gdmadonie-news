@@ -137,9 +137,8 @@
   @media (max-width:700px){ .persone-grid{grid-template-columns:1fr} }
   .persona-card { background:var(--caldo); border-radius:28px; padding:30px; text-align:center; transition:transform .3s ease; }
   .persona-card:hover { transform:translateY(-6px); }
-  .persona-photo { width:140px; height:140px; border-radius:50%; overflow:hidden; margin:0 auto 20px; filter:grayscale(1); transition:filter .4s ease; }
-  .persona-card:hover .persona-photo { filter:grayscale(0); }
-  .persona-photo img { width:100%; height:100%; object-fit:cover; }
+  .persona-photo { width:100%; max-width:280px; aspect-ratio:4/5; border-radius:22px; overflow:hidden; margin:0 auto 20px; background:var(--blu); }
+  .persona-photo img { width:100%; height:100%; object-fit:cover; object-position:50% 12%; }
   .persona-card h3 { font-size:1.3rem; margin-bottom:6px; text-transform:none; }
   .persona-card .ruolo { font-weight:600; font-size:14px; color:var(--acc); }
   .persona-card .profilo { display:inline-block; margin-top:14px; font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--blu); }
@@ -288,7 +287,7 @@
   .prof-aside { position:sticky; top:96px; }
   .mini-profile { display:flex; align-items:center; gap:14px; padding:12px 0; border-top:1px solid rgba(28,34,51,.09); cursor:pointer; }
   .mini-profile:first-of-type { border-top:none; }
-  .mini-profile img { width:54px; height:54px; border-radius:50%; object-fit:cover; object-position:top; background:var(--blu); }
+  .mini-profile img { width:60px; height:60px; border-radius:50%; object-fit:cover; object-position:50% 12%; background:var(--blu); }
   .mini-profile b { display:block; font-weight:800; } .mini-profile span { font-size:13px; opacity:.6; }
   .sub-sec { padding:40px 0 0; } .sub-sec h2 { font-size:1.9rem; margin-bottom:22px; }
   
