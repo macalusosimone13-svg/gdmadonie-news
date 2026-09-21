@@ -137,3 +137,21 @@
     transform: none;
   }
 }
+
+/* Splash screen (redesign blu) */
+.mn-splash{position:fixed;inset:0;z-index:9999;background:#0F1B3A;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:opacity .6s ease-out}
+.mn-splash.is-fading{opacity:0}
+.mn-splash-glow{position:absolute;top:-160px;right:-160px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(47,91,216,.55) 0%,rgba(47,91,216,0) 70%)}
+.mn-splash-inner{position:relative;text-align:center;padding:0 24px;animation:mn-rise .8s ease-out both}
+.mn-splash-logo{font-family:'Rubik',sans-serif;font-weight:900;text-transform:uppercase;color:#fff;font-size:clamp(2.4rem,9vw,4rem);line-height:.95}
+.mn-splash-logo span{display:block;color:#5C86F2;font-size:.42em;letter-spacing:.32em;margin-top:.5em}
+.mn-splash-tag{margin-top:22px;font-family:'Figtree',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.65);max-width:320px;margin-left:auto;margin-right:auto;line-height:1.6}
+.mn-splash-bar{position:absolute;left:50%;bottom:56px;width:120px;height:3px;margin-left:-60px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}
+.mn-splash-bar i{display:block;height:100%;width:40%;border-radius:3px;background:#5C86F2;animation:mn-load 1.1s ease-in-out infinite}
+@keyframes mn-load{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}
+@keyframes mn-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.mn-splash-inner,.mn-splash-bar i{animation:none}}
+.mn-auth-logo{font-family:'Rubik',sans-serif;font-weight:900;text-transform:uppercase;color:#fff;font-size:34px;line-height:.95;margin-bottom:26px}
+.mn-auth-logo span{display:block;color:#5C86F2;font-size:13px;letter-spacing:.32em;margin-top:8px}
+.mn-auth-card button[type=submit],.mn-auth-card button.w-full{border-radius:999px;font-family:'Rubik',sans-serif;font-weight:700;letter-spacing:.02em}
+.mn-auth-card input{border-radius:14px}
