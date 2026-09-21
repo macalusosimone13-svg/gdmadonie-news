@@ -413,3 +413,25 @@
     .rd .assist-side p{ font-size:14px; }
     .rd .assist-card{ padding:14px; border-radius:22px; }
   }
+
+/* ===== Admin: menu a sezioni ===== */
+.rd .adm-body{ display:grid; grid-template-columns:260px minmax(0,1fr); gap:32px; padding-top:32px; padding-bottom:72px; align-items:start; }
+.rd .adm-nav{ position:sticky; top:88px; }
+.rd .adm-select{ display:none; }
+.rd .adm-group{ margin-bottom:18px; }
+.rd .adm-group-title{ font:600 11px/1 'Rubik',sans-serif; letter-spacing:.14em; text-transform:uppercase; color:#6b7691; margin:0 0 8px 12px; }
+.rd .adm-item{ display:block; width:100%; text-align:left; padding:10px 12px; border-radius:10px; font:500 14px/1.3 'Figtree',sans-serif; color:#0F1B3A; background:transparent; border:0; cursor:pointer; }
+.rd .adm-item:hover{ background:rgba(47,91,216,.08); }
+.rd .adm-item.on{ background:#2F5BD8; color:#fff; }
+.rd .adm-title{ margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid rgba(15,27,58,.1); }
+.rd .adm-title h2{ font:700 24px/1.2 'Rubik',sans-serif; color:#0F1B3A; margin:0 0 4px; }
+.rd .adm-title p{ margin:0; color:#5a6580; font-size:15px; }
+.rd .adm-main{ min-width:0; }
+@media (max-width:860px){
+  .rd .adm-body{ grid-template-columns:1fr; gap:18px; padding-top:20px; }
+  .rd .adm-nav{ position:static; }
+  .rd .adm-list{ display:none; }
+  .rd .adm-select{ display:block; }
+  .rd .adm-select span{ display:block; font:600 11px/1 'Rubik',sans-serif; letter-spacing:.14em; text-transform:uppercase; color:#6b7691; margin-bottom:6px; }
+  .rd .adm-select select{ width:100%; min-height:48px; padding:0 14px; border-radius:12px; border:1px solid rgba(15,27,58,.2); background:#fff; font:500 16px 'Figtree',sans-serif; color:#0F1B3A; }
+}

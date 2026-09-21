@@ -9,7 +9,7 @@ import { useUxConfig } from '@/lib/UxConfigContext';
 
 // Pagine gia' riprogettate col nuovo stile: hanno il loro contenitore.
 // Le altre restano nel contenitore stretto di prima finche' non le migro.
-const REDESIGNED = ['/', '/rassegna-stampa', '/gd-madonie', '/chi-siamo', '/in-evidenza', '/sondaggi', '/articolo', '/post', '/assistente', '/impostazioni', '/privacy', '/termini', '/evento'];
+const REDESIGNED = ['/', '/rassegna-stampa', '/gd-madonie', '/chi-siamo', '/in-evidenza', '/sondaggi', '/articolo', '/post', '/assistente', '/impostazioni', '/privacy', '/termini', '/evento', '/admin'];
 
 const SOCIAL_ICONS = { instagram: Instagram, facebook: Facebook, telegram: Send, twitter: Twitter, youtube: Youtube, website: Globe, email: Mail, custom: LinkIcon };
 

@@ -39,6 +39,7 @@ export default function Admin() {
   const [editingPost, setEditingPost] = useState(null);
   const [editingEvent, setEditingEvent] = useState(null);
   const [role, setRole] = useState(null);
+  const [tab, setTab] = useState('post');
 
   useEffect(() => {
     getCurrentUser().then((u) => setRole(u?.role || null)).catch(() => setRole(null));
@@ -126,36 +127,70 @@ export default function Admin() {
     setRefreshing(false);
   };
 
+  const SECTIONS = [
+    { group: 'Contenuti', items: [
+      { id: 'post', label: 'Nuovo post', desc: 'Scrivi e pubblica un comunicato, con foto o video.', show: true },
+      { id: 'event', label: 'Nuovo evento', desc: 'Crea un evento con data, luogo e iscrizioni.', show: isAdmin },
+      { id: 'manage', label: 'Post ed eventi pubblicati', desc: 'Modifica, elimina o pubblica le bozze.', show: true },
+      { id: 'iscrizioni', label: 'Iscrizioni agli eventi', desc: 'Chi si è iscritto agli eventi. Puoi scaricare l\'elenco.', show: isAdmin },
+    ] },
+    { group: 'Rassegna stampa', items: [
+      { id: 'rss', label: 'Giornali e importazione', desc: 'Importa le notizie dai giornali e scegli quali testate mostrare.', show: isAdmin },
+    ] },
+    { group: 'Sondaggi', items: [
+      { id: 'sondaggi', label: 'Sondaggi politici', desc: 'Inserisci e aggiorna i sondaggi.', show: isAdmin },
+      { id: 'coalizioni', label: 'Coalizioni', desc: 'Quali partiti fanno parte di ogni coalizione.', show: isAdmin },
+    ] },
+    { group: 'Il sito', items: [
+      { id: 'mia-pagina', label: 'La mia pagina', desc: 'Foto, ruolo e descrizione che compaiono nella tua scheda.', show: isEditor },
+      { id: 'contatti', label: 'Contatti e social', desc: 'Link a Instagram, email e altri contatti del circolo.', show: isAdmin },
+      { id: 'testi', label: 'Testi del sito', desc: 'Modifica i testi delle pagine (Chi siamo, ecc.).', show: isAdmin },
+      { id: 'email', label: 'Email automatiche', desc: 'Testo delle email inviate agli iscritti.', show: isAdmin },
+    ] },
+    { group: 'Avanzate', items: [
+      { id: 'log', label: 'Registro attività', desc: 'Cronologia delle importazioni e delle operazioni automatiche.', show: isAdmin },
+      { id: 'backup', label: 'Backup', desc: 'Salva una copia dei contenuti del sito.', show: isAdmin },
+      { id: 'codice', label: 'Esporta codice', desc: 'Per chi gestisce il sito: scarica il codice.', show: isAdmin },
+      { id: 'splash', label: 'Splash (vecchio design)', desc: 'Non più usato nel nuovo design.', show: isAdmin },
+      { id: 'ux', label: 'Design UX (vecchio design)', desc: 'Non più usato nel nuovo design.', show: isAdmin },
+      { id: 'storia', label: 'Storie IG (vecchio design)', desc: 'Non più usato nel nuovo design.', show: isAdmin },
+      { id: 'sondaggi-storia', label: 'Storie sondaggi (vecchio design)', desc: 'Non più usato nel nuovo design.', show: isAdmin },
+    ] },
+  ].map((g) => ({ ...g, items: g.items.filter((i) => i.show) })).filter((g) => g.items.length);
+  const current = SECTIONS.flatMap((g) => g.items).find((i) => i.id === tab) || SECTIONS[0]?.items[0];
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Area Admin</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Pubblica e gestisci i contenuti del circolo</p>
-      </div>
-      <Tabs defaultValue="post">
-        <TabsList className="w-full flex overflow-x-auto scrollbar-hide bg-muted p-1 h-auto rounded-full">
-          <TabsTrigger value="post" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Nuovo Post</TabsTrigger>
-          {isAdmin && <TabsTrigger value="event" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Nuovo Evento</TabsTrigger>}
-          <TabsTrigger value="manage" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Gestisci</TabsTrigger>
-          {isEditor && <TabsTrigger value="mia-pagina" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">La mia pagina</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="rss" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-[999px]">Rassegna RSS</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="contatti" className="flex-1 text-xs py-2.5 min-h-[44px]">Contatti</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="log" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Log</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="splash" className="flex-1 text-xs py-2.5 min-h-[44px]">Splash</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="testi" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Testi</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="email" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Email</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="ux" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Design UX</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="storia" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Storia IG</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="sondaggi" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Sondaggi</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="coalizioni" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Coalizioni</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="sondaggi-storia" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Storia Sondaggi</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="iscrizioni" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Iscrizioni</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="codice" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Codice</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="backup" className="flex-1 text-xs py-2.5 min-h-[44px] rounded-full">Backup</TabsTrigger>}
-        </TabsList>
-        <TabsContent value="post" className="mt-4"><PostForm onCreated={load} /></TabsContent>
-        {isAdmin && <TabsContent value="event" className="mt-4"><EventForm onCreated={load} /></TabsContent>}
-        <TabsContent value="manage" className="mt-4 space-y-5">
+    <div className="adm">
+      <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
+        <span className="section-kicker">Area riservata</span>
+        <h1>GESTIONE SITO</h1>
+        <p>Scegli cosa vuoi fare dal menu: ogni voce ha una breve spiegazione.</p>
+      </div></div>
+      <div className="wrap-wide adm-body">
+        <nav className="adm-nav" aria-label="Sezioni">
+          <label className="adm-select">
+            <span>Sezione</span>
+            <select value={current?.id} onChange={(e) => setTab(e.target.value)}>
+              {SECTIONS.map((g) => <optgroup key={g.group} label={g.group}>{g.items.map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}</optgroup>)}
+            </select>
+          </label>
+          <div className="adm-list">
+            {SECTIONS.map((g) =>
+            <div key={g.group} className="adm-group">
+                <p className="adm-group-title">{g.group}</p>
+                {g.items.map((i) =>
+              <button key={i.id} type="button" onClick={() => setTab(i.id)} className={`adm-item ${current?.id === i.id ? 'on' : ''}`}>{i.label}</button>
+              )}
+              </div>
+            )}
+          </div>
+        </nav>
+        <section className="adm-main">
+          {current && <header className="adm-title"><h2>{current.label}</h2><p>{current.desc}</p></header>}
+          <Tabs value={current?.id} onValueChange={setTab}>
+        <TabsContent value="post" className="mt-0"><PostForm onCreated={load} /></TabsContent>
+        {isAdmin && <TabsContent value="event" className="mt-0"><EventForm onCreated={load} /></TabsContent>}
+        <TabsContent value="manage" className="mt-0 space-y-5">
           <div>
             <h3 className="font-semibold text-foreground mb-2 text-sm">Post ({posts.length})</h3>
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : posts.length === 0 ? <p className="text-sm text-muted-foreground">Nessun post.</p> :
@@ -205,9 +240,9 @@ export default function Admin() {
           </div>
           }
         </TabsContent>
-        {isEditor && <TabsContent value="mia-pagina" className="mt-4"><MyTeamPageManager /></TabsContent>}
+        {isEditor && <TabsContent value="mia-pagina" className="mt-0"><MyTeamPageManager /></TabsContent>}
         {isAdmin && <>
-        <TabsContent value="rss" className="mt-4 space-y-4">
+        <TabsContent value="rss" className="mt-0 space-y-4">
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-foreground mb-1">Aggregazione RSS</h3>
             <p className="text-sm text-muted-foreground mb-4">Importa le ultime notizie politiche da ANSA, Repubblica, Il Fatto, testate siciliane e del territorio madonita. Le testate con sezione Politica dedicata usano il feed di categoria; le altre vengono filtrate per tema.</p>
@@ -225,17 +260,17 @@ export default function Admin() {
           </div>
           <TestataManager />
         </TabsContent>
-        <TabsContent value="contatti" className="mt-4"><SocialLinksManager /></TabsContent>
-        <TabsContent value="log" className="mt-4"><ExecutionLogViewer /></TabsContent>
-        <TabsContent value="splash" className="mt-4"><SplashConfigManager /></TabsContent>
-        <TabsContent value="testi" className="mt-4"><ContentTextManager /></TabsContent>
-        <TabsContent value="email" className="mt-4"><EmailTemplateManager /></TabsContent>
-        <TabsContent value="ux" className="mt-4"><UxDesignManager /></TabsContent>
-        <TabsContent value="storia" className="mt-4"><StoryShareConfigManager /></TabsContent>
-        <TabsContent value="sondaggi" className="mt-4"><PollManager /></TabsContent>
-        <TabsContent value="coalizioni" className="mt-4"><CoalitionGroupManager /></TabsContent>
-        <TabsContent value="sondaggi-storia" className="mt-4"><PollShareConfigManager /></TabsContent>
-        <TabsContent value="iscrizioni" className="mt-4 space-y-4">
+        <TabsContent value="contatti" className="mt-0"><SocialLinksManager /></TabsContent>
+        <TabsContent value="log" className="mt-0"><ExecutionLogViewer /></TabsContent>
+        <TabsContent value="splash" className="mt-0"><SplashConfigManager /></TabsContent>
+        <TabsContent value="testi" className="mt-0"><ContentTextManager /></TabsContent>
+        <TabsContent value="email" className="mt-0"><EmailTemplateManager /></TabsContent>
+        <TabsContent value="ux" className="mt-0"><UxDesignManager /></TabsContent>
+        <TabsContent value="storia" className="mt-0"><StoryShareConfigManager /></TabsContent>
+        <TabsContent value="sondaggi" className="mt-0"><PollManager /></TabsContent>
+        <TabsContent value="coalizioni" className="mt-0"><CoalitionGroupManager /></TabsContent>
+        <TabsContent value="sondaggi-storia" className="mt-0"><PollShareConfigManager /></TabsContent>
+        <TabsContent value="iscrizioni" className="mt-0 space-y-4">
           <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -271,10 +306,12 @@ export default function Admin() {
             }
           </div>
         </TabsContent>
-        <TabsContent value="codice" className="mt-4"><CodeExporter /></TabsContent>
-        <TabsContent value="backup" className="mt-4"><BackupManager /></TabsContent>
+        <TabsContent value="codice" className="mt-0"><CodeExporter /></TabsContent>
+        <TabsContent value="backup" className="mt-0"><BackupManager /></TabsContent>
         </>}
-      </Tabs>
+          </Tabs>
+        </section>
+      </div>
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(open) => {if (!open) setPendingDelete(null);}}>
         <AlertDialogContent>
