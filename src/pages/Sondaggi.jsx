@@ -217,7 +217,7 @@ export default function Sondaggi() {
   const shareLinkUrl = typeof window !== 'undefined' ? `${window.location.origin}/functions/shareSondaggi?scope=${scope}` : shareUrl;
 
   const buildPollFile = async (imgFormat) => {
-    const pollCfg = { brand_title: 'GD Madonie News', brand_subtitle: 'Giovani Democratici Madonie', logo_url: '', logo_size: 140, background_color: '#f5f5f5', title_color: '', category_bg_color: '#2F5BD8', category_text_color: '#FFFFFF', domain_text: 'gdmadonie-news.com', show_category: true, show_domain: true, top_band_enabled: false, top_band_color: '#000000', top_band_opacity: 0.35, category_gap: 28 };
+    const pollCfg = { brand_title: 'GD Madonie News', brand_subtitle: 'Giovani Democratici Madonie', logo_url: '', logo_size: 140, background_color: '#F4F6FD', title_color: '', category_bg_color: '#2F5BD8', category_text_color: '#FFFFFF', domain_text: 'gdmadonie-news.com', show_category: true, show_domain: true, top_band_enabled: false, top_band_color: '#000000', top_band_opacity: 0.35, category_gap: 28 };
     const subtitle = [
     format(new Date(latest.date), 'd MMMM yyyy', { locale: it }),
     latest.institute,
@@ -253,7 +253,7 @@ export default function Sondaggi() {
       const c = document.createElement('canvas');
       c.width = bmp.width; c.height = bmp.height;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.fillStyle = '#F4F6FD'; ctx.fillRect(0, 0, c.width, c.height);
       ctx.drawImage(bmp, 0, 0);
       const jpg = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.92));
       if (jpg) out = jpg;

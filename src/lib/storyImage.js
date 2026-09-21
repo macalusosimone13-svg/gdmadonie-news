@@ -199,17 +199,20 @@ async function drawBrandBadge(ctx, logoUrl, brandTitle, brandSubtitle, logoSize,
     }
   }
   if (!logoDrawn) {
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(logoX, logoY, logoSize, logoSize, radius);
-    else ctx.rect(logoX, logoY, logoSize, logoSize);
-    ctx.fill();
-    ctx.fillStyle = '#0F1B3A';
-    ctx.font = '700 56px -apple-system, sans-serif';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    ctx.fillText('GD', logoX + logoSize / 2, logoY + logoSize / 2 + 2);
+    // Wordmark del redesign (Rubik), al posto del vecchio quadrato "GD".
+    try { await Promise.all([document.fonts.load('900 64px Rubik'), document.fonts.load('800 28px Rubik')]); } catch {}
+    const dark = (textColor || '#ffffff').toLowerCase() === '#ffffff';
     ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = textColor || '#ffffff';
+    ctx.font = '900 68px Rubik, "Arial Black", sans-serif';
+    ctx.fillText('GD MADONIE', logoX, logoY + 66);
+    ctx.fillStyle = dark ? '#7EA0FF' : '#2F5BD8';
+    ctx.font = '800 28px Rubik, Arial, sans-serif';
+    try { ctx.letterSpacing = '10px'; } catch {}
+    ctx.fillText('NEWS', logoX + 4, logoY + 112);
+    try { ctx.letterSpacing = '0px'; } catch {}
+    return;
   }
   const textX = logoX + logoSize + 28;
   const titleFontSize = Math.round(logoSize * 0.33);
@@ -259,7 +262,7 @@ function drawTextOnlyCard(ctx, W, H, { category, title, bodyText, domain, catego
 
   if (title) {
     ctx.fillStyle = titleColor || '#ffffff';
-    ctx.font = '700 58px Georgia, serif';
+    ctx.font = '800 56px Rubik, Arial, sans-serif';
     ctx.textBaseline = 'alphabetic';
     const lines = wrapText(ctx, title, maxWidth).slice(0, 6);
     lines.forEach((line) => {
