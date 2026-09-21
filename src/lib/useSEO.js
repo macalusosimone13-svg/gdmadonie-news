@@ -25,6 +25,22 @@ function upsertLink(rel, href) {
   el.setAttribute('href', href);
 }
 
+// Il sito e' raggiungibile anche da indirizzi "tecnici" (es. il dominio
+// gratuito di Cloudflare Pages), oltre al dominio vero. Qualunque sia
+// l'indirizzo con cui la pagina viene aperta, diciamo sempre a Google che
+// quello "vero" e' il nostro dominio: altrimenti l'indirizzo tecnico rischia
+// di finire indicizzato come se fosse un sito a se stante.
+const CANONICAL_HOST = 'https://www.gdmadonie-news.com';
+function toCanonicalUrl(url) {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    return CANONICAL_HOST + u.pathname + u.search;
+  } catch {
+    return url;
+  }
+}
+
 export function useSEO({ title, description, image, url, type = 'website', noindex = false }) {
   useEffect(() => {
     if (title) document.title = title;
@@ -34,8 +50,9 @@ export function useSEO({ title, description, image, url, type = 'website', noind
     upsertMeta('property', 'og:image', image);
     upsertMeta('property', 'og:type', type);
     if (url) {
-      upsertMeta('property', 'og:url', url);
-      upsertLink('canonical', url);
+      const canonicalUrl = toCanonicalUrl(url);
+      upsertMeta('property', 'og:url', canonicalUrl);
+      upsertLink('canonical', canonicalUrl);
     }
     upsertMeta('name', 'twitter:card', image ? 'summary_large_image' : 'summary');
     upsertMeta('name', 'twitter:title', title);
