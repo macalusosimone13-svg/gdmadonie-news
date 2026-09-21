@@ -8,7 +8,7 @@ import { useUxConfig } from '@/lib/UxConfigContext';
 
 // Pagine gia' riprogettate col nuovo stile: hanno il loro contenitore.
 // Le altre restano nel contenitore stretto di prima finche' non le migro.
-const REDESIGNED = ['/'];
+const REDESIGNED = ['/', '/rassegna-stampa', '/gd-madonie', '/chi-siamo', '/in-evidenza'];
 
 const SOCIAL_ICONS = { instagram: Instagram, facebook: Facebook, telegram: Send, twitter: Twitter, youtube: Youtube, website: Globe, email: Mail, custom: LinkIcon };
 
@@ -51,7 +51,7 @@ export default function Layout() {
   }, []);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'editor';
-  const redesigned = REDESIGNED.includes(location.pathname);
+  const redesigned = REDESIGNED.some((r) => (r === '/' ? location.pathname === '/' : location.pathname.startsWith(r)));
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
   const linkCls = ({ isActive }) => (isActive ? 'active' : '');
   const showNews = ux.show_rassegna !== false;
@@ -111,7 +111,7 @@ export default function Layout() {
       </main>
 
       <footer className="site-footer">
-        <div className="wrap">
+        <div className="wrap-wide">
           <div className="footer-top">
             <Link to="/" className="logo"><div className="logo-text">GD MADONIE<span>NEWS</span></div></Link>
             <nav className="footer-nav">

@@ -1,24 +1,45 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { sb44 } from '@/api/supabaseEntities';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PostCard from '@/components/PostCard';
-import GdEventCard from '@/components/GdEventCard';
-import PostCardSkeleton from '@/components/PostCardSkeleton';
+import { Lead, Card } from '@/components/redesign/Cards';
+import { Newsletter, FollowStats } from '@/components/redesign/SideBoxes';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
+import { MapPin, Clock } from 'lucide-react';
 import PullToRefresh from '@/components/PullToRefresh';
 import EventsCalendar from '@/components/EventsCalendar';
-import { LayoutGrid, Calendar as CalIcon, ArrowUp, Search, X } from 'lucide-react';
+import { ArrowUp, Search, X } from 'lucide-react';
 import { hasUnread } from '@/lib/readArticles';
+import { useSEO } from '@/lib/useSEO';
 import { loadSiteContent, getContent } from '@/lib/siteContent';
-import { useUxConfig } from '@/lib/UxConfigContext';
 
 const BATCH = 60;
 const PAGE_SIZE = 8;
 
 function NewDot({ show }) {
   if (!show) return null;
-  return <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-background" aria-hidden="true" />;
+  return <span aria-hidden="true" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#10b981', marginLeft: 7, verticalAlign: '2px' }} />;
+}
+
+function EventRow({ event }) {
+  const [open, setOpen] = useState(false);
+  const d = event.date ? new Date(event.date) : null;
+  return (
+    <article className="ev-card" style={{ gridTemplateColumns: '110px minmax(0,1fr)' }}>
+      <Link to={`/evento/${event.id}`} className="ev-date">
+        <b>{d ? format(d, 'dd') : '--'}</b><span>{d ? format(d, 'MMM', { locale: it }).toUpperCase() : ''}</span><i>{d ? format(d, 'yyyy') : ''}</i>
+      </Link>
+      <div className="ev-info">
+        <Link to={`/evento/${event.id}`}><h3>{event.title}</h3></Link>
+        <div className="ev-meta">
+          {event.location && <span><MapPin size={13} style={{ display: 'inline', verticalAlign: '-2px' }} /> {event.location}</span>}
+          {d && <span><Clock size={13} style={{ display: 'inline', verticalAlign: '-2px' }} /> {format(d, "d MMMM yyyy 'alle' HH:mm", { locale: it })}</span>}
+        </div>
+        {event.image_url && <button type="button" className="btn-pill btn-blu ev-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open}>{open ? 'Nascondi locandina' : 'Vedi locandina'}</button>}
+        {open && <img src={event.image_url} alt={`Locandina — ${event.title}`} loading="lazy" style={{ borderRadius: 18, marginTop: 8, maxHeight: '80vh', width: 'auto', maxWidth: '100%' }} />}
+      </div>
+    </article>);
 }
 
 export default function GDMadonie() {
@@ -34,8 +55,6 @@ export default function GDMadonie() {
   const [searchQuery, setSearchQuery] = useState('');
   const [newsSearchQuery, setNewsSearchQuery] = useState('');
   const lastSig = useRef(null);
-  const { config: ux } = useUxConfig();
-  const cardStyle = ux.team_cards_bg_color ? { backgroundColor: ux.team_cards_bg_color } : undefined;
 
   useEffect(() => {loadSiteContent().then(setContent);}, []);
 
@@ -109,124 +128,92 @@ export default function GDMadonie() {
   };
 
 
-  const EmptyList = () => <div className="text-center py-12 text-muted-foreground text-sm">Nessun contenuto pubblicato.</div>;
-  const FirstLoad = () => <div className="grid gap-4 lg:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <PostCardSkeleton key={i} />)}</div>;
+  useSEO({
+    title: 'GD Madonie — Comunicati, news ed eventi del circolo',
+    description: 'Comunicati, news ed eventi dei Giovani Democratici Madonie.',
+    url: typeof window !== 'undefined' ? window.location.href : undefined
+  });
 
-  const visible = comunicati.filter((p) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.trim().toLowerCase();
-    return p.title?.toLowerCase().includes(q) || p.excerpt?.toLowerCase().includes(q);
-  }).slice(0, visibleCount);
+  const Empty = () => <div style={{ textAlign: 'center', padding: '48px 0', opacity: .6 }}>Nessun contenuto pubblicato.</div>;
+  const Loading = () => <div className="news-main-grid gd-grid">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="skel" style={{ height: 320 }} />)}</div>;
+
+  const filt = (list, q) => list.filter((p) => {
+    if (!q.trim()) return true;
+    const t = q.trim().toLowerCase();
+    return p.title?.toLowerCase().includes(t) || p.excerpt?.toLowerCase().includes(t);
+  });
+  const filteredCom = filt(comunicati, searchQuery), filteredNews = filt(newsGd, newsSearchQuery);
+  const visible = filteredCom.slice(0, visibleCount);
   const hasMore = !searchQuery.trim() && visibleCount < comunicati.length;
-
-  const visibleNews = newsGd.filter((p) => {
-    if (!newsSearchQuery.trim()) return true;
-    const q = newsSearchQuery.trim().toLowerCase();
-    return p.title?.toLowerCase().includes(q) || p.excerpt?.toLowerCase().includes(q);
-  }).slice(0, newsVisibleCount);
+  const visibleNews = filteredNews.slice(0, newsVisibleCount);
   const hasMoreNews = !newsSearchQuery.trim() && newsVisibleCount < newsGd.length;
+  const tabList = [['comunicati', 'Comunicati', comunicati.length, hasUnread(comunicati)], ['news', 'News GD', newsGd.length, hasUnread(newsGd)], ['eventi', 'Eventi', eventi.length, hasUnread(eventi)]];
+
+  const Search_ = ({ value, set, ph }) =>
+  <div className="search-box">
+      <Search size={16} style={{ opacity: .5 }} />
+      <input type="text" value={value} onChange={(e) => set(e.target.value)} placeholder={ph} />
+      {value && <button onClick={() => set('')} aria-label="Cancella ricerca"><X size={16} /></button>}
+    </div>;
+
+  const list = (items, loadingNow, sentinel, more, q) =>
+  loadingNow ? <Loading /> :
+  items.length === 0 ? <Empty /> :
+  <>
+      <Lead post={items[0]} wide label="Comunicato GD" siteContent={null} />
+      {items.length > 1 && <div className="news-main-grid gd-grid">{items.slice(1).map((p) => <Card key={p.id} post={p} />)}</div>}
+      <div ref={sentinel} aria-hidden="true" />
+      {more && <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><div className="w-7 h-7 border-4 border-slate-200 border-t-primary rounded-full animate-spin" /></div>}
+    </>;
 
   return (
     <PullToRefresh onRefresh={refreshAll}>
-      <div className="space-y-4">
-        <div>
-          {content &&
+      <div className="rd-page">
+        <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
+          <span className="section-kicker">Dal circolo</span>
+          <h1>{(content && getContent(content, 'gd_title')) || 'GD MADONIE'}</h1>
+          <p>{(content && getContent(content, 'gd_subtitle')) || 'Comunicati e iniziative del circolo'}</p>
+          <div className="tabs">
+            {tabList.map(([k, l, n, unread]) =>
+            <button key={k} className={`tab ${activeTab === k ? 'active' : ''}`} onClick={() => setActiveTab(k)}>{l}<span className="n">{n}</span><NewDot show={unread} /></button>
+            )}
+          </div>
+        </div></div>
+        <div className="wrap-wide news-body">
+          {hasNew &&
+          <button onClick={refreshAll} className="btn-pill btn-blu" style={{ width: '100%', marginBottom: 16 }}><ArrowUp size={14} style={{ marginRight: 8 }} /> Nuovi aggiornamenti disponibili — tocca per vedere</button>}
+
+          {activeTab === 'comunicati' &&
           <>
-              <h1 className="tracking-tight text-[hsl(var(--primary))] font-serif font-normal text-3xl">{getContent(content, 'gd_title')}</h1>
-              <p className="text-muted-foreground mt-0.5 font-serif font-normal text-base">{getContent(content, 'gd_subtitle')}</p>
-            </>
-          }
+              <Search_ value={searchQuery} set={setSearchQuery} ph="Cerca tra i comunicati…" />
+              <div className="news-count">{filteredCom.length} comunicat{filteredCom.length === 1 ? 'o' : 'i'}</div>
+              {list(visible, comunicatiQuery.isLoading && !comunicatiQuery.data, sentinelRef, hasMore)}
+            </>}
+
+          {activeTab === 'news' &&
+          <>
+              <Search_ value={newsSearchQuery} set={setNewsSearchQuery} ph="Cerca tra le news…" />
+              <div className="news-count">{filteredNews.length} news</div>
+              {list(visibleNews, newsQuery.isLoading && !newsQuery.data, newsSentinelRef, hasMoreNews)}
+            </>}
+
+          {activeTab === 'eventi' &&
+          <>
+              <div className="tabs" style={{ marginTop: 0, marginBottom: 14 }}>
+                <button className={`tab ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')}>Elenco</button>
+                <button className={`tab ${view === 'calendar' ? 'active' : ''}`} onClick={() => setView('calendar')}>Calendario</button>
+              </div>
+              {eventiQuery.isLoading && !eventiQuery.data ? <Loading /> :
+            eventi.length === 0 ? <Empty /> :
+            view === 'calendar' ? <EventsCalendar events={eventi} /> :
+            <div className="ev-list">{eventi.map((ev) => <EventRow key={ev.id} event={ev} />)}</div>}
+            </>}
+
+          <div className="strip-2">
+            <Newsletter />
+            <div><FollowStats /></div>
+          </div>
         </div>
-        {hasNew &&
-        <button onClick={refreshAll} className="sticky top-0 z-30 w-full flex items-center justify-center gap-2 text-xs font-medium text-primary-foreground bg-primary px-4 py-2.5 rounded-full shadow-md">
-            <ArrowUp className="w-3.5 h-3.5" /> Nuovi aggiornamenti disponibili — tocca per vedere
-          </button>
-        }
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full flex overflow-x-auto scrollbar-hide touch-pan-x bg-muted p-1 h-auto rounded-[999px]">
-            <TabsTrigger value="comunicati" style={activeTab === 'comunicati' ? cardStyle : undefined} className="relative overflow-hidden flex-1 text-xs py-2.5 min-h-[44px] rounded-full">
-              {activeTab === 'comunicati' && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/10 to-transparent" />}
-              <span className="relative">Comunicati</span><NewDot show={hasUnread(comunicati)} />
-            </TabsTrigger>
-            <TabsTrigger value="news" style={activeTab === 'news' ? cardStyle : undefined} className="relative overflow-hidden flex-1 text-xs py-2.5 min-h-[44px] rounded-full">
-              {activeTab === 'news' && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/10 to-transparent" />}
-              <span className="relative">News GD</span><NewDot show={hasUnread(newsGd)} />
-            </TabsTrigger>
-            <TabsTrigger value="eventi" style={activeTab === 'eventi' ? cardStyle : undefined} className="relative overflow-hidden flex-1 text-xs py-2.5 min-h-[44px] rounded-full">
-              {activeTab === 'eventi' && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/10 to-transparent" />}
-              <span className="relative">Eventi</span><NewDot show={hasUnread(eventi)} />
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="comunicati" className="mt-4 space-y-4">
-            <div className="relative">
-              <Search className="w-4 h-4 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cerca tra i comunicati..."
-              className="w-full pl-11 pr-10 py-2.5 min-h-[44px] rounded-full bg-muted text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
-
-              {searchQuery &&
-              <button onClick={() => setSearchQuery('')} aria-label="Cancella ricerca" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"><X className="w-4 h-4" /></button>
-              }
-            </div>
-            <div className="grid gap-4 lg:grid-cols-2">
-            {comunicatiQuery.isLoading && !comunicatiQuery.data ? <FirstLoad /> :
-            visible.length === 0 && !comunicatiQuery.isFetching ? <EmptyList /> :
-            <>
-                {visible.map((p) => <PostCard key={p.id} post={p} />)}
-                <div ref={sentinelRef} aria-hidden="true" className="lg:col-span-2" />
-                {hasMore && <div className="flex justify-center py-6 lg:col-span-2"><div className="w-7 h-7 border-4 border-slate-200 border-t-primary rounded-full animate-spin" /></div>}
-                {!hasMore && !searchQuery.trim() && comunicati.length >= BATCH && <p className="text-center text-xs text-muted-foreground py-3 lg:col-span-2">Hai visto tutti i comunicati recenti.</p>}
-              </>
-            }
-            </div>
-          </TabsContent>
-          <TabsContent value="news" className="mt-4 space-y-4">
-            <div className="relative">
-              <Search className="w-4 h-4 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-              type="text"
-              value={newsSearchQuery}
-              onChange={(e) => setNewsSearchQuery(e.target.value)}
-              placeholder="Cerca tra le news..."
-              className="w-full pl-11 pr-10 py-2.5 min-h-[44px] rounded-full bg-muted text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
-
-              {newsSearchQuery &&
-              <button onClick={() => setNewsSearchQuery('')} aria-label="Cancella ricerca" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"><X className="w-4 h-4" /></button>
-              }
-            </div>
-            <div className="grid gap-4 lg:grid-cols-2">
-            {newsQuery.isLoading && !newsQuery.data ? <FirstLoad /> :
-            visibleNews.length === 0 && !newsQuery.isFetching ? <EmptyList /> :
-            <>
-                {visibleNews.map((p) => <PostCard key={p.id} post={p} />)}
-                <div ref={newsSentinelRef} aria-hidden="true" className="lg:col-span-2" />
-                {hasMoreNews && <div className="flex justify-center py-6 lg:col-span-2"><div className="w-7 h-7 border-4 border-slate-200 border-t-primary rounded-full animate-spin" /></div>}
-                {!hasMoreNews && !newsSearchQuery.trim() && newsGd.length >= BATCH && <p className="text-center text-xs text-muted-foreground py-3 lg:col-span-2">Hai visto tutte le news recenti.</p>}
-              </>
-            }
-            </div>
-          </TabsContent>
-          <TabsContent value="eventi" className="mt-4 space-y-3">
-            {eventiQuery.isLoading && !eventiQuery.data ? <FirstLoad /> :
-            <>
-                <div className="flex items-center gap-1.5 bg-muted p-1 rounded-full">
-                  <button onClick={() => setView('list')} aria-pressed={view === 'list'} style={view === 'list' ? cardStyle : undefined} className={`relative overflow-hidden flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 min-h-[44px] transition-all rounded-full border ${view === 'list' ? `text-primary shadow-sm border-transparent scale-[1.03] ${cardStyle ? '' : 'bg-card'}` : 'text-muted-foreground border-border/50'}`}>
-                    {view === 'list' && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/10 to-transparent" />}
-                    <LayoutGrid className="relative w-3.5 h-3.5" /> <span className="relative">Elenco</span>
-                  </button>
-                  <button onClick={() => setView('calendar')} aria-pressed={view === 'calendar'} style={view === 'calendar' ? cardStyle : undefined} className={`relative overflow-hidden flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 min-h-[44px] transition-all rounded-full border ${view === 'calendar' ? `text-primary shadow-sm border-transparent scale-[1.03] ${cardStyle ? '' : 'bg-card'}` : 'text-muted-foreground border-border/50'}`}>
-                    {view === 'calendar' && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/10 to-transparent" />}
-                    <CalIcon className="relative w-3.5 h-3.5" /> <span className="relative">Calendario</span>
-                  </button>
-                </div>
-                {eventi.length === 0 ? <EmptyList /> : view === 'calendar' ? <EventsCalendar events={eventi} /> : eventi.map((ev) => <GdEventCard key={ev.id} event={ev} />)}
-              </>
-            }
-          </TabsContent>
-        </Tabs>
       </div>
     </PullToRefresh>);
 

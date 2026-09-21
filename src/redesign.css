@@ -322,3 +322,10 @@
   .rd .featured-text h2 { display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; }
 
   .rd .logo-text { white-space:nowrap; }
+  .rd section.hero { padding:70px 20px 90px; }
+  .rd section.cta-final { padding:110px 20px; margin-top:72px; }
+  @media (max-width:700px){ .rd section.hero { padding:56px 20px 64px; } .rd section.cta-final { padding:80px 20px; } }
+  @media (max-width:700px){ .rd .source-chips{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin-inline:-20px; padding-inline:20px; } .rd .source-chips::-webkit-scrollbar{display:none} .rd .schip{ white-space:nowrap; flex-shrink:0; } }
+  .rd .news-body .tab { background:var(--tint); }
+  .rd .news-body .tab.active { background:var(--blu); }
+  .rd .tabs .tab { text-decoration:none; display:inline-block; }

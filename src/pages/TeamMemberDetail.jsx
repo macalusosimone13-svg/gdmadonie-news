@@ -1,45 +1,33 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Instagram, Facebook, Twitter, Linkedin, Mail } from 'lucide-react';
+import { Instagram, Facebook, Twitter, Linkedin, Mail } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { sb44 } from '@/api/supabaseEntities';
-import { format } from 'date-fns';
-import { it } from 'date-fns/locale';
-import { CATEGORIES, getCategoryLabel } from '@/lib/categories';
 import { useSiteContent } from '@/lib/useSiteContent';
-import { getContent } from '@/lib/siteContent';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
-import { useUxConfig } from '@/lib/UxConfigContext';
-import { Image } from '@/components/ui/image';
+import { Card } from '@/components/redesign/Cards';
 
-function BioBlock({ bio }) {
-  if (!bio) return null;
+// Il testo del profilo puo' avere titoletti ("## ...") e citazioni ("> ...").
+// I titoletti diventano sezioni numerate.
+function parseBio(bio) {
+  if (!bio) return [];
   const blocks = bio.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
-  return (
-    <div className="space-y-5">
-      {blocks.map((block, i) => {
-        if (block.startsWith('## ')) {
-          return <h2 key={i} className="font-serif font-normal text-foreground pt-2 text-2xl capitalize">{block.slice(3)}</h2>;
-        }
-        if (block.startsWith('> ')) {
-          return (
-            <blockquote key={i} className="border-l-4 border-primary pl-4 py-1 text-xl font-serif italic text-foreground leading-snug bg-[hsl(var(--popover))]">
-              {block.slice(2)}
-            </blockquote>);
-
-        }
-        return <p key={i} className="text-[15px] text-foreground leading-relaxed whitespace-pre-line">{block}</p>;
-      })}
-    </div>);
-
+  const sections = [];
+  let cur = { title: null, items: [] };
+  const push = () => { if (cur.title || cur.items.length) sections.push(cur); };
+  for (const b of blocks) {
+    if (b.startsWith('## ')) { push(); cur = { title: b.slice(3), items: [] }; } else
+    if (b.startsWith('> ')) cur.items.push({ quote: b.slice(2) });else
+    cur.items.push({ p: b });
+  }
+  push();
+  return sections;
 }
 
 export default function TeamMemberDetail() {
   const { slot } = useParams();
   const navigate = useNavigate();
   const { data: content } = useSiteContent();
-  const { config: ux } = useUxConfig();
-  const cardStyle = ux.team_cards_bg_color ? { backgroundColor: ux.team_cards_bg_color } : undefined;
 
   const photo = content?.[`team_${slot}_photo`];
   const detailPhoto = content?.[`team_${slot}_detail_photo`] || photo;
@@ -48,21 +36,16 @@ export default function TeamMemberDetail() {
   const caption = content?.[`team_${slot}_caption`];
   const bio = content?.[`team_${slot}_bio`];
 
+  const rawEmail = content?.[`team_${slot}_email`];
   const socials = [
-  { key: 'instagram', icon: Instagram, url: content?.[`team_${slot}_instagram`] },
-  { key: 'facebook', icon: Facebook, url: content?.[`team_${slot}_facebook`] },
-  { key: 'twitter', icon: Twitter, url: content?.[`team_${slot}_twitter`] },
-  { key: 'linkedin', icon: Linkedin, url: content?.[`team_${slot}_linkedin`] },
-  {
-    key: 'email', icon: Mail,
-    url: content?.[`team_${slot}_email`] ?
-    content[`team_${slot}_email`].startsWith('mailto:') ? content[`team_${slot}_email`] : `mailto:${content[`team_${slot}_email`]}` :
-    null
-  }].
+  { key: 'instagram', label: 'Instagram', icon: Instagram, url: content?.[`team_${slot}_instagram`] },
+  { key: 'facebook', label: 'Facebook', icon: Facebook, url: content?.[`team_${slot}_facebook`] },
+  { key: 'twitter', label: 'X / Twitter', icon: Twitter, url: content?.[`team_${slot}_twitter`] },
+  { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, url: content?.[`team_${slot}_linkedin`] },
+  { key: 'email', label: 'Email', icon: Mail, url: rawEmail ? (rawEmail.startsWith('mailto:') ? rawEmail : `mailto:${rawEmail}`) : null }].
   filter((s) => s.url);
 
   const pageUrl = `https://www.gdmadonie-news.com/in-evidenza/${slot}`;
-
   useSEO({
     title: name ? `${name}${caption ? ` — ${caption}` : ''} — GD Madonie News` : 'GD Madonie News',
     description: caption || 'Giovani Democratici Madonie',
@@ -70,10 +53,6 @@ export default function TeamMemberDetail() {
     url: pageUrl,
     type: 'profile'
   });
-
-  // Dati strutturati "Persona": collegano esplicitamente nome, ruolo e questa
-  // pagina all'organizzazione, cosi' una ricerca come "segretario gd madonie"
-  // puo' portare direttamente qui.
   useJsonLd(name ? {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -87,154 +66,71 @@ export default function TeamMemberDetail() {
 
   const otherProfiles = [1, 2, 3, 4].
   filter((i) => String(i) !== String(slot)).
-  map((i) => ({
-    slot: i,
-    photo: content?.[`team_${i}_photo`],
-    name: content?.[`team_${i}_name`]
-  })).
+  map((i) => ({ slot: i, photo: content?.[`team_${i}_photo`], name: content?.[`team_${i}_name`], caption: content?.[`team_${i}_caption`] })).
   filter((t) => t.photo);
 
   const { data: ownPosts } = useQuery({
     queryKey: ['profile-own-posts', name],
-    queryFn: () => name ? sb44.entities.Post.filter({ status: 'published', author: name }, '-published_date', 5) : Promise.resolve([]),
+    queryFn: () => name ? sb44.entities.Post.filter({ status: 'published', author: name }, '-published_date', 6) : Promise.resolve([]),
     enabled: !!name,
     staleTime: 5 * 60 * 1000
   });
-
   const { data: relatedNews } = useQuery({
     queryKey: ['profile-related-news', slot],
-    queryFn: () => sb44.entities.Post.filter({ status: 'published' }, '-published_date', 3),
+    queryFn: () => sb44.entities.Post.filter({ status: 'published', category: { $in: ['politica_regionale', 'politica_nazionale'] } }, '-published_date', 3),
     staleTime: 5 * 60 * 1000
   });
 
-  const goBack = () => {
-    if (window.history.state && window.history.state.idx > 0) navigate(-1);else
-    navigate('/');
-  };
-
   if (!detailPhoto && !name) {
-    return (
-      <div className="text-center py-20 text-muted-foreground">
-        Pagina non trovata. <Link to="/" className="text-primary underline">Torna alla home</Link>
-      </div>);
-
+    return <div style={{ textAlign: 'center', padding: '80px 20px', opacity: .7 }}>Pagina non trovata. <Link to="/" style={{ color: 'var(--acc)', fontWeight: 800 }}>Torna alla home</Link></div>;
   }
 
+  const sections = parseBio(bio);
+
   return (
-    <div className="space-y-6 max-w-2xl lg:max-w-5xl mx-auto">
-      {detailPhoto ?
-      <div className="-mt-5 -mx-4 lg:mt-0 lg:mx-0 lg:rounded-2xl overflow-hidden relative">
-          <div className="relative aspect-[4/5] lg:aspect-[16/9] w-full bg-muted">
-            <Image src={detailPhoto} fittingType="fill" focalPointY={0.2} alt={name || ''} className="w-full h-full" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-5 lg:p-8">
-              {(prefix || name) &&
-            <h1 className="font-serif font-normal text-2xl lg:text-4xl leading-tight">
-                  {prefix && <span className="text-white">{prefix} </span>}
-                  {name && <span className="text-[#ff7024]">{name}</span>}
-                </h1>
-            }
-              {caption && <p className="text-white/80 text-sm mt-1">{caption}</p>}
-            </div>
-          </div>
-          <button onClick={goBack} aria-label="Indietro" className="absolute top-3 left-3 z-10 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white/90 backdrop-blur-sm text-foreground shadow-md flex items-center justify-center hover:bg-white">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        </div> :
-
-      <div>
-          <button onClick={goBack} aria-label="Indietro" className="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-card border border-border shadow-sm text-foreground hover:bg-muted mb-3">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          {name && <h1 className="text-2xl font-bold text-foreground leading-tight">{prefix ? `${prefix} ${name}` : name}</h1>}
-          {caption && <p className="text-sm text-muted-foreground mt-1">{caption}</p>}
-        </div>
-      }
-
-      <div className="lg:grid lg:grid-cols-3 lg:gap-10 lg:items-start">
-        <div className="lg:col-span-2">
-          <BioBlock bio={bio} />
-        </div>
-        <aside className="space-y-6 mt-6 lg:mt-0">
+    <div className="rd-page">
+      <div className="prof-hero"><div className="hero-glow" /><div className="prof-hero-inner">
+        <div className="prof-text">
+          {prefix && <span className="kicker">{prefix}</span>}
+          <h1>{(name || '').split(' ').map((w, i, a) => <span key={i}>{w}{i < a.length - 1 && <br />}</span>)}</h1>
+          {caption && <span className="prof-role">{caption}</span>}
           {socials.length > 0 &&
-          <div style={cardStyle} className={`relative overflow-hidden border-t border-border pt-6 lg:border-t-0 lg:pt-0 lg:border lg:border-border lg:rounded-2xl lg:p-5 ${cardStyle ? '' : ''}`}>
-              <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent hidden lg:block" />
-              <h3 className="relative text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Contatti</h3>
-              <div className="relative flex items-center gap-3">
-                {socials.map((s) => {
-                const Icon = s.icon;
-                return (
-                  <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.key} className="w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground flex items-center justify-center transition-colors">
-                      <Icon className="w-4 h-4" />
-                    </a>);
-
-              })}
-              </div>
-            </div>
-          }
-
-          {ownPosts && ownPosts.length > 0 &&
-          <div style={cardStyle} className="relative overflow-hidden border-t border-border pt-6 lg:border-t-0 lg:pt-0 lg:border lg:border-border lg:rounded-2xl lg:p-5 space-y-3">
-              <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent hidden lg:block" />
-              <h3 className="relative text-sm font-semibold text-muted-foreground uppercase tracking-wide">Le sue notizie</h3>
-              <div className="relative space-y-3">
-                {ownPosts.map((p) =>
-              <Link key={p.id} to={`/articolo/${p.id}`} className="block group">
-                    <h4 className="text-sm font-semibold leading-snug text-foreground group-hover:text-primary line-clamp-2">{p.title}</h4>
-                    {p.published_date && <p className="text-[11px] text-muted-foreground mt-0.5">{format(new Date(p.published_date), 'd MMMM yyyy', { locale: it })}</p>}
-                  </Link>
-              )}
-              </div>
-            </div>
-          }
-
-          {otherProfiles.length > 0 &&
-          <div style={cardStyle} className="relative overflow-hidden border-t border-border pt-6 lg:border-t-0 lg:pt-0 lg:border lg:border-border lg:rounded-2xl lg:p-5 space-y-3">
-              <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent hidden lg:block" />
-              <h3 className="relative text-sm font-semibold text-muted-foreground uppercase tracking-wide">{getContent(content, 'team_related_label')}</h3>
-              <div className="relative flex gap-3 overflow-x-auto scrollbar-hide lg:flex-col lg:overflow-visible">
-                {otherProfiles.map((p) =>
-              <Link key={p.slot} to={`/in-evidenza/${p.slot}`} className="shrink-0 w-24 lg:w-full text-center lg:text-left lg:flex lg:items-center lg:gap-3 group">
-                    <div className="w-24 h-24 lg:w-12 lg:h-12 rounded-xl overflow-hidden bg-muted mb-1.5 lg:mb-0">
-                      <Image src={p.photo} fittingType="fill" alt={p.name || ''} className="w-full h-full transition-transform duration-300 group-hover:scale-105" />
-                    </div>
-                    {p.name && <p className="text-xs text-foreground line-clamp-2 group-hover:text-primary transition-colors">{p.name}</p>}
-                  </Link>
-              )}
-              </div>
-            </div>
-          }
-        </aside>
-      </div>
-
-      {relatedNews && relatedNews.length > 0 &&
-      <div className="pt-6 border-t border-border space-y-5">
-          <h3 className="text-xl font-serif font-bold text-foreground border-b-2 border-primary pb-2 inline-block">Potrebbero interessarti</h3>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {relatedNews.map((p) => {
-            const date = p.published_date ? format(new Date(p.published_date), 'd MMMM yyyy', { locale: it }) : '';
-            return (
-              <Link key={p.id} to={`/articolo/${p.id}`} style={cardStyle} className={`relative overflow-hidden block group border border-border rounded-xl p-3 ${cardStyle ? '' : 'bg-card'}`}>
-                  <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/10 to-transparent" />
-                  {p.image_url &&
-                <div className="aspect-video rounded-lg overflow-hidden bg-muted mb-2">
-                      <Image src={p.image_url} fittingType="fill" alt={p.title} className="w-full h-full transition-transform duration-300 group-hover:scale-105" />
-                    </div>
-                }
-                  <span className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ${CATEGORIES[p.category]?.badge || 'text-primary'}`}>
-                    {getCategoryLabel(content, p.category)}
-                  </span>
-                  <h4 className="text-base font-serif font-bold leading-snug text-foreground group-hover:text-primary transition-colors mt-1.5 line-clamp-2">{p.title}</h4>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    {date && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{date}</span>}
-                    {p.author && <span>di <span className="font-semibold">{p.author.toUpperCase()}</span></span>}
-                  </div>
-                </Link>);
-
-          })}
-          </div>
+          <div className="prof-pills">{socials.map((s) => <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer">{s.label}</a>)}</div>}
         </div>
-      }
-    </div>);
+        {detailPhoto && <div className="prof-photo"><img src={detailPhoto} alt={name || ''} /></div>}
+      </div></div>
 
+      <div className="wrap-wide">
+        <div className="prof-body">
+          <div>
+            {sections.length > 0 ? sections.map((s, i) =>
+            <div className="bio-sec" key={i}>
+                {s.title && <h2><span className="num">{String(i + 1).padStart(2, '0')}</span>{s.title}</h2>}
+                {s.items.map((it, j) => it.quote ?
+              <blockquote key={j} style={{ borderLeft: '4px solid var(--acc)', margin: '0 0 14px', padding: '4px 0 4px 18px', fontSize: 20, lineHeight: 1.4, fontStyle: 'italic' }}>{it.quote}</blockquote> :
+              <p key={j} style={{ whiteSpace: 'pre-line' }}>{it.p}</p>)}
+              </div>
+            ) :
+            <div className="bio-empty"><h3>Il profilo è in preparazione</h3><p>{name} non ha ancora pubblicato la sua presentazione. Nel frattempo trovi qui sotto le sue notizie.</p></div>}
+          </div>
+          <aside className="prof-aside">
+            {socials.length > 0 &&
+            <div className="side-box"><div className="side-title">Contatti</div>
+                <div className="info-list">{socials.map((s) => <div key={s.key}><b>{s.label}</b><a href={s.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 800, color: 'var(--acc)' }}>Apri ↗</a></div>)}</div>
+              </div>}
+            {otherProfiles.length > 0 &&
+            <div className="side-box"><div className="side-title">{content?.team_related_label || 'Altri profili'}</div>
+                {otherProfiles.map((p) =>
+              <Link key={p.slot} to={`/in-evidenza/${p.slot}`} className="mini-profile"><img src={p.photo} alt="" /><div><b>{p.name}</b><span>{p.caption}</span></div></Link>
+              )}
+              </div>}
+          </aside>
+        </div>
+
+        {ownPosts && ownPosts.length > 0 &&
+        <div className="sub-sec"><h2>Le sue notizie</h2><div className="mini-grid">{ownPosts.slice(0, 3).map((p) => <Card key={p.id} post={p} siteContent={content} />)}</div></div>}
+        {relatedNews && relatedNews.length > 0 &&
+        <div className="sub-sec" style={{ paddingBottom: 100 }}><h2>Potrebbero interessarti</h2><div className="mini-grid">{relatedNews.map((p) => <Card key={p.id} post={p} siteContent={content} />)}</div></div>}
+      </div>
+    </div>);
 }
