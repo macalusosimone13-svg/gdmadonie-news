@@ -129,7 +129,7 @@ export default function Home() {
   return (
     <PullToRefresh onRefresh={refresh}>
       <div>
-        <section className="hero" style={{ paddingTop: 70 }}>
+        <section className="hero">
           <div className="hero-glow" aria-hidden="true" />
           <div className="hero-inner">
             <span className="kicker">L'informazione dei Giovani Democratici delle Madonie</span>

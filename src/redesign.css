@@ -333,3 +333,10 @@
   .rd .article-detail h1 { font-size:clamp(1.7rem,4.4vw,2.6rem); line-height:1; margin:6px 0 4px; text-transform:none; }
   .rd .article-detail .ad-content p { font-size:18px; line-height:1.7; opacity:.9; white-space:pre-line; margin:0 0 16px; }
   .rd .article-detail .ad-external { margin-top:6px; }
+
+  /* desktop: hero + striscia scorrevole entrano tutti nella prima schermata */
+  @media (min-width:901px) and (min-height:560px){
+    .rd section.hero{ min-height:calc(100svh - 152px); max-height:calc(100svh - 152px); display:flex; align-items:center; justify-content:center; padding:20px 20px; }
+    .rd .hero h1{ font-size:clamp(2.6rem,min(9vw,13.5vh),5.6rem); }
+    .rd .hero-actions{ margin-top:clamp(18px,4vh,40px); }
+  }
