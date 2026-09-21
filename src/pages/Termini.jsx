@@ -17,7 +17,7 @@ export default function Termini() {
       </div></div>
       <div className="wrap" style={{ maxWidth: 820, paddingTop: 36, paddingBottom: 72 }}>
       <div className="prose prose-sm max-w-none text-foreground space-y-4 leading-relaxed legal-text">
-        <p><em>Ultimo aggiornamento: [05/09/26]</em></p>
+        <p><em>Ultimo aggiornamento: 05/09/2026</em></p>
         <h2 className="text-lg font-semibold">Natura del sito</h2>
         <p>GD Madonie News è un sito di informazione gestito da Giovani Democratici Madonie che pubblica comunicati ed eventi propri e aggrega, a scopo informativo, notizie politiche da fonti terze tramite feed RSS pubblici, con link diretto alla fonte originale.</p>
         <h2 className="text-lg font-semibold">Contenuti di terze parti</h2>

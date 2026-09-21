@@ -17,10 +17,10 @@ export default function Privacy() {
       </div></div>
       <div className="wrap" style={{ maxWidth: 820, paddingTop: 36, paddingBottom: 72 }}>
       <div className="prose prose-sm max-w-none text-foreground space-y-4 leading-relaxed legal-text">
-        <p><em>Ultimo aggiornamento: [05/09/26]</em></p>
+        <p><em>Ultimo aggiornamento: 05/09/2026</em></p>
 
         <h2 className="text-lg font-semibold">Titolare del trattamento</h2>
-        <p>Il titolare del trattamento dei dati raccolti tramite questo sito è Giovani Democratici Madonie, contattabile all'indirizzo [gdmadonie@gmail.com].</p>
+        <p>Il titolare del trattamento dei dati raccolti tramite questo sito è Giovani Democratici Madonie, contattabile all'indirizzo <a href="mailto:gdmadonie@gmail.com" className="text-primary underline">gdmadonie@gmail.com</a>.</p>
 
         <h2 className="text-lg font-semibold">Dati raccolti</h2>
         <p>Il sito raccoglie dati forniti volontariamente dall'utente in fase di registrazione (nome, email) e dati di navigazione tramite cookie tecnici e, se attivi, cookie pubblicitari di terze parti (Google AdSense).</p>
@@ -35,7 +35,7 @@ export default function Privacy() {
         <p>I dati sono trattati per consentire la registrazione e l'accesso all'area riservata, l'invio di notifiche relative a nuovi contenuti ed eventi, e per finalità statistiche e pubblicitarie.</p>
 
         <h2 className="text-lg font-semibold">Diritti dell'utente</h2>
-        <p>L'utente può cancellare in autonomia il proprio account e i dati collegati in qualsiasi momento dalla sezione del proprio profilo, tramite l'opzione "Elimina account". Per richieste di accesso o rettifica dei dati, può scrivere a gdmadonie@gmail.com.</p>
+        <p>L'utente può cancellare in autonomia il proprio account e i dati collegati in qualsiasi momento dalla sezione del proprio profilo, tramite l'opzione "Elimina account". Per richieste di accesso o rettifica dei dati, può scrivere a <a href="mailto:gdmadonie@gmail.com" className="text-primary underline">gdmadonie@gmail.com</a>.</p>
       </div>
       </div>
     </div>
