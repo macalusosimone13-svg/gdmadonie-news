@@ -173,7 +173,7 @@ export default function TestataManager() {
             <div className="w-12 h-12 rounded-lg border border-border bg-card flex items-center justify-center overflow-hidden shrink-0">
               {form.logo_url ? <img src={form.logo_url} alt="logo" className="w-full h-full object-contain" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
             </div>
-            <input value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder="URL logo (https://...)" className={field} type="url" />
+            <input value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder="URL logo (https://...)" className={`${field} min-w-0`} type="url" />
             <label className="inline-flex items-center gap-1.5 text-xs font-medium text-primary cursor-pointer whitespace-nowrap px-3 py-2.5 min-h-[44px] border border-border rounded-lg hover:bg-muted">
               {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               Carica
