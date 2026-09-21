@@ -384,3 +384,4 @@
     .rd .schip.active{ background:var(--acc); }
     .sel-source{ display:inline; }
   }
+  .rd .back-feed.always{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%; background:var(--tint); color:var(--notte); margin-right:10px; flex-shrink:0; } .rd .back-feed.always + .logo{ margin-right:auto; }

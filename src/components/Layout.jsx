@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getCurrentUser } from '@/lib/supabaseAuth';
 import { sb44 } from '@/api/supabaseEntities';
 import UserAvatar from '@/components/UserAvatar';
+import { useBackTarget } from '@/lib/backTarget';
 import { useUxConfig } from '@/lib/UxConfigContext';
 
 // Pagine gia' riprogettate col nuovo stile: hanno il loro contenitore.
@@ -22,6 +23,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { config: ux } = useUxConfig();
+  const backTarget = useBackTarget();
 
   useEffect(() => {
     getCurrentUser().then((u) => { setUser(u); }).catch(() => {}).finally(() => setAuthChecked(true));
@@ -61,7 +63,7 @@ export default function Layout() {
       {ux.show_banner && ux.banner_text && <div className="banner">{ux.banner_text}</div>}
       <header className="site" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="header-inner">
-          {location.pathname !== '/' && <Link to="/" className="back-feed" aria-label="Torna al Feed"><ArrowLeft size={20} /></Link>}
+          {location.pathname !== '/' && <Link to={location.pathname.startsWith('/evento') ? '/gd-madonie' : (/^\/(post|articolo)\//.test(location.pathname) && backTarget) || '/'} className={`back-feed ${/^\/(post|articolo|evento)\//.test(location.pathname) ? 'always' : ''}`} aria-label={/^\/(post|articolo|evento)\//.test(location.pathname) ? 'Torna alla sezione' : 'Torna al Feed'}><ArrowLeft size={20} /></Link>}
           <Link to="/" className="logo" aria-label="GD Madonie News - Feed">
             <div className="logo-text">GD MADONIE<span>NEWS</span></div>
           </Link>

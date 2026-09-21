@@ -89,9 +89,6 @@ export default function EventDetail() {
 
   return (
     <div className="space-y-5">
-      <Link to="/gd-madonie" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
-        <ArrowLeft className="w-4 h-4" /> Indietro
-      </Link>
       {event.image_url && (
         <div className="flex justify-center">
           <img

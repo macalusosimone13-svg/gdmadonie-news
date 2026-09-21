@@ -8,7 +8,8 @@ import { useSiteContent } from '@/lib/useSiteContent';
 import { getContent } from '@/lib/siteContent';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { ArrowLeft, ExternalLink, Calendar, User, Download, Share2, Pencil, Instagram, Loader2, Trash2 } from 'lucide-react';
+import { setBackTarget, sectionForPost } from '@/lib/backTarget';
+import { ExternalLink, Calendar, User, Download, Share2, Pencil, Instagram, Loader2, Trash2 } from 'lucide-react';
 import { markRead } from '@/lib/readArticles';
 import { cleanExcerpt } from '@/lib/cleanText';
 import SourceBadge from '@/components/SourceBadge';
@@ -133,6 +134,7 @@ export default function PostDetail() {
     return () => {document.getElementById(SCRIPT_ID)?.remove();};
   }, [post]);
 
+  useEffect(() => { setBackTarget(sectionForPost(post)); return () => setBackTarget(null); }, [post?.category, post?.source_type]);
   if (loading) return (
     <div className="space-y-5">
       <Skeleton className="h-4 w-20 rounded-full" />
@@ -276,19 +278,12 @@ export default function PostDetail() {
         const items = post.media && post.media.length ? post.media : post.image_url ? [{ url: post.image_url, type: post.media_type, orientation: post.media_orientation, poster_url: post.poster_url }] : [];
         if (!items.length) {
           return (
-            <div>
-              <button onClick={goBack} aria-label="Indietro" className="inline-flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-card border border-border shadow-sm text-foreground hover:bg-muted">
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-            </div>);
+            <div />);
 
         }
         return (
           <div className="rounded-[28px] overflow-hidden relative">
             <MediaCarousel items={items} alt={post.title} badge={{ label: getCategoryLabel(content, post.category), className: cat.badge }} />
-            <button onClick={goBack} aria-label="Indietro" className="absolute top-3 left-3 z-[35] w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white/90 backdrop-blur-sm text-foreground shadow-md ring-1 ring-black/5 flex items-center justify-center hover:bg-white">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
           </div>);
 
       })()}
