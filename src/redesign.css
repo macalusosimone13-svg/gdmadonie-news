@@ -444,3 +444,4 @@
 .rd .logo-news-only b{font-weight:900}
 .rd .assist-logo{ display:block; margin-bottom:14px; position:relative; }
 .rd .icon-btn.assist-btn:hover{ background:#dfe6f8; }
+.rd .icon-btn.assist-btn{ transition:background .2s, transform .2s ease; } .rd .icon-btn.assist-btn:hover{ transform:scale(1.12); }
