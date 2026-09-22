@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
-import { Sparkles, Send, Search, Check, Loader2, ExternalLink, Download, PenLine, X, Eye, Trash2 } from 'lucide-react';
+import { Sparkles, Send, Search, Check, Loader2, ExternalLink, Download, PenLine, X, Eye, Trash2, Paperclip, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
@@ -57,7 +57,7 @@ async function generateAI(payload) {
 // è così che funziona l'anteprima "sul sito vero" senza pubblicare per
 // davvero. Se esiste già un id, si aggiorna quel post invece di crearne un
 // altro ogni volta che si guarda l'anteprima.
-async function saveNewsGDPost({ id, title, body, imageBlob, status }) {
+async function saveNewsGDPost({ id, title, body, imageBlob, status, attachmentUrl, attachmentName }) {
   let media;
   if (imageBlob) {
     const file = new File([imageBlob], `news-gd-${Date.now()}.png`, { type: 'image/png' });
@@ -73,7 +73,11 @@ async function saveNewsGDPost({ id, title, body, imageBlob, status }) {
     source_type: 'gd_madonie',
     status,
     published_date: new Date().toISOString(),
-    ...(media ? { image_url: media.url, media_type: 'image', media_orientation: 'vertical', media: [media] } : {})
+    ...(media ? { image_url: media.url, media_type: 'image', media_orientation: 'vertical', media: [media] } : {}),
+    // Link o file allegato (es. il PDF del documento commentato): stesso
+    // meccanismo gia' usato dal resto dell'Admin (PostForm), reso disponibile
+    // anche qui - compare sotto il testo come bottone "Scarica allegato".
+    ...(attachmentUrl ? { attachment_url: attachmentUrl, attachment_name: attachmentName || 'Leggi il documento' } : {})
   };
   const saved = id ? await sb44.entities.Post.update(id, payload) : await sb44.entities.Post.create(payload);
   if (status === 'published') {
@@ -106,6 +110,9 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewBlob, setPreviewBlob] = useState(null);
   const [previewBusy, setPreviewBusy] = useState(false);
+  const [attachUrl, setAttachUrl] = useState('');
+  const [attachName, setAttachName] = useState('');
+  const [attachUploading, setAttachUploading] = useState(false);
   const objUrl = useRef(null);
 
   useEffect(() => {
@@ -117,6 +124,8 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     setPublished(null);
     setPostId(null);
     setFmt('post');
+    setAttachUrl('');
+    setAttachName('');
     setEditing(!!startBlank);
     // Se veniamo dalla rassegna, o abbiamo già un argomento, l'IA parte
     // subito da sola: un click in meno.
@@ -176,6 +185,21 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     return () => { cancelled = true; clearTimeout(t); };
   }, [open, fmt, title, body, sourceArticle]);
 
+  // Carica un file (PDF o foto) come allegato: stesso helper usato altrove
+  // sul sito, cosi' l'admin puo' anche non avere gia' un link pronto.
+  const uploadAttachment = async (file) => {
+    if (!file) return;
+    setAttachUploading(true); setError(null);
+    try {
+      const { file_url } = await uploadFile(file);
+      setAttachUrl(file_url);
+      setAttachName(file.name);
+    } catch (e) {
+      setError('Caricamento allegato non riuscito');
+    }
+    setAttachUploading(false);
+  };
+
   const downloadPng = () => {
     if (!previewBlob) return;
     const a = document.createElement('a');
@@ -190,7 +214,7 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     if (!title.trim() || !body.trim()) return;
     setPublishing(true); setError(null);
     try {
-      const saved = await saveNewsGDPost({ id: postId, title, body, imageBlob: previewBlob, status: 'published' });
+      const saved = await saveNewsGDPost({ id: postId, title, body, imageBlob: previewBlob, status: 'published', attachmentUrl: attachUrl, attachmentName: attachName });
       setPostId(saved.id);
       setPublished(saved);
       onPublished?.();
@@ -208,7 +232,7 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     if (!title.trim() || !body.trim()) return;
     setPreviewingSite(true); setError(null);
     try {
-      const saved = await saveNewsGDPost({ id: postId, title, body, imageBlob: previewBlob, status: 'draft' });
+      const saved = await saveNewsGDPost({ id: postId, title, body, imageBlob: previewBlob, status: 'draft', attachmentUrl: attachUrl, attachmentName: attachName });
       setPostId(saved.id);
       window.open(`/articolo/${saved.id}`, '_blank', 'noopener,noreferrer');
     } catch (e) {
@@ -264,6 +288,26 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titolo" className="font-semibold" />
               <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={9} placeholder="Testo del post..." />
               <p className="text-[11px] text-muted-foreground">{body.length} caratteri — puoi modificare tutto prima di pubblicare.</p>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Link o file allegato (facoltativo)</label>
+                {attachUrl ?
+                <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2 text-sm">
+                    <Paperclip className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
+                    <span className="truncate flex-1">{attachName || attachUrl}</span>
+                    <button type="button" onClick={() => { setAttachUrl(''); setAttachName(''); }} aria-label="Rimuovi allegato" className="text-muted-foreground hover:text-red-600 flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
+                  </div> :
+
+                <div className="flex gap-2">
+                    <Input value={attachUrl} onChange={(e) => setAttachUrl(e.target.value)} placeholder="Incolla un link — es. il PDF del documento" className="text-sm" />
+                    <label className={`${PILL_SECONDARY} !min-h-[40px] !px-3 text-xs cursor-pointer flex-shrink-0`} title="Oppure carica un file (PDF o foto)">
+                      {attachUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                      <input type="file" accept="application/pdf,image/*" className="hidden" disabled={attachUploading} onChange={(e) => uploadAttachment(e.target.files[0])} />
+                    </label>
+                  </div>
+                }
+                <p className="text-[11px] text-muted-foreground leading-snug">Comparirà sotto il post come bottone "{attachName || 'Scarica allegato'}" — usalo per rimandare al testo integrale (PDF), a una fonte o a una foto.</p>
+              </div>
             </div>
 
             <div className="space-y-2">
