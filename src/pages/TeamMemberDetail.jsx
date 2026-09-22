@@ -6,6 +6,7 @@ import { useSiteContent } from '@/lib/useSiteContent';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
 import { Card } from '@/components/redesign/Cards';
+import { sized, fallbackTo } from '@/lib/imgSize';
 
 // Il testo del profilo puo' avere titoletti ("## ...") e citazioni ("> ...").
 // I titoletti diventano sezioni numerate.
@@ -97,7 +98,7 @@ export default function TeamMemberDetail() {
           {socials.length > 0 &&
           <div className="prof-pills">{socials.map((s) => <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer">{s.label}</a>)}</div>}
         </div>
-        {detailPhoto && <div className="prof-photo"><img src={detailPhoto} alt={name || ''} /></div>}
+        {detailPhoto && <div className="prof-photo"><img src={sized(detailPhoto, 700)} onError={fallbackTo(detailPhoto)} alt={name || ''} /></div>}
       </div></div>
 
       <div className="wrap-wide">
@@ -117,7 +118,7 @@ export default function TeamMemberDetail() {
             {otherProfiles.length > 0 &&
             <div className="side-box"><div className="side-title">{content?.team_related_label || 'Altri profili'}</div>
                 {otherProfiles.map((p) =>
-              <Link key={p.slot} to={`/in-evidenza/${p.slot}`} className="mini-profile"><img src={p.photo} alt="" /><div><b>{p.name}</b><span>{p.caption}</span></div></Link>
+              <Link key={p.slot} to={`/in-evidenza/${p.slot}`} className="mini-profile"><img src={sized(p.photo, 150)} onError={fallbackTo(p.photo)} alt="" /><div><b>{p.name}</b><span>{p.caption}</span></div></Link>
               )}
               </div>}
           </aside>
