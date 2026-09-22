@@ -147,6 +147,11 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
         category: 'News GD',
         title,
         bodyText: body,
+        // Se veniamo da una notizia di rassegna con una sua foto, la si usa
+        // come sfondo (come le condivisioni degli altri articoli del sito):
+        // così la locandina mostra subito di cosa parla la notizia, non solo
+        // il nostro commento.
+        imageUrl: sourceArticle?.image_url || undefined,
         logoUrl: null,
         ...NEWS_GD_BRAND
       }).then((b) => {
@@ -159,7 +164,7 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
       }).finally(() => !cancelled && setPreviewBusy(false));
     }, 450);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [open, fmt, title, body]);
+  }, [open, fmt, title, body, sourceArticle]);
 
   const downloadPng = () => {
     if (!previewBlob) return;
