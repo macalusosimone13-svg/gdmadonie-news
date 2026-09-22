@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
-import { Sparkles, Send, Search, Check, Loader2, ExternalLink, Download, PenLine, X, Eye, Trash2, Paperclip, Upload, RefreshCw } from 'lucide-react';
+import { Sparkles, Send, Search, Check, Loader2, ExternalLink, Download, PenLine, X, Eye, Trash2, Paperclip, Upload, RefreshCw, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
@@ -57,7 +57,7 @@ async function generateAI(payload) {
 // è così che funziona l'anteprima "sul sito vero" senza pubblicare per
 // davvero. Se esiste già un id, si aggiorna quel post invece di crearne un
 // altro ogni volta che si guarda l'anteprima.
-async function saveNewsGDPost({ id, title, body, imageBlob, status, attachmentUrl, attachmentName }) {
+async function saveNewsGDPost({ id, title, body, imageBlob, status, attachmentUrl, attachmentName, publishedDate }) {
   let media;
   if (imageBlob) {
     const file = new File([imageBlob], `news-gd-${Date.now()}.png`, { type: 'image/png' });
@@ -72,7 +72,10 @@ async function saveNewsGDPost({ id, title, body, imageBlob, status, attachmentUr
     author: 'GD Madonie',
     source_type: 'gd_madonie',
     status,
-    published_date: new Date().toISOString(),
+    // Per "programma pubblicazione" published_date e' nel futuro: il post
+    // resta invisibile (status 'scheduled') finche' un job automatico non
+    // lo porta a 'published' da solo, esattamente a quell'ora.
+    published_date: publishedDate || new Date().toISOString(),
     ...(media ? { image_url: media.url, media_type: 'image', media_orientation: 'vertical', media: [media] } : {}),
     // Link o file allegato (es. il PDF del documento commentato): stesso
     // meccanismo gia' usato dal resto dell'Admin (PostForm), reso disponibile
@@ -102,6 +105,9 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
   const [error, setError] = useState(null);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(null);
+  const [scheduleMode, setScheduleMode] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState('');
+  const [scheduled, setScheduled] = useState(null);
   // Id del post già salvato (come bozza per l'anteprima, o pubblicato):
   // finché non è pubblicato, "Annulla" lo elimina di nuovo.
   const [postId, setPostId] = useState(null);
@@ -122,6 +128,9 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     setTopic(initialTopic || '');
     setError(null);
     setPublished(null);
+    setScheduled(null);
+    setScheduleMode(false);
+    setScheduleAt('');
     setPostId(null);
     setFmt('post');
     setAttachUrl('');
@@ -224,6 +233,33 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     setPublishing(false);
   };
 
+  // Invece di pubblicare subito, salva il post con l'orario scelto: resta
+  // invisibile a tutti (come una bozza) finche' un controllo automatico,
+  // ogni pochi minuti, non lo pubblica da solo esattamente a quell'ora.
+  const schedulePost = async () => {
+    if (!title.trim() || !body.trim() || !scheduleAt) return;
+    const when = new Date(scheduleAt);
+    if (Number.isNaN(when.getTime()) || when <= new Date()) { setError('Scegli un orario nel futuro.'); return; }
+    setPublishing(true); setError(null);
+    try {
+      const saved = await saveNewsGDPost({ id: postId, title, body, imageBlob: previewBlob, status: 'scheduled', attachmentUrl: attachUrl, attachmentName: attachName, publishedDate: when.toISOString() });
+      setPostId(saved.id);
+      setScheduled(saved);
+      onPublished?.(saved);
+    } catch (e) {
+      setError(e.message);
+    }
+    setPublishing(false);
+  };
+
+  // Orario minimo selezionabile per la programmazione (tra 5 minuti da ora),
+  // nel formato richiesto dall'input datetime-local (ora locale del browser).
+  const minScheduleLocal = () => {
+    const d = new Date(Date.now() + 5 * 60000);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   // Salva come bozza (invisibile a tutti tranne l'admin, per via delle
   // regole del sito) e apre la pagina vera dell'articolo in un'altra
   // scheda: è la stessa identica pagina che vedrebbero i visitatori,
@@ -244,7 +280,7 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
   // "Annulla e scarta": se avevamo già salvato una bozza (per l'anteprima)
   // la elimina, cosi' non resta nulla in giro; poi chiude la finestra.
   const discardAndClose = async () => {
-    if (postId && !published) {
+    if (postId && !published && !scheduled) {
       try { await sb44.entities.Post.delete(postId); } catch {}
     }
     onClose();
@@ -329,13 +365,40 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
           </div>
         }
 
+        {editing && !published && !scheduled &&
+        <div className="space-y-2">
+            {!scheduleMode ?
+          <button type="button" onClick={() => setScheduleMode(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground px-2">
+                <Clock className="w-3.5 h-3.5" /> Programma per dopo, invece di pubblicare subito
+              </button> :
+
+          <div className="flex flex-wrap items-center gap-2 bg-muted rounded-xl p-3">
+              <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <input type="datetime-local" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} min={minScheduleLocal()} className="text-sm bg-white border border-border rounded-lg px-2 py-1.5" />
+              <button type="button" onClick={() => { setScheduleMode(false); setScheduleAt(''); }} className="text-xs text-muted-foreground hover:text-foreground underline ml-auto">Annulla programmazione</button>
+            </div>
+          }
+          </div>
+        }
+
         {editing &&
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+          {scheduled ?
+          <p className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700 px-1">
+              <Check className="w-4 h-4" /> Programmato per {format(new Date(scheduled.published_date), "d MMMM 'alle' HH:mm", { locale: it })}
+            </p> :
+          scheduleMode ?
+          <button type="button" onClick={schedulePost} disabled={publishing || !title.trim() || !body.trim() || !scheduleAt} className={PILL_PRIMARY}>
+              {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
+              Programma pubblicazione
+            </button> :
+
           <button type="button" onClick={publish} disabled={publishing || !title.trim() || !body.trim()} className={PILL_PRIMARY}>
-            {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : published ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-            {published ? 'Pubblicato su News GD' : 'Pubblica su News GD'}
-          </button>
-          {!published &&
+              {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : published ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+              {published ? 'Pubblicato su News GD' : 'Pubblica su News GD'}
+            </button>
+          }
+          {!published && !scheduled &&
           <button type="button" onClick={previewOnSite} disabled={previewingSite || !title.trim() || !body.trim()} className={PILL_SECONDARY} title="Si apre come sul sito vero, ma la vedi solo tu finché non pubblichi">
               {previewingSite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
               Anteprima sul sito
@@ -346,7 +409,12 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
               Vedi il post <ExternalLink className="w-3.5 h-3.5" />
             </a>
           }
-          {!published &&
+          {scheduled &&
+          <a href={`/articolo/${scheduled.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-[#2F5BD8] font-bold hover:underline px-2" title="Lo vedi solo tu finché non viene pubblicato">
+              Vedi l'anteprima <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          }
+          {!published && !scheduled &&
           <button type="button" onClick={discardAndClose} className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 px-2 ml-auto">
               <Trash2 className="w-3.5 h-3.5" /> Annulla e scarta
             </button>
@@ -509,6 +577,7 @@ function PubblicatiTab() {
                 <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                   {p.status === 'draft' && <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Bozza</span>}
+                  {p.status === 'scheduled' && <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[#EAF0FD] text-[#2F5BD8]">Programmato</span>}
                   {p.published_date ? format(new Date(p.published_date), 'd MMM yyyy, HH:mm', { locale: it }) : ''}
                 </p>
               </div>
@@ -523,7 +592,7 @@ function PubblicatiTab() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminare questo post da News GD?</AlertDialogTitle>
-            <AlertDialogDescription>{pendingDelete?.status === 'draft' ? 'È una bozza, non ancora visibile ai visitatori.' : 'Non sarà più visibile sul sito.'} Non si può annullare.</AlertDialogDescription>
+            <AlertDialogDescription>{pendingDelete?.status === 'draft' ? 'È una bozza, non ancora visibile ai visitatori.' : pendingDelete?.status === 'scheduled' ? 'È programmato ma non è ancora uscito.' : 'Non sarà più visibile sul sito.'} Non si può annullare.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annulla</AlertDialogCancel>
