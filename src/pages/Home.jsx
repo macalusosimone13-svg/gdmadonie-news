@@ -16,7 +16,11 @@ import { Newsletter, FollowStats } from '@/components/redesign/SideBoxes';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
-const GD_CATS = ['comunicato', 'news_gd', 'proposta', 'approfondimento'];
+// Il Feed (homepage) mostra solo i comunicati veri e propri del circolo:
+// le "News GD" (le notizie regionali riprese e riscritte dall'IA) hanno
+// una loro sezione a parte (menu "GD Madonie" > "News GD"), esattamente
+// come gia' separato nella pagina GDMadonie.jsx — qui non vanno mescolate.
+const GD_CATS = ['comunicato'];
 const TOPICS = 'SPOPOLAMENTO · SANITÀ · TRASPORTI · LAVORO · SCUOLA · AREE INTERNE · DIRITTI · AMBIENTE ·';
 
 function Featured({ post, isEvent, siteContent }) {
