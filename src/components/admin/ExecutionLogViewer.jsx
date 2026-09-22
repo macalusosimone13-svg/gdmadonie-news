@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
 import { RefreshCw, Loader2, CheckCircle2, AlertTriangle, XCircle, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
@@ -15,7 +14,10 @@ export default function ExecutionLogViewer() {
     let sbLogs = [];
     let base44Logs = [];
     try { sbLogs = await sb44.entities.ExecutionLog.list('-run_date', 20); } catch { /* ignora */ }
-    try { base44Logs = await base44.entities.ExecutionLog.list('-run_date', 20); } catch { /* Base44 non più raggiungibile: va bene, restano comunque i log di Supabase */ }
+    try {
+      const { base44 } = await import('@/api/base44Client');
+      base44Logs = await base44.entities.ExecutionLog.list('-run_date', 20);
+    } catch { /* Base44 non più raggiungibile: va bene, restano comunque i log di Supabase */ }
     const merged = [...(sbLogs || []), ...(base44Logs || [])]
       .sort((a, b) => new Date(b.run_date || 0) - new Date(a.run_date || 0))
       .slice(0, 20);
