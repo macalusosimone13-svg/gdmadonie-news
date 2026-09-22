@@ -20,7 +20,9 @@ export default function Layout() {
   const [socialLinks, setSocialLinks] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
+  const [gdOpen, setGdOpen] = useState(false);
   const ddRef = useRef(null);
+  const gdRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { config: ux } = useUxConfig();
@@ -45,10 +47,13 @@ export default function Layout() {
     });
   }, [location.pathname, location.search]);
 
-  useEffect(() => { setMenuOpen(false); setNewsOpen(false); }, [location.pathname]);
+  useEffect(() => { setMenuOpen(false); setNewsOpen(false); setGdOpen(false); }, [location.pathname]);
 
   useEffect(() => {
-    const onDoc = (e) => { if (ddRef.current && !ddRef.current.contains(e.target)) setNewsOpen(false); };
+    const onDoc = (e) => {
+      if (ddRef.current && !ddRef.current.contains(e.target)) setNewsOpen(false);
+      if (gdRef.current && !gdRef.current.contains(e.target)) setGdOpen(false);
+    };
     document.addEventListener('click', onDoc);
     return () => document.removeEventListener('click', onDoc);
   }, []);
@@ -72,6 +77,15 @@ export default function Layout() {
           </Link>
           <nav className="main-nav" aria-label="Navigazione principale">
             <NavLink to="/" end className={linkCls}>Feed</NavLink>
+            <div className="nav-dropdown" ref={gdRef}>
+              <NavLink to="/gd-madonie" className={linkCls}>GD Madonie</NavLink>
+              <span className="nav-dropdown-chevron" role="button" aria-label="Scegli tra Comunicati, News GD o Eventi" onClick={(e) => { e.stopPropagation(); setGdOpen((o) => !o); }}>▾</span>
+              <div className={`nav-dropdown-menu ${gdOpen ? 'open' : ''}`}>
+                <a onClick={() => navigate('/gd-madonie?tab=comunicati')}>Comunicati</a>
+                <a onClick={() => navigate('/gd-madonie?tab=news')}>News GD</a>
+                <a onClick={() => navigate('/gd-madonie?tab=eventi')}>Eventi</a>
+              </div>
+            </div>
             {showNews &&
             <div className="nav-dropdown" ref={ddRef}>
                 <NavLink to="/rassegna-stampa" className={linkCls}>News</NavLink>
@@ -101,6 +115,10 @@ export default function Layout() {
       </header>
       <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
         <Link to="/">Feed</Link>
+        <Link to="/gd-madonie">GD Madonie</Link>
+        <Link className="sub" to="/gd-madonie?tab=comunicati">Comunicati</Link>
+        <Link className="sub" to="/gd-madonie?tab=news">News GD</Link>
+        <Link className="sub" to="/gd-madonie?tab=eventi">Eventi</Link>
         {showNews && <Link to="/rassegna-stampa">News</Link>}
         <Link className="sub" to="/rassegna-stampa/nazionale">Nazionale</Link>
         <Link className="sub" to="/rassegna-stampa/regionale">Regionale</Link>
