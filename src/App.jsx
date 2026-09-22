@@ -11,10 +11,6 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import Layout from '@/components/Layout';
 import AdminRoute from '@/components/AdminRoute';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import ForgotPassword from '@/pages/ForgotPassword';
-import ResetPassword from '@/pages/ResetPassword';
 import { UxConfigProvider } from '@/lib/UxConfigContext';
 
 
@@ -64,6 +60,13 @@ const Termini = lazyRetry(() => import('@/pages/Termini'));
 const TeamMemberDetail = lazyRetry(() => import('@/pages/TeamMemberDetail'));
 const ChiSiamo = lazyRetry(() => import('@/pages/ChiSiamo'));
 const Sondaggi = lazyRetry(() => import('@/pages/Sondaggi'));
+// Pagine di accesso: pochi visitatori le aprono rispetto a chi legge le
+// notizie, quindi anche queste si scaricano solo quando servono davvero
+// invece di appesantire il caricamento iniziale di tutto il sito.
+const Login = lazyRetry(() => import('@/pages/Login'));
+const Register = lazyRetry(() => import('@/pages/Register'));
+const ForgotPassword = lazyRetry(() => import('@/pages/ForgotPassword'));
+const ResetPassword = lazyRetry(() => import('@/pages/ResetPassword'));
 
 const PageSpinner = () => (
   <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#FFFDF9' }}>
