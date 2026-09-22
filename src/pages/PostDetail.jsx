@@ -79,7 +79,7 @@ export default function PostDetail() {
           onSupabase = false;
         }
         if (!p) { setLoadError(true); }
-        if (p && p.status === 'draft') {
+        if (p && p.status !== 'published') {
           let admin = false;
           try {const u = await getCurrentUser();admin = u?.role === 'admin' || u?.role === 'editor';} catch {}
           if (!admin) {setPost(null);setLoading(false);return;}
