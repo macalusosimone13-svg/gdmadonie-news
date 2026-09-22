@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
 import { supabase } from '@/lib/supabaseClient';
 import { getCurrentUser } from '@/lib/supabaseAuth';
@@ -69,6 +68,13 @@ export default function PostDetail() {
 
   const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 
+  // Il vecchio sistema Base44 serve solo come ripiego per articoli
+  // vecchissimi mai passati a Supabase (ormai rarissimo). Caricarlo solo
+  // quando serve davvero, invece che sempre, toglie un pezzo pesante di
+  // codice dal caricamento di ogni singola notizia (la pagina piu' visitata
+  // del sito) — velocizza il sito senza cambiare come funziona.
+  const getBase44 = async () => (await import('@/api/base44Client')).base44;
+
   useEffect(() => {
     setLoadError(false);
     (async () => {
@@ -76,6 +82,7 @@ export default function PostDetail() {
         let p = await withTimeout(sb44.entities.Post.get(id), 9000).catch(() => null);
         let onSupabase = !!p;
         if (!p) {
+          const base44 = await getBase44();
           p = await withTimeout(base44.entities.Post.get(id), 6000).catch(() => null);
           onSupabase = false;
         }
@@ -97,7 +104,7 @@ export default function PostDetail() {
     setSavingNote(true);
     try {
       if (fromSupabase) await sb44.entities.Post.update(post.id, { editorial_note: noteDraft });
-      else await base44.entities.Post.update(post.id, { editorial_note: noteDraft });
+      else await (await getBase44()).entities.Post.update(post.id, { editorial_note: noteDraft });
       setPost({ ...post, editorial_note: noteDraft });
       setEditingNote(false);
     } catch {}
@@ -109,7 +116,7 @@ export default function PostDetail() {
     setDeleting(true);
     try {
       if (fromSupabase) await sb44.entities.Post.delete(post.id);
-      else await base44.entities.Post.delete(post.id);
+      else await (await getBase44()).entities.Post.delete(post.id);
       navigate('/rassegna-stampa');
     } catch {
       alert('Eliminazione non riuscita. Riprova.');
