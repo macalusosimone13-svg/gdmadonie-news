@@ -8,7 +8,8 @@ import { cleanExcerpt } from '@/lib/cleanText';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sparkles, Send, Search, Check, Loader2, ExternalLink, Download, PenLine, X } from 'lucide-react';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { Sparkles, Send, Search, Check, Loader2, ExternalLink, Download, PenLine, X, Eye, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
@@ -49,34 +50,38 @@ async function generateAI(payload) {
   return data;
 }
 
-// Pubblica su News GD: se c'è una locandina generata, la carica prima come
+// Salva su News GD: se c'è una locandina generata, la carica prima come
 // immagine di copertina del post (così l'articolo appare come tutti gli
-// altri sul sito: immagine sopra, testo sotto), poi crea il post.
-async function publishToNewsGD({ title, body, imageBlob }) {
+// altri sul sito: immagine sopra, testo sotto). Con status "draft" il post
+// esiste ma resta invisibile a chiunque non sia admin (regola del sito) —
+// è così che funziona l'anteprima "sul sito vero" senza pubblicare per
+// davvero. Se esiste già un id, si aggiorna quel post invece di crearne un
+// altro ogni volta che si guarda l'anteprima.
+async function saveNewsGDPost({ id, title, body, imageBlob, status }) {
   let media;
   if (imageBlob) {
     const file = new File([imageBlob], `news-gd-${Date.now()}.png`, { type: 'image/png' });
     const { file_url } = await uploadFile(file);
     media = { url: file_url, type: 'image', orientation: 'vertical' };
   }
-  const created = await sb44.entities.Post.create({
+  const payload = {
     title,
     content: body,
     excerpt: body.length > 220 ? body.slice(0, 217) + '…' : body,
     category: 'news_gd',
     author: 'GD Madonie',
     source_type: 'gd_madonie',
-    status: 'published',
+    status,
     published_date: new Date().toISOString(),
-    image_url: media?.url,
-    media_type: media ? 'image' : undefined,
-    media_orientation: media ? 'vertical' : undefined,
-    media: media ? [media] : undefined
-  });
-  try {
-    await supabase.functions.invoke('notify-new-post', { body: { post_id: created.id, app_url: window.location.origin } });
-  } catch {}
-  return created;
+    ...(media ? { image_url: media.url, media_type: 'image', media_orientation: 'vertical', media: [media] } : {})
+  };
+  const saved = id ? await sb44.entities.Post.update(id, payload) : await sb44.entities.Post.create(payload);
+  if (status === 'published') {
+    try {
+      await supabase.functions.invoke('notify-new-post', { body: { post_id: saved.id, app_url: window.location.origin } });
+    } catch {}
+  }
+  return saved;
 }
 
 // --- Finestra di scrittura -------------------------------------------
@@ -93,6 +98,10 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
   const [error, setError] = useState(null);
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(null);
+  // Id del post già salvato (come bozza per l'anteprima, o pubblicato):
+  // finché non è pubblicato, "Annulla" lo elimina di nuovo.
+  const [postId, setPostId] = useState(null);
+  const [previewingSite, setPreviewingSite] = useState(false);
   const [fmt, setFmt] = useState('post');
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewBlob, setPreviewBlob] = useState(null);
@@ -106,6 +115,7 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     setTopic(initialTopic || '');
     setError(null);
     setPublished(null);
+    setPostId(null);
     setFmt('post');
     setEditing(!!startBlank);
     // Se veniamo dalla rassegna, o abbiamo già un argomento, l'IA parte
@@ -180,8 +190,9 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     if (!title.trim() || !body.trim()) return;
     setPublishing(true); setError(null);
     try {
-      const created = await publishToNewsGD({ title, body, imageBlob: previewBlob });
-      setPublished(created);
+      const saved = await saveNewsGDPost({ id: postId, title, body, imageBlob: previewBlob, status: 'published' });
+      setPostId(saved.id);
+      setPublished(saved);
       onPublished?.();
     } catch (e) {
       setError(e.message);
@@ -189,8 +200,34 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     setPublishing(false);
   };
 
+  // Salva come bozza (invisibile a tutti tranne l'admin, per via delle
+  // regole del sito) e apre la pagina vera dell'articolo in un'altra
+  // scheda: è la stessa identica pagina che vedrebbero i visitatori,
+  // solo che finché resta una bozza la vedi soltanto tu.
+  const previewOnSite = async () => {
+    if (!title.trim() || !body.trim()) return;
+    setPreviewingSite(true); setError(null);
+    try {
+      const saved = await saveNewsGDPost({ id: postId, title, body, imageBlob: previewBlob, status: 'draft' });
+      setPostId(saved.id);
+      window.open(`/articolo/${saved.id}`, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      setError(e.message);
+    }
+    setPreviewingSite(false);
+  };
+
+  // "Annulla e scarta": se avevamo già salvato una bozza (per l'anteprima)
+  // la elimina, cosi' non resta nulla in giro; poi chiude la finestra.
+  const discardAndClose = async () => {
+    if (postId && !published) {
+      try { await sb44.entities.Post.delete(postId); } catch {}
+    }
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && discardAndClose()}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Scrivi su News GD</DialogTitle></DialogHeader>
 
@@ -243,6 +280,7 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
               <button type="button" onClick={downloadPng} disabled={!previewBlob} className={`${PILL_SECONDARY} w-full !min-h-[40px] text-xs`}>
                 <Download className="w-3.5 h-3.5" /> Scarica PNG
               </button>
+              <p className="text-[11px] text-muted-foreground leading-snug">Questa è solo la grafica di copertina. Per vedere l'intera pagina come apparirà sul sito, usa "Anteprima sul sito" qui sotto.</p>
             </div>
           </div>
         }
@@ -253,10 +291,21 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
             {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : published ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
             {published ? 'Pubblicato su News GD' : 'Pubblica su News GD'}
           </button>
+          {!published &&
+          <button type="button" onClick={previewOnSite} disabled={previewingSite || !title.trim() || !body.trim()} className={PILL_SECONDARY} title="Si apre come sul sito vero, ma la vedi solo tu finché non pubblichi">
+              {previewingSite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+              Anteprima sul sito
+            </button>
+          }
           {published &&
           <a href={`/articolo/${published.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-[#2F5BD8] font-bold hover:underline px-2">
               Vedi il post <ExternalLink className="w-3.5 h-3.5" />
             </a>
+          }
+          {!published &&
+          <button type="button" onClick={discardAndClose} className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 px-2 ml-auto">
+              <Trash2 className="w-3.5 h-3.5" /> Annulla e scarta
+            </button>
           }
         </div>
         }
@@ -369,6 +418,78 @@ function ScriviTuTab() {
     </div>);
 }
 
+// --- Tab "Pubblicati": tutti i post scritti da qui, con la possibilità di
+// eliminarli — le bozze lasciate a metà (dalle anteprime mai pubblicate)
+// compaiono qui con l'etichetta "Bozza", così non restano invisibili. ---
+function PubblicatiTab() {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    sb44.entities.Post.filter({ source_type: 'gd_madonie', category: 'news_gd' }, '-published_date', 60)
+      .then((data) => setPosts(data || []))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await sb44.entities.Post.delete(pendingDelete.id);
+      setPosts((prev) => prev.filter((p) => p.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch {}
+    setDeleting(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      {loading ?
+      <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div> :
+      posts.length === 0 ?
+      <p className="text-sm text-muted-foreground text-center py-10">Non hai ancora scritto nulla su News GD.</p> :
+
+      <div className="space-y-2">
+          {posts.map((p) =>
+          <div key={p.id} className="flex items-center gap-3 bg-card border border-border rounded-xl p-3">
+              {p.image_url ?
+            <img src={sized(p.image_url, 96)} onError={fallbackTo(p.image_url)} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" /> :
+
+            <div className="w-14 h-14 rounded-lg bg-muted flex-shrink-0" />
+            }
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  {p.status === 'draft' && <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Bozza</span>}
+                  {p.published_date ? format(new Date(p.published_date), 'd MMM yyyy, HH:mm', { locale: it }) : ''}
+                </p>
+              </div>
+              <a href={`/articolo/${p.id}`} target="_blank" rel="noopener noreferrer" aria-label="Vedi" title="Vedi" className="text-muted-foreground hover:text-primary p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><ExternalLink className="w-4 h-4" /></a>
+              <button onClick={() => setPendingDelete(p)} aria-label="Elimina" title="Elimina" className="text-red-500 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
+            </div>
+          )}
+        </div>
+      }
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminare questo post da News GD?</AlertDialogTitle>
+            <AlertDialogDescription>{pendingDelete?.status === 'draft' ? 'È una bozza, non ancora visibile ai visitatori.' : 'Non sarà più visibile sul sito.'} Non si può annullare.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Elimina</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>);
+}
+
 export default function RedazionePanel() {
   const [tab, setTab] = useState('rassegna');
 
@@ -377,7 +498,8 @@ export default function RedazionePanel() {
       <div className="flex bg-muted rounded-full p-1 text-sm font-medium w-fit">
         <button type="button" onClick={() => setTab('rassegna')} className={`px-4 py-2 rounded-full ${tab === 'rassegna' ? 'bg-[#2F5BD8] text-white' : 'text-muted-foreground'}`}>Rassegna</button>
         <button type="button" onClick={() => setTab('scrivitu')} className={`px-4 py-2 rounded-full ${tab === 'scrivitu' ? 'bg-[#2F5BD8] text-white' : 'text-muted-foreground'}`}>Scrivi tu</button>
+        <button type="button" onClick={() => setTab('pubblicati')} className={`px-4 py-2 rounded-full ${tab === 'pubblicati' ? 'bg-[#2F5BD8] text-white' : 'text-muted-foreground'}`}>Pubblicati</button>
       </div>
-      {tab === 'rassegna' ? <RassegnaTab /> : <ScriviTuTab />}
+      {tab === 'rassegna' ? <RassegnaTab /> : tab === 'scrivitu' ? <ScriviTuTab /> : <PubblicatiTab />}
     </div>);
 }
