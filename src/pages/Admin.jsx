@@ -23,6 +23,7 @@ import PollShareConfigManager from '@/components/admin/PollShareConfigManager';
 import CoalitionGroupManager from '@/components/admin/CoalitionGroupManager';
 import BackupManager from '@/components/admin/BackupManager';
 import RedazionePanel from '@/components/admin/RedazionePanel';
+import StatsPanel from '@/components/admin/StatsPanel';
 import { CATEGORIES } from '@/lib/categories';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -141,6 +142,9 @@ export default function Admin() {
     { group: 'Rassegna stampa', items: [
       { id: 'rss', label: 'Giornali e importazione', desc: 'Importa le notizie dai giornali e scegli quali testate mostrare.', show: isAdmin },
     ] },
+    { group: 'Statistiche', items: [
+      { id: 'statistiche', label: 'Cosa funziona meglio', desc: 'Le notizie più lette e più condivise, per capire cosa scrivere di più.', show: isAdmin },
+    ] },
     { group: 'Sondaggi', items: [
       { id: 'sondaggi', label: 'Sondaggi politici', desc: 'Inserisci e aggiorna i sondaggi.', show: isAdmin },
       { id: 'coalizioni', label: 'Coalizioni', desc: 'Quali partiti fanno parte di ogni coalizione.', show: isAdmin },
@@ -247,6 +251,7 @@ export default function Admin() {
         {isEditor && <TabsContent value="mia-pagina" className="mt-0"><MyTeamPageManager /></TabsContent>}
         {isAdmin && <>
                   <TabsContent value="redazione" className="mt-0"><RedazionePanel /></TabsContent>
+                  <TabsContent value="statistiche" className="mt-0"><StatsPanel /></TabsContent>
         <TabsContent value="rss" className="mt-0 space-y-4">
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-foreground mb-1">Aggregazione RSS</h3>
