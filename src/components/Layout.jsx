@@ -36,6 +36,40 @@ export default function Layout() {
     sb44.entities.SocialLink.list('sort_order', 50).then((data) => setSocialLinks((data || []).filter((l) => l.is_active))).catch(() => {});
   }, []);
 
+  // Scheda d'identita' del sito per Google (Organization + WebSite), uguale
+  // su ogni pagina: aiuta Google a capire chi siamo e puo' far comparire il
+  // nome "GD Madonie News" nei risultati di ricerca invece del solo
+  // indirizzo. Stesso meccanismo gia' usato per la scheda NewsArticle dei
+  // singoli articoli (PostDetail.jsx), inserito una sola volta qui.
+  useEffect(() => {
+    const SCRIPT_ID = 'ld-json-organization';
+    const data = {
+      '@context': 'https://schema.org',
+      '@graph': [
+      {
+        '@type': 'Organization',
+        name: 'Giovani Democratici Madonie',
+        url: 'https://www.gdmadonie-news.com',
+        logo: 'https://www.gdmadonie-news.com/favicon-512.png',
+        sameAs: (socialLinks || []).map((l) => l.url).filter(Boolean)
+      },
+      {
+        '@type': 'WebSite',
+        name: 'GD Madonie News',
+        url: 'https://www.gdmadonie-news.com'
+      }]
+
+    };
+    let el = document.getElementById(SCRIPT_ID);
+    if (!el) {
+      el = document.createElement('script');
+      el.type = 'application/ld+json';
+      el.id = SCRIPT_ID;
+      document.head.appendChild(el);
+    }
+    el.textContent = JSON.stringify(data);
+  }, [socialLinks]);
+
   // Il sito e' una single-page app: a ogni cambio di rotta si manda a mano un
   // evento di visualizzazione pagina a Google Analytics.
   useEffect(() => {
