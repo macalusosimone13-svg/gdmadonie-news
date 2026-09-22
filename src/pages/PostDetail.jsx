@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { sb44 } from '@/api/supabaseEntities';
+import { supabase } from '@/lib/supabaseClient';
 import { getCurrentUser } from '@/lib/supabaseAuth';
 import { CATEGORIES, getCategoryLabel } from '@/lib/categories';
 import { useSiteContent } from '@/lib/useSiteContent';
@@ -157,6 +158,24 @@ export default function PostDetail() {
   }, [post]);
 
   useEffect(() => { setBackTarget(sectionForPost(post)); return () => setBackTarget(null); }, [post?.category, post?.source_type]);
+
+  // Contatore letture per il cruscotto "cosa funziona meglio" (solo admin):
+  // una volta per sessione del browser per articolo, cosi' non si gonfia
+  // ricaricando la stessa pagina. Conta solo se il post e' davvero
+  // pubblicato (controllato anche lato server dalla function).
+  useEffect(() => {
+    if (!post?.id || post.status !== 'published') return;
+    try {
+      const key = `viewed:${post.id}`;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch {}
+    supabase.rpc('increment_post_view', { p_post_id: post.id }).catch(() => {});
+  }, [post?.id, post?.status]);
+
+  const trackShare = () => {
+    if (post?.id) supabase.rpc('increment_post_share', { p_post_id: post.id }).catch(() => {});
+  };
   useEffect(() => {
     if (!shareChoiceOpen || !post) return;
     let cancelled = false;
@@ -219,8 +238,8 @@ export default function PostDetail() {
   const shareWa = `https://wa.me/?text=${encodeURIComponent(`📰 *${post.title}*\n\nLeggi su GD Madonie News:\n${shareUrl}`)}`;
   const shareFb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
   const shareNative = async () => {
-    if (navigator.share) {try {await navigator.share({ title: post.title, url: shareUrl });} catch (e) {}} else
-    {navigator.clipboard?.writeText(shareUrl);alert('Link copizzato');}
+    if (navigator.share) {try {await navigator.share({ title: post.title, url: shareUrl });trackShare();} catch (e) {}} else
+    {navigator.clipboard?.writeText(shareUrl);alert('Link copizzato');trackShare();}
   };
 
   const isVideo = post ? (post.media?.[0]?.type || post.media_type) === 'video' : false;
@@ -294,7 +313,7 @@ export default function PostDetail() {
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       // Solo il file (senza titolo/testo): Instagram lo carica più volentieri.
       navigator.share({ files: [file] }).
-      then(() => setShareChoiceOpen(false)).
+      then(() => { setShareChoiceOpen(false); trackShare(); }).
       catch((e) => { if (e?.name !== 'AbortError') setShareMsg('Non è stato possibile aprire la condivisione. Usa "Scarica" e caricala a mano.'); });
     } else {
       downloadFile(file);
@@ -307,6 +326,7 @@ export default function PostDetail() {
     a.href = url; a.download = file.name; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     setShareMsg('File scaricato e link copiato: aprilo in Instagram, Facebook o WhatsApp e incolla il link con lo sticker "Link".');
+    trackShare();
   };
 
   return (
@@ -385,7 +405,7 @@ export default function PostDetail() {
       }
       <div className="share-row">
         <span className="share-label"><Share2 className="w-4 h-4" /> Condividi</span>
-        <a href={shareWa} target="_blank" rel="noopener noreferrer" className="share-btn">WhatsApp</a>
+        <a href={shareWa} target="_blank" rel="noopener noreferrer" onClick={trackShare} className="share-btn">WhatsApp</a>
         <button onClick={shareStory} className="share-btn share-primary"><Instagram className="w-4 h-4" /> Storie e Post</button>
         <button onClick={shareNative} className="share-btn">Copia link</button>
       </div>
