@@ -180,7 +180,7 @@ export default function Home() {
           <div className="persone-grid">
             {team.slice(0, 2).map((t) =>
             <Link key={t.slot} to={`/in-evidenza/${t.slot}`} className="persona-card">
-                <div className="persona-photo"><img src={t.photo} alt={t.name || ''} loading="lazy" /></div>
+                <div className="persona-photo"><img src={sized(t.photo, 500)} onError={fallbackTo(t.photo)} alt={t.name || ''} loading="lazy" decoding="async" /></div>
                 <h3>{[t.prefix, t.name].filter(Boolean).join(' ') || 'Team'}</h3>
                 {t.caption && <div className="ruolo">{t.caption}</div>}
                 <span className="profilo">Vedi il profilo →</span>
