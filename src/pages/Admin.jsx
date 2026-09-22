@@ -22,6 +22,7 @@ import PollManager from '@/components/admin/PollManager';
 import PollShareConfigManager from '@/components/admin/PollShareConfigManager';
 import CoalitionGroupManager from '@/components/admin/CoalitionGroupManager';
 import BackupManager from '@/components/admin/BackupManager';
+import RedazionePanel from '@/components/admin/RedazionePanel';
 import { CATEGORIES } from '@/lib/categories';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -134,6 +135,9 @@ export default function Admin() {
       { id: 'manage', label: 'Post ed eventi pubblicati', desc: 'Modifica, elimina o pubblica le bozze.', show: true },
       { id: 'iscrizioni', label: 'Iscrizioni agli eventi', desc: 'Chi si è iscritto agli eventi. Puoi scaricare l\'elenco.', show: isAdmin },
     ] },
+    { group: 'News GD', items: [
+      { id: 'redazione', label: 'Scrivi su News GD', desc: 'Commenta la rassegna o scrivi un post libero: l\'IA prepara testo e grafica, tu pubblichi.', show: isAdmin },
+    ] },
     { group: 'Rassegna stampa', items: [
       { id: 'rss', label: 'Giornali e importazione', desc: 'Importa le notizie dai giornali e scegli quali testate mostrare.', show: isAdmin },
     ] },
@@ -242,6 +246,7 @@ export default function Admin() {
         </TabsContent>
         {isEditor && <TabsContent value="mia-pagina" className="mt-0"><MyTeamPageManager /></TabsContent>}
         {isAdmin && <>
+                  <TabsContent value="redazione" className="mt-0"><RedazionePanel /></TabsContent>
         <TabsContent value="rss" className="mt-0 space-y-4">
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-foreground mb-1">Aggregazione RSS</h3>
