@@ -128,9 +128,9 @@
   .nl-btn { width:100%; background:var(--blu); color:#fff; border-radius:14px; padding:13px; font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:.03em; }
   .socials { display:flex; gap:10px; }
   .soc { width:42px; height:42px; border-radius:50%; background:var(--tint); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:var(--blu); }
-  .counters { display:grid; grid-template-columns:1fr 1fr; text-align:center; }
-  .counters b { display:block; font-family:'Rubik',sans-serif; font-weight:900; font-size:2.2rem; color:var(--blu); line-height:1; }
-  .counters span { font-size:11.5px; font-weight:700; letter-spacing:.08em; opacity:.55; text-transform:uppercase; }
+  .counters { display:grid; grid-template-columns:repeat(3,1fr); text-align:center; }
+  .counters b { display:block; font-family:'Rubik',sans-serif; font-weight:900; font-size:1.9rem; color:var(--blu); line-height:1; }
+  .counters span { font-size:10.5px; font-weight:700; letter-spacing:.06em; opacity:.55; text-transform:uppercase; }
 
   /* persone / cta / footer */
   .persone-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:26px; max-width:760px; margin-top:30px; }
