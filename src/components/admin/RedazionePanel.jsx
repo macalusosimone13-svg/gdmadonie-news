@@ -1,25 +1,42 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { sb44 } from '@/api/supabaseEntities';
 import { supabase } from '@/lib/supabaseClient';
-import { buildStoryBlob, STORY_DEFAULTS } from '@/lib/storyImage';
-import { CATEGORIES } from '@/lib/categories';
+import { uploadFile } from '@/lib/uploadFile';
+import { buildStoryBlob } from '@/lib/storyImage';
+import { sized, fallbackTo } from '@/lib/imgSize';
+import { cleanExcerpt } from '@/lib/cleanText';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sparkles, Send, ImageIcon, Search, Check, Loader2, ExternalLink, Download } from 'lucide-react';
+import { Sparkles, Send, Search, Check, Loader2, ExternalLink, Download, PenLine, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
 // Bottoni "pillola" nello stesso stile usato dal resto dell'Admin
 // (Nuovo post, Nuovo evento): pieno blu per l'azione principale,
-// bordo scuro per quella secondaria. Qui come classi dirette, così
-// il look è identico ovunque compaiano questi pulsanti, anche
-// annidati dentro le card della rassegna.
+// bordo scuro per quella secondaria.
 const PILL_PRIMARY = "inline-flex items-center justify-center gap-2 min-h-[46px] px-5 rounded-full bg-[#2F5BD8] text-white font-extrabold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-[#2A4FC0]";
 const PILL_SECONDARY = "inline-flex items-center justify-center gap-2 min-h-[46px] px-5 rounded-full border-[1.5px] border-[#0F1B3A] text-[#0F1B3A] bg-white font-extrabold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-[#F4F7FE]";
 // Pulsante "IA": tinta azzurrina, stesso linguaggio delle aree
 // tratteggiate blu già usate sul sito per le azioni assistite dall'IA.
-const PILL_AI = "inline-flex items-center gap-2 text-sm font-bold text-[#2F5BD8] bg-[#F4F7FE] border border-[#2F5BD8]/35 rounded-full px-4 py-2.5 min-h-[44px] disabled:opacity-60 transition-colors hover:bg-[#EAF0FD]";
+const PILL_AI = "inline-flex items-center justify-center gap-2 text-sm font-bold text-[#2F5BD8] bg-[#F4F7FE] border border-[#2F5BD8]/35 rounded-full px-5 py-3 min-h-[46px] disabled:opacity-60 transition-colors hover:bg-[#EAF0FD]";
+
+// Stessa identica palette "redesign blu" già usata per condividere i
+// singoli articoli (PostDetail.jsx): i colori salvati in StoryShareConfig
+// risalgono al vecchio design arancione e vengono ignorati di proposito,
+// esattamente come lì. Nessun logo caricato da file (poteva essere vecchio
+// anche quello): si usa sempre il marchio testuale "GD MADONIE" pulito.
+const NEWS_GD_BRAND = {
+  bgGradientStart: '#1B3A8C',
+  bgGradientEnd: '#0A1226',
+  primaryColor: '#0F1B3A',
+  categoryBg: '#2F5BD8',
+  categoryText: '#FFFFFF',
+  titleColor: '#ffffff',
+  brandTitle: 'GD Madonie News',
+  brandSubtitle: 'Giovani Democratici Madonie',
+  domain: 'gdmadonie-news.com'
+};
 
 // Chiama la function Supabase "redazione-ai", che genera il testo
 // nello stile di GD Madonie. Solo per l'admin (Simone): la function stessa
@@ -32,7 +49,16 @@ async function generateAI(payload) {
   return data;
 }
 
-async function publishToNewsGD({ title, body }) {
+// Pubblica su News GD: se c'è una locandina generata, la carica prima come
+// immagine di copertina del post (così l'articolo appare come tutti gli
+// altri sul sito: immagine sopra, testo sotto), poi crea il post.
+async function publishToNewsGD({ title, body, imageBlob }) {
+  let media;
+  if (imageBlob) {
+    const file = new File([imageBlob], `news-gd-${Date.now()}.png`, { type: 'image/png' });
+    const { file_url } = await uploadFile(file);
+    media = { url: file_url, type: 'image', orientation: 'vertical' };
+  }
   const created = await sb44.entities.Post.create({
     title,
     content: body,
@@ -41,7 +67,11 @@ async function publishToNewsGD({ title, body }) {
     author: 'GD Madonie',
     source_type: 'gd_madonie',
     status: 'published',
-    published_date: new Date().toISOString()
+    published_date: new Date().toISOString(),
+    image_url: media?.url,
+    media_type: media ? 'image' : undefined,
+    media_orientation: media ? 'vertical' : undefined,
+    media: media ? [media] : undefined
   });
   try {
     await supabase.functions.invoke('notify-new-post', { body: { post_id: created.id, app_url: window.location.origin } });
@@ -49,127 +79,195 @@ async function publishToNewsGD({ title, body }) {
   return created;
 }
 
-// --- Grafica (locandina) -----------------------------------------------
-// Riusa lo stesso motore Canvas già in produzione per le Storie/Post
-// condivisi dal sito (src/lib/storyImage.js): stessi colori, stesso logo
-// reale del sito (niente più scritta segnaposto), stesso fallback se il
-// logo non si legge. Qui senza foto: va sul layout "solo testo".
-function GraphicModal({ open, onClose, title, body, storyConfig, siteLogo }) {
+// --- Finestra di scrittura -------------------------------------------
+// Un'unica schermata per: generare il testo con l'IA (o scriverlo a mano),
+// vedere subito accanto l'anteprima della locandina così come apparirà
+// pubblicata su News GD, e pubblicare. Usata sia dalla Rassegna (con
+// l'articolo di partenza) sia da "Scrivi tu" (con un argomento libero).
+function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerate, startBlank, onPublished }) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [topic, setTopic] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState(null);
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState(null);
   const [fmt, setFmt] = useState('post');
-  const [url, setUrl] = useState('');
-  const [blob, setBlob] = useState(null);
-  const [busy, setBusy] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewBlob, setPreviewBlob] = useState(null);
+  const [previewBusy, setPreviewBusy] = useState(false);
   const objUrl = useRef(null);
 
   useEffect(() => {
     if (!open) return;
-    let cancelled = false;
-    setBusy(true);
-    buildStoryBlob({
-      format: fmt,
-      category: 'News GD',
-      title,
-      bodyText: body,
-      domain: storyConfig.domain_text_gd || STORY_DEFAULTS.domain_text_gd,
-      primaryColor: '#0F1B3A',
-      logoUrl: storyConfig.logo_url || siteLogo,
-      brandTitle: storyConfig.brand_title,
-      brandSubtitle: storyConfig.brand_subtitle,
-      bgGradientStart: storyConfig.bg_gradient_start,
-      bgGradientEnd: storyConfig.bg_gradient_end,
-      categoryBg: storyConfig.category_bg_color,
-      categoryText: storyConfig.category_text_color,
-      titleColor: storyConfig.title_color,
-      overlayIntensity: storyConfig.overlay_intensity,
-      showCategory: storyConfig.show_category,
-      showDomain: storyConfig.show_domain,
-      topBandEnabled: storyConfig.top_band_enabled,
-      topBandColor: storyConfig.top_band_color,
-      topBandOpacity: storyConfig.top_band_opacity,
-      logoSize: storyConfig.logo_size,
-      categoryGap: storyConfig.category_gap
-    }).then((b) => {
-      if (cancelled) return;
-      if (objUrl.current) URL.revokeObjectURL(objUrl.current);
-      const u = URL.createObjectURL(b);
-      objUrl.current = u;
-      setUrl(u);
-      setBlob(b);
-    }).finally(() => !cancelled && setBusy(false));
-    return () => { cancelled = true; };
-  }, [open, fmt, title, body, storyConfig, siteLogo]);
+    setTitle('');
+    setBody('');
+    setTopic(initialTopic || '');
+    setError(null);
+    setPublished(null);
+    setFmt('post');
+    setEditing(!!startBlank);
+    // Se veniamo dalla rassegna, o abbiamo già un argomento, l'IA parte
+    // subito da sola: un click in meno.
+    if (sourceArticle) generate();
+    else if (autoGenerate) generate(initialTopic || '');
+  }, [open]);
 
-  const download = () => {
-    if (!blob) return;
+  const generate = async (topicOverride) => {
+    setGenerating(true); setError(null); setEditing(true);
+    try {
+      const result = sourceArticle ?
+      await generateAI({
+        mode: 'comment',
+        title: sourceArticle.title,
+        excerpt: sourceArticle.excerpt,
+        content: sourceArticle.content,
+        source_name: sourceArticle.source_name,
+        category: sourceArticle.category
+      }) :
+      await generateAI({ mode: 'compose', topic: topicOverride !== undefined ? topicOverride : topic });
+      setTitle(result.title || '');
+      setBody(result.body || '');
+    } catch (e) {
+      setError(e.message);
+    }
+    setGenerating(false);
+  };
+
+  // Anteprima della locandina: si rigenera da sola mentre scrivi (con un
+  // piccolo ritardo per non rifare l'immagine a ogni singola lettera).
+  useEffect(() => {
+    if (!open || !title.trim()) { setPreviewUrl(''); setPreviewBlob(null); return; }
+    let cancelled = false;
+    setPreviewBusy(true);
+    const t = setTimeout(() => {
+      buildStoryBlob({
+        format: fmt,
+        category: 'News GD',
+        title,
+        bodyText: body,
+        logoUrl: null,
+        ...NEWS_GD_BRAND
+      }).then((b) => {
+        if (cancelled) return;
+        if (objUrl.current) URL.revokeObjectURL(objUrl.current);
+        const u = URL.createObjectURL(b);
+        objUrl.current = u;
+        setPreviewUrl(u);
+        setPreviewBlob(b);
+      }).finally(() => !cancelled && setPreviewBusy(false));
+    }, 450);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [open, fmt, title, body]);
+
+  const downloadPng = () => {
+    if (!previewBlob) return;
     const a = document.createElement('a');
-    a.href = url;
+    a.href = previewUrl;
     a.download = `news-gd-${fmt}-${Date.now()}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
   };
 
+  const publish = async () => {
+    if (!title.trim() || !body.trim()) return;
+    setPublishing(true); setError(null);
+    try {
+      const created = await publishToNewsGD({ title, body, imageBlob: previewBlob });
+      setPublished(created);
+      onPublished?.();
+    } catch (e) {
+      setError(e.message);
+    }
+    setPublishing(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Grafica per News GD</DialogTitle></DialogHeader>
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex bg-muted rounded-full p-1 text-xs font-medium">
-            <button type="button" onClick={() => setFmt('post')} className={`px-3 py-1.5 rounded-full ${fmt === 'post' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}>Post (4:5)</button>
-            <button type="button" onClick={() => setFmt('story')} className={`px-3 py-1.5 rounded-full ${fmt === 'story' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}>Storia (9:16)</button>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Scrivi su News GD</DialogTitle></DialogHeader>
+
+        {sourceArticle &&
+        <div className="bg-muted rounded-xl p-3 text-sm">
+            <p className="text-xs text-muted-foreground font-medium">Notizia di partenza · {sourceArticle.source_name}</p>
+            <p className="font-semibold text-foreground leading-snug">{sourceArticle.title}</p>
           </div>
-          {busy && !url ?
-          <div className={`w-full ${fmt === 'post' ? 'max-w-[260px] aspect-[4/5]' : 'max-w-[230px] aspect-[9/16]'} rounded-2xl bg-muted flex items-center justify-center`}>
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div> :
-          <img src={url} alt="Anteprima grafica" className={`w-full ${fmt === 'post' ? 'max-w-[260px]' : 'max-w-[230px]'} rounded-2xl border border-border shadow-sm`} />
-          }
-          <button type="button" onClick={download} disabled={!blob} className={`${PILL_PRIMARY} w-full`}>
-            <Download className="w-4 h-4" /> Scarica PNG
+        }
+
+        {!sourceArticle &&
+        <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground block">Di cosa vuoi parlare?</label>
+            <Textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={3} placeholder="Scrivi anche solo due righe, il fatto o l'argomento — es. «il piano paesaggistico delle Madonie, è successo questo...»" />
+          </div>
+        }
+
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={generate} disabled={generating || (!sourceArticle && !topic.trim())} className={PILL_AI}>
+            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {generating ? 'Genero…' : title ? "Rigenera con l'IA" : "Genera con l'IA"}
           </button>
+          {!editing &&
+          <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground px-2">
+              <PenLine className="w-3.5 h-3.5" /> Scrivi tu, senza IA
+            </button>
+          }
         </div>
+        {error && <p className="text-xs text-red-600">{error}</p>}
+
+        {editing &&
+        <div className="grid md:grid-cols-[1fr,230px] gap-4 pt-1">
+            <div className="space-y-3 min-w-0">
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titolo" className="font-semibold" />
+              <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={9} placeholder="Testo del post..." />
+              <p className="text-[11px] text-muted-foreground">{body.length} caratteri — puoi modificare tutto prima di pubblicare.</p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Così apparirà su News GD</p>
+              <div className="flex bg-muted rounded-full p-1 text-xs font-medium w-fit">
+                <button type="button" onClick={() => setFmt('post')} className={`px-3 py-1.5 rounded-full ${fmt === 'post' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}>Post</button>
+                <button type="button" onClick={() => setFmt('story')} className={`px-3 py-1.5 rounded-full ${fmt === 'story' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}>Storia</button>
+              </div>
+              <div className={`w-full ${fmt === 'post' ? 'aspect-[4/5]' : 'aspect-[9/16]'} rounded-2xl border border-border bg-muted overflow-hidden flex items-center justify-center relative`}>
+                {previewUrl && <img src={previewUrl} alt="Anteprima" className="w-full h-full object-cover" />}
+                {previewBusy && <div className="absolute inset-0 bg-white/60 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>}
+                {!previewUrl && !previewBusy && <p className="text-xs text-muted-foreground text-center px-4">Scrivi un titolo per vedere l'anteprima</p>}
+              </div>
+              <button type="button" onClick={downloadPng} disabled={!previewBlob} className={`${PILL_SECONDARY} w-full !min-h-[40px] text-xs`}>
+                <Download className="w-3.5 h-3.5" /> Scarica PNG
+              </button>
+            </div>
+          </div>
+        }
+
+        {editing &&
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+          <button type="button" onClick={publish} disabled={publishing || !title.trim() || !body.trim()} className={PILL_PRIMARY}>
+            {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : published ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+            {published ? 'Pubblicato su News GD' : 'Pubblica su News GD'}
+          </button>
+          {published &&
+          <a href={`/articolo/${published.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-[#2F5BD8] font-bold hover:underline px-2">
+              Vedi il post <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          }
+        </div>
+        }
       </DialogContent>
     </Dialog>);
 }
 
-// --- Riquadro comune per un testo generato (bozza rassegna o "Scrivi tu") ---
-// È un <form> (come "Nuovo post"/"Nuovo evento"): stessa cornice,
-// stessi campi, stessi pulsanti del resto dell'Admin.
-function DraftEditor({ title, body, onChange, onPublish, onOpenGraphic, publishing, published }) {
-  return (
-    <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
-      <Input value={title} onChange={(e) => onChange({ title: e.target.value, body })} placeholder="Titolo" className="font-semibold" />
-      <Textarea value={body} onChange={(e) => onChange({ title, body: e.target.value })} rows={6} placeholder="Testo del post..." />
-      <p className="text-[11px] text-muted-foreground">{body.length} caratteri — puoi modificare tutto prima di pubblicare.</p>
-      <div className="flex flex-wrap items-center gap-2 pt-1">
-        <button type="button" onClick={onOpenGraphic} disabled={!title.trim()} className={PILL_SECONDARY}>
-          <ImageIcon className="w-4 h-4" /> Genera locandina
-        </button>
-        <button type="button" onClick={onPublish} disabled={publishing || !title.trim() || !body.trim()} className={PILL_PRIMARY}>
-          {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : published ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-          {published ? 'Pubblicato su News GD' : 'Pubblica su News GD'}
-        </button>
-        {published &&
-        <a href={`/articolo/${published.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-[#2F5BD8] font-bold hover:underline px-2">
-            Vedi il post <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        }
-      </div>
-    </form>);
-}
-
-// --- Tab "Rassegna": ogni notizia già raccolta dal sito, con generazione
-// del commento su richiesta (non tutte insieme, per non sprecare chiamate). ---
-// Stessa struttura a elenco di card della sezione "Post ed eventi
-// pubblicati": ogni notizia è una card, la bozza generata appare dentro
-// la stessa card, come un modulo che si apre lì.
-function RassegnaTab({ storyConfig, siteLogo }) {
+// --- Tab "Rassegna": le notizie già raccolte dal sito, mostrate come
+// vere card giornalistiche (immagine, titolo, estratto) — le stesse usate
+// nella pagina pubblica "Rassegna stampa". Un click apre la scrittura. ---
+function RassegnaTab() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cat, setCat] = useState('all');
   const [q, setQ] = useState('');
-  const [drafts, setDrafts] = useState({}); // id -> { title, body, generating, publishing, published, error }
-  const [graphicFor, setGraphicFor] = useState(null);
+  const [composerFor, setComposerFor] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -185,193 +283,89 @@ function RassegnaTab({ storyConfig, siteLogo }) {
     return true;
   }), [posts, cat, q]);
 
-  const setDraft = (id, patch) => setDrafts((d) => ({ ...d, [id]: { ...d[id], ...patch } }));
-
-  const generate = async (post) => {
-    setDraft(post.id, { generating: true, error: null });
-    try {
-      const result = await generateAI({
-        mode: 'comment',
-        title: post.title,
-        excerpt: post.excerpt,
-        content: post.content,
-        source_name: post.source_name,
-        category: post.category
-      });
-      setDraft(post.id, { title: result.title || post.title, body: result.body || '', generating: false });
-    } catch (e) {
-      setDraft(post.id, { generating: false, error: e.message });
-    }
-  };
-
-  const publish = async (post) => {
-    const d = drafts[post.id];
-    if (!d) return;
-    setDraft(post.id, { publishing: true });
-    try {
-      const created = await publishToNewsGD({ title: d.title, body: d.body });
-      setDraft(post.id, { publishing: false, published: created });
-    } catch (e) {
-      setDraft(post.id, { publishing: false, error: e.message });
-    }
-  };
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 items-center bg-card border border-border rounded-2xl p-3">
-        <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2 flex-1 min-w-[180px]">
-          <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca tra le notizie…" className="bg-transparent outline-none text-sm w-full" />
-        </div>
-        <div className="flex bg-muted rounded-full p-1 text-xs font-medium">
-          {[['all', 'Tutte'], ['politica_nazionale', 'Nazionale'], ['politica_regionale', 'Regionale']].map(([k, l]) =>
-          <button key={k} type="button" onClick={() => setCat(k)} className={`px-3 py-1.5 rounded-full ${cat === k ? 'bg-[#2F5BD8] text-white' : 'text-muted-foreground'}`}>{l}</button>
-          )}
-        </div>
+      <div className="search-box !max-w-none !my-0">
+        <Search size={16} style={{ opacity: .5 }} />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca tra le notizie…" />
+        {q && <button onClick={() => setQ('')} aria-label="Cancella ricerca"><X size={16} /></button>}
+      </div>
+      <div className="source-chips !pt-0">
+        {[['all', 'Tutte'], ['politica_nazionale', 'Nazionale'], ['politica_regionale', 'Regionale']].map(([k, l]) =>
+        <button key={k} type="button" onClick={() => setCat(k)} className={`schip ${cat === k ? 'active' : ''}`}>{l}</button>
+        )}
       </div>
 
       {loading ?
-      <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div> :
+      <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div> :
       filtered.length === 0 ?
-      <p className="text-sm text-muted-foreground text-center py-8">Nessuna notizia trovata.</p> :
+      <p className="text-sm text-muted-foreground text-center py-10">Nessuna notizia trovata.</p> :
 
-      <div className="space-y-3">
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
           {filtered.map((post) => {
-          const d = drafts[post.id] || {};
-          const hasDraft = d.title !== undefined;
+          const img = post.image_url;
           return (
-            <div key={post.id} className={`bg-card border rounded-2xl p-4 space-y-3 transition-colors ${hasDraft ? 'border-[#2F5BD8]/40' : 'border-border'}`}>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">{post.source_name}{post.published_date ? ' · ' + format(new Date(post.published_date), 'd MMM, HH:mm', { locale: it }) : ''} · {CATEGORIES[post.category]?.label}</p>
-                  <h3 className="font-semibold text-foreground leading-snug mt-0.5">{post.title}</h3>
-                  {post.excerpt && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{post.excerpt}</p>}
+            <article key={post.id} className={`article-card${img ? '' : ' noimg'}`}>
+                {img &&
+              <div className="card-media">
+                  <img src={sized(img, 480)} onError={fallbackTo(img)} alt="" loading="lazy" decoding="async" />
                 </div>
-
-                {hasDraft ?
-              <div className="border-t border-border pt-3">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-[#2F5BD8] mb-2">Bozza di GD Madonie</p>
-                  <DraftEditor
-                  title={d.title}
-                  body={d.body}
-                  onChange={({ title, body }) => setDraft(post.id, { title, body })}
-                  onPublish={() => publish(post)}
-                  onOpenGraphic={() => setGraphicFor({ title: d.title, body: d.body })}
-                  publishing={d.publishing}
-                  published={d.published} />
-                </div> :
-
-              <button type="button" onClick={() => generate(post)} disabled={d.generating} className={PILL_AI}>
-                    {d.generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    {d.generating ? 'Genero…' : "Genera commento con l'IA"}
-                  </button>
               }
-                {d.error && <p className="text-xs text-red-600">{d.error}</p>}
-              </div>);
+                <div className="card-body">
+                  <div className="meta-line">{post.source_name}{post.published_date ? ' · ' + format(new Date(post.published_date), 'd MMM', { locale: it }) : ''}</div>
+                  <h3 style={{ fontSize: img ? undefined : '1.05rem' }}>{post.title}</h3>
+                  {post.excerpt && <p>{cleanExcerpt(post.excerpt)}</p>}
+                  <button type="button" onClick={() => setComposerFor(post)} className={`${PILL_AI} w-full justify-center mt-3`}>
+                    <Sparkles className="w-4 h-4" /> Scrivi su questo
+                  </button>
+                </div>
+              </article>);
 
         })}
         </div>
       }
 
-      <GraphicModal
-        open={!!graphicFor}
-        onClose={() => setGraphicFor(null)}
-        title={graphicFor?.title || ''}
-        body={graphicFor?.body || ''}
-        storyConfig={storyConfig}
-        siteLogo={siteLogo} />
+      <ComposerModal
+        open={!!composerFor}
+        onClose={() => setComposerFor(null)}
+        sourceArticle={composerFor}
+        onPublished={load} />
 
     </div>);
 }
 
 // --- Tab "Scrivi tu": argomento libero -> post completo -------------------
-// La parte di input è un <form>, come "Nuovo post": stessa cornice bianca
-// arrotondata del resto dell'Admin, non più "nuda" sullo sfondo pagina.
-function ScriviTuTab({ storyConfig, siteLogo }) {
+function ScriviTuTab() {
   const [topic, setTopic] = useState('');
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState(null);
-  const [draft, setDraft] = useState(null); // { title, body }
-  const [publishing, setPublishing] = useState(false);
-  const [published, setPublished] = useState(null);
-  const [graphicOpen, setGraphicOpen] = useState(false);
-
-  const generate = async () => {
-    if (!topic.trim()) return;
-    setGenerating(true); setError(null);
-    try {
-      const result = await generateAI({ mode: 'compose', topic });
-      setDraft({ title: result.title || '', body: result.body || '' });
-      setPublished(null);
-    } catch (e) {
-      setError(e.message);
-    }
-    setGenerating(false);
-  };
-
-  const publish = async () => {
-    if (!draft) return;
-    setPublishing(true);
-    try {
-      const created = await publishToNewsGD(draft);
-      setPublished(created);
-    } catch (e) {
-      setError(e.message);
-    }
-    setPublishing(false);
-  };
+  const [composerOpen, setComposerOpen] = useState(false);
 
   return (
     <div className="space-y-4">
-      <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <label className="text-sm font-medium text-foreground block">Di cosa vuoi parlare?</label>
         <Textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={4} placeholder="Scrivi anche solo due righe, il fatto o l'argomento — es. «il piano paesaggistico delle Madonie, è successo questo...»" />
-        <button type="button" onClick={generate} disabled={generating || !topic.trim()} className={PILL_AI}>
-          {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          {generating ? 'Genero…' : "Genera post con l'IA"}
-        </button>
-        {error && <p className="text-xs text-red-600">{error}</p>}
-      </form>
-
-      {draft &&
-      <div className="bg-card border border-[#2F5BD8]/40 rounded-2xl p-4">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-[#2F5BD8] mb-2">Bozza di GD Madonie</p>
-          <DraftEditor
-          title={draft.title}
-          body={draft.body}
-          onChange={setDraft}
-          onPublish={publish}
-          onOpenGraphic={() => setGraphicOpen(true)}
-          publishing={publishing}
-          published={published} />
-
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => setComposerOpen('generate')} disabled={!topic.trim()} className={PILL_AI}>
+            <Sparkles className="w-4 h-4" /> Genera post con l'IA
+          </button>
+          <button type="button" onClick={() => setComposerOpen('blank')} className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground px-2">
+            <PenLine className="w-3.5 h-3.5" /> Scrivi tu, senza IA
+          </button>
         </div>
-      }
+      </div>
 
-      <GraphicModal
-        open={graphicOpen}
-        onClose={() => setGraphicOpen(false)}
-        title={draft?.title || ''}
-        body={draft?.body || ''}
-        storyConfig={storyConfig}
-        siteLogo={siteLogo} />
+      <ComposerModal
+        open={!!composerOpen}
+        onClose={() => setComposerOpen(false)}
+        initialTopic={topic}
+        autoGenerate={composerOpen === 'generate'}
+        startBlank={composerOpen === 'blank'} />
 
     </div>);
 }
 
 export default function RedazionePanel() {
   const [tab, setTab] = useState('rassegna');
-  const [storyConfig, setStoryConfig] = useState({});
-  const [siteLogo, setSiteLogo] = useState('');
-
-  useEffect(() => {
-    Promise.all([
-    sb44.entities.StoryShareConfig.filter({ key: 'main' }, '-updated_date', 1),
-    sb44.entities.SiteContent.filter({ key: 'site_logo_url' }, '-updated_date', 1)]
-    ).then(([configs, logos]) => {
-      setStoryConfig({ ...STORY_DEFAULTS, ...(configs?.[0] || {}) });
-      setSiteLogo(logos?.[0]?.value || '');
-    });
-  }, []);
 
   return (
     <div className="space-y-4">
@@ -379,6 +373,6 @@ export default function RedazionePanel() {
         <button type="button" onClick={() => setTab('rassegna')} className={`px-4 py-2 rounded-full ${tab === 'rassegna' ? 'bg-[#2F5BD8] text-white' : 'text-muted-foreground'}`}>Rassegna</button>
         <button type="button" onClick={() => setTab('scrivitu')} className={`px-4 py-2 rounded-full ${tab === 'scrivitu' ? 'bg-[#2F5BD8] text-white' : 'text-muted-foreground'}`}>Scrivi tu</button>
       </div>
-      {tab === 'rassegna' ? <RassegnaTab storyConfig={storyConfig} siteLogo={siteLogo} /> : <ScriviTuTab storyConfig={storyConfig} siteLogo={siteLogo} />}
+      {tab === 'rassegna' ? <RassegnaTab /> : <ScriviTuTab />}
     </div>);
 }
