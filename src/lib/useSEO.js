@@ -62,12 +62,18 @@ export function useSEO({ title, description, image, url, type = 'website', noind
     // Contenuti aggregati da fonti terze (rassegna stampa): teniamoli fuori
     // dall'indice di Google per non farli contare come "contenuto di scarso
     // valore" del sito in fase di revisione AdSense.
+    // "max-image-preview:large" e' quello che permette a Google di mostrare
+    // le foto delle nostre notizie a grandezza intera nei risultati di
+    // ricerca e in Google Discover (senza, Google le mostra piu' piccole,
+    // di default): e' uno dei requisiti indicati da Google stesso per
+    // comparire bene in Discover. "max-snippet:-1" lascia mostrare
+    // l'anteprima di testo per intero invece che tagliata.
     let robots = document.head.querySelector('meta[name="robots"]');
     if (!robots) {
       robots = document.createElement('meta');
       robots.setAttribute('name', 'robots');
       document.head.appendChild(robots);
     }
-    robots.setAttribute('content', noindex ? 'noindex, follow' : 'index, follow');
+    robots.setAttribute('content', (noindex ? 'noindex, follow' : 'index, follow') + ', max-image-preview:large, max-snippet:-1');
   }, [title, description, image, url, type, noindex]);
 }
