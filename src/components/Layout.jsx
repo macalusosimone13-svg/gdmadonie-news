@@ -1,5 +1,5 @@
 import AssistantLogo from '@/components/AssistantLogo';
-import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, LogIn, Instagram, Facebook, Send, Twitter, Youtube, Globe, Mail, Link as LinkIcon, ArrowUp, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { getCurrentUser } from '@/lib/supabaseAuth';
@@ -23,7 +23,6 @@ export default function Layout() {
   const [gdOpen, setGdOpen] = useState(false);
   const ddRef = useRef(null);
   const gdRef = useRef(null);
-  const navigate = useNavigate();
   const location = useLocation();
   const { config: ux } = useUxConfig();
   const backTarget = useBackTarget();
@@ -115,9 +114,9 @@ export default function Layout() {
               <NavLink to="/gd-madonie" className={linkCls}>GD Madonie</NavLink>
               <span className="nav-dropdown-chevron" role="button" aria-label="Scegli tra Comunicati, News GD o Eventi" onClick={(e) => { e.stopPropagation(); setGdOpen((o) => !o); }}>▾</span>
               <div className={`nav-dropdown-menu ${gdOpen ? 'open' : ''}`}>
-                <a onClick={() => navigate('/gd-madonie?tab=comunicati')}>Comunicati</a>
-                <a onClick={() => navigate('/gd-madonie?tab=news')}>News GD</a>
-                <a onClick={() => navigate('/gd-madonie?tab=eventi')}>Eventi</a>
+                <Link to="/gd-madonie?tab=comunicati">Comunicati</Link>
+                <Link to="/gd-madonie?tab=news">News GD</Link>
+                <Link to="/gd-madonie?tab=eventi">Eventi</Link>
               </div>
             </div>
             {showNews &&
@@ -125,8 +124,8 @@ export default function Layout() {
                 <NavLink to="/rassegna-stampa" className={linkCls}>News</NavLink>
                 <span className="nav-dropdown-chevron" role="button" aria-label="Scegli tra Nazionale o Regionale" onClick={(e) => { e.stopPropagation(); setNewsOpen((o) => !o); }}>▾</span>
                 <div className={`nav-dropdown-menu ${newsOpen ? 'open' : ''}`}>
-                  <a onClick={() => navigate('/rassegna-stampa/nazionale')}>Nazionale</a>
-                  <a onClick={() => navigate('/rassegna-stampa/regionale')}>Regionale</a>
+                  <Link to="/rassegna-stampa/nazionale">Nazionale</Link>
+                  <Link to="/rassegna-stampa/regionale">Regionale</Link>
                 </div>
               </div>
             }
