@@ -4,6 +4,7 @@ import { sb44 } from '@/api/supabaseEntities';
 import { Instagram, Facebook, Mail, Send, Twitter, Youtube, Globe, Link as LinkIcon } from 'lucide-react';
 import { loadSiteContent, getContent } from '@/lib/siteContent';
 import { useSEO } from '@/lib/useSEO';
+import { sized, fallbackTo } from '@/lib/imgSize';
 
 const SOCIAL_ICONS = { instagram: Instagram, facebook: Facebook, telegram: Send, twitter: Twitter, youtube: Youtube, website: Globe, email: Mail, custom: LinkIcon };
 const TOPICS = ['Aree interne', 'Spopolamento', 'Sanità territoriale', 'Infrastrutture digitali', 'Gestione faunistica', 'Politica locale e regionale'];
@@ -63,7 +64,7 @@ export default function ChiSiamo() {
               if (isEmpty(o.nome)) return (
                 <div key={o.ruolo} className="org-card empty"><div className="org-photo">—</div><div className="org-info"><div className="org-role">{o.ruolo}</div><div className="org-name">Da assegnare</div></div></div>);
               const inner = <>
-                <div className="org-photo">{s?.photo ? <img src={s.photo} alt="" loading="lazy" /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', fontFamily: 'Rubik', fontWeight: 900, color: 'var(--chiaro)' }}>{o.nome.trim()[0]}</div>}</div>
+                <div className="org-photo">{s?.photo ? <img src={sized(s.photo, 500)} onError={fallbackTo(s.photo)} alt="" loading="lazy" /> : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', fontFamily: 'Rubik', fontWeight: 900, color: 'var(--chiaro)' }}>{o.nome.trim()[0]}</div>}</div>
                 <div className="org-info"><div className="org-role">{o.ruolo}</div><div className="org-name">{o.nome}</div>{s && <span className="org-link">Vedi il profilo →</span>}</div>
               </>;
               return s ? <Link key={o.ruolo} to={`/in-evidenza/${s.slot}`} className="org-card">{inner}</Link> : <div key={o.ruolo} className="org-card">{inner}</div>;
