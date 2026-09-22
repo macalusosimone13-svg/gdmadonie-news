@@ -47,6 +47,13 @@ export default function GDMadonie() {
   const tabParam = searchParams.get('tab');
   const initialTab = ['comunicati', 'news', 'eventi'].includes(tabParam) ? tabParam : 'comunicati';
   const [activeTab, setActiveTab] = useState(initialTab);
+  // Se arriviamo qui da un link con ?tab=... mentre siamo gia' su questa
+  // pagina (stessa rotta: React Router non la rimonta), lo stato iniziale
+  // sopra non basta - va sincronizzato quando cambia il parametro in URL.
+  useEffect(() => {
+    if (['comunicati', 'news', 'eventi'].includes(tabParam) && tabParam !== activeTab) setActiveTab(tabParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabParam]);
   const [content, setContent] = useState(null);
   const [view, setView] = useState('list');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
