@@ -15,8 +15,22 @@ import { UxConfigProvider } from '@/lib/UxConfigContext';
 
 
 // Dopo un nuovo rilascio i vecchi file JS cambiano nome: una scheda rimasta
-// aperta cerca pezzi che non esistono piu' e resterebbe vuota. Si riprova e,
-// se serve, si ricarica la pagina una volta sola per prendere la versione nuova.
+// aperta (o l'app sulla schermata Home, lasciata in background) cerca pezzi
+// che non esistono piu' e resterebbe vuota. Si riprova e, se serve, si
+// ricarica la pagina una volta sola per prendere la versione nuova.
+// Il semplice window.location.reload() a volte in modalita' "app" su
+// telefono (aggiunta alla schermata Home) puo' riproporre la pagina gia'
+// in memoria (bfcache) invece di scaricarla di nuovo dalla rete: per essere
+// sicuri che sia un caricamento davvero nuovo, si cambia l'indirizzo con un
+// parametro che cambia ogni volta.
+function forceFreshReload() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('_r', Date.now().toString());
+    window.location.replace(url.toString());
+  } catch { window.location.reload(); }
+}
+
 const lazyRetry = (factory) => lazy(async () => {
   try {
     const m = await factory();
@@ -26,7 +40,7 @@ const lazyRetry = (factory) => lazy(async () => {
     try { await new Promise((r) => setTimeout(r, 600)); return await factory(); } catch (e2) {
       let already = false;
       try { already = sessionStorage.getItem('mn_chunk_reload') === '1'; sessionStorage.setItem('mn_chunk_reload', '1'); } catch {}
-      if (!already) { window.location.reload(); return new Promise(() => {}); }
+      if (!already) { forceFreshReload(); return new Promise(() => {}); }
       throw e2;
     }
   }
@@ -42,7 +56,7 @@ class ChunkErrorBoundary extends React.Component {
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24, textAlign: 'center', background: '#FFFDF9', color: '#0F1B3A', fontFamily: 'Figtree, sans-serif' }}>
         <div style={{ fontFamily: 'Rubik, sans-serif', fontWeight: 900, fontSize: 24, textTransform: 'uppercase' }}>Qualcosa non si è caricato</div>
         <p style={{ maxWidth: 320, opacity: .75 }}>La connessione ha avuto un problema. Riprova: di solito basta un secondo.</p>
-        <button onClick={() => { try { sessionStorage.removeItem('mn_chunk_reload'); } catch {} window.location.reload(); }} style={{ background: '#2F5BD8', color: '#fff', fontFamily: 'Rubik, sans-serif', fontWeight: 700, padding: '14px 28px', borderRadius: 999 }}>Ricarica</button>
+        <button onClick={() => { try { sessionStorage.removeItem('mn_chunk_reload'); } catch {} forceFreshReload(); }} style={{ background: '#2F5BD8', color: '#fff', fontFamily: 'Rubik, sans-serif', fontWeight: 700, padding: '14px 28px', borderRadius: 999 }}>Ricarica</button>
       </div>);
   }
 }
