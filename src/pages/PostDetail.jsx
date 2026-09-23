@@ -177,11 +177,16 @@ export default function PostDetail() {
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, '1');
     } catch {}
-    supabase.rpc('increment_post_view', { p_post_id: post.id }).catch(() => {});
+    // NB: quello che restituisce supabase.rpc(...) non è una vera Promise
+    // (non ha .catch), quindi si usa .then(fatto, fallito) invece di
+    // .catch(): con .catch() qui l'errore era immediato e rompeva l'intera
+    // pagina dell'articolo (era la causa della schermata "Qualcosa non si è
+    // caricato" al primo apertura di un articolo mai visto in quella sessione).
+    supabase.rpc('increment_post_view', { p_post_id: post.id }).then(() => {}, () => {});
   }, [post?.id, post?.status]);
 
   const trackShare = () => {
-    if (post?.id) supabase.rpc('increment_post_share', { p_post_id: post.id }).catch(() => {});
+    if (post?.id) supabase.rpc('increment_post_share', { p_post_id: post.id }).then(() => {}, () => {});
   };
   useEffect(() => {
     if (!shareChoiceOpen || !post) return;
