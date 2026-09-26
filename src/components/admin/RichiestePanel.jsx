@@ -11,6 +11,13 @@ const TIPI = {
   proposta: { label: 'Proposta notizia', cls: 'bg-emerald-100 text-emerald-700' },
   altro: { label: 'Altro', cls: 'bg-muted text-muted-foreground' },
 };
+// Frase chiara sul motivo della richiesta, e oggetto già pronto per la risposta via email.
+const MOTIVI = {
+  iscrizione: { frase: 'vuole iscriversi ai Giovani Democratici Madonie', oggetto: 'La tua iscrizione ai GD Madonie' },
+  segnalazione: { frase: 'vuole segnalarti un problema del suo territorio', oggetto: 'La tua segnalazione a GD Madonie' },
+  proposta: { frase: 'ti propone una notizia o un tema da raccontare', oggetto: 'La tua proposta a GD Madonie News' },
+  altro: { frase: 'ti ha scritto per un altro motivo', oggetto: 'Il tuo messaggio a GD Madonie' },
+};
 const FILTRI = [
   { id: 'aperte', label: 'Da gestire' },
   { id: 'gestita', label: 'Gestite' },
@@ -75,6 +82,7 @@ export default function RichiestePanel() {
         <div className="space-y-2">
           {visibili.map((r) => {
             const t = TIPI[r.tipo] || TIPI.altro;
+            const m = MOTIVI[r.tipo] || MOTIVI.altro;
             return (
               <div key={r.id} onClick={() => segnaLetta(r)}
                 className={`bg-card border rounded-xl p-4 space-y-2 ${r.stato === 'nuova' ? 'border-[#2F5BD8]' : 'border-border'} ${r.stato === 'gestita' ? 'opacity-70' : ''}`}>
@@ -83,15 +91,25 @@ export default function RichiestePanel() {
                   {r.stato === 'nuova' && <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#2F5BD8] text-white">Nuova</span>}
                   <span className="text-xs text-muted-foreground ml-auto">{format(new Date(r.created_at), "d MMM yyyy, HH:mm", { locale: it })}</span>
                 </div>
-                <p className="font-bold text-foreground">{r.nome}
-                  {r.comune && <span className="font-normal text-muted-foreground text-sm inline-flex items-center gap-1 ml-2"><MapPin className="w-3.5 h-3.5" />{r.comune}</span>}
+                <p className="text-base text-foreground leading-snug">
+                  <b>{r.nome}</b>{r.comune ? <> da <b>{r.comune}</b></> : ''} {m.frase}.
                 </p>
-                {r.messaggio && <p className="text-sm text-foreground whitespace-pre-line">{r.messaggio}</p>}
-                <div className="flex flex-wrap items-center gap-2 pt-1">
+                <div className="rounded-lg bg-muted/60 px-3 py-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Cosa ti ha scritto</p>
+                  {r.messaggio ?
+                    <p className="text-sm text-foreground whitespace-pre-line">{r.messaggio}</p> :
+                    <p className="text-sm text-muted-foreground italic">Nessun messaggio: ha lasciato solo i suoi dati per essere ricontattato.</p>}
+                </div>
+                <p className="text-sm text-foreground pt-1">
                   {isEmail(r.contatto) ?
-                    <a href={`mailto:${r.contatto}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2F5BD8] px-3 py-2 rounded-full bg-[#EAF0FD]"><Mail className="w-4 h-4" />{r.contatto}</a> :
+                    <>Ti ha lasciato la sua <b>email</b>: rispondigli da qui.</> :
+                    <>Ti ha lasciato il suo <b>numero di telefono</b>: chiamalo o scrivigli su WhatsApp.</>}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {isEmail(r.contatto) ?
+                    <a href={`mailto:${r.contatto}?subject=${encodeURIComponent(m.oggetto)}&body=${encodeURIComponent(`Ciao ${String(r.nome || '').split(' ')[0]},\n\ngrazie per averci scritto dal sito.\n\n`)}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2F5BD8] px-3 py-2 rounded-full bg-[#EAF0FD]"><Mail className="w-4 h-4" />Scrivi a {r.contatto}</a> :
                     <>
-                      <a href={telHref(r.contatto)} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2F5BD8] px-3 py-2 rounded-full bg-[#EAF0FD]"><Phone className="w-4 h-4" />{r.contatto}</a>
+                      <a href={telHref(r.contatto)} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2F5BD8] px-3 py-2 rounded-full bg-[#EAF0FD]"><Phone className="w-4 h-4" />Chiama {r.contatto}</a>
                       <a href={waHref(r.contatto)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sm font-bold text-emerald-700 px-3 py-2 rounded-full bg-emerald-100">WhatsApp</a>
                     </>
                   }
