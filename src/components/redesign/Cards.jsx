@@ -19,7 +19,7 @@ export const fmtDate = (d) => {
   try { return d ? format(new Date(d), 'd MMMM yyyy', { locale: it }) : ''; } catch { return ''; }
 };
 
-export const postLink = (p) => (p._type === 'event' ? `/evento/${p.id}` : `/articolo/${p.id}`);
+export const postLink = (p) => (p._type === 'event' ? `/evento/${p.id}` : `/articolo/${p.slug || p.id}`);
 export const metaSource = (p, siteContent) => p.source_name || p.author || getCategoryLabel(siteContent, p.category);
 
 export function Card({ post, siteContent }) {
