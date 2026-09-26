@@ -192,7 +192,7 @@ export default function Home() {
         <section className="cta-final" id="partecipa">
           <h2>PARTECIPA</h2>
           <p>Segnala una notizia, proponi un'inchiesta o entra nei Giovani Democratici delle Madonie.</p>
-          <a href="mailto:gdmadonie@gmail.com" className="btn-pill">Scrivici</a>
+          <Link to="/partecipa" className="btn-pill">Scrivici</Link>
         </section>
       </div>
     </PullToRefresh>);

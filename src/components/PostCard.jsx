@@ -24,7 +24,7 @@ export default function PostCard({ post, saved, onToggleSave }) {
         const isVertical = post.media_orientation === 'vertical';
         const isVideo = post.media_type === 'video';
         return (
-          <Link to={`/articolo/${post.id}`} className="relative block bg-muted group">
+          <Link to={`/articolo/${post.slug || post.id}`} className="relative block bg-muted group">
             <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 flex-wrap">
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm bg-[#005eff] ${cat.badge}`}>{label}</span>
               {nuovo && <span className="text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 shadow-sm">Nuovo</span>}
@@ -61,7 +61,7 @@ export default function PostCard({ post, saved, onToggleSave }) {
           </Link>);
 
       })()}
-      <Link to={`/articolo/${post.id}`} className="block p-4 cursor-pointer rounded-[99px]">
+      <Link to={`/articolo/${post.slug || post.id}`} className="block p-4 cursor-pointer rounded-[99px]">
         {post.image_url ?
         post.source_name ?
         <div className="flex items-center gap-2 mb-2 flex-wrap">

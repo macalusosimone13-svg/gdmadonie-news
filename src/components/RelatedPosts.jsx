@@ -91,7 +91,7 @@ function RelatedItem({ post }) {
   '';
   return (
     <Link
-      to={`/articolo/${post.id}`}
+      to={`/articolo/${post.slug || post.id}`}
       className="flex gap-3 bg-card rounded-2xl border border-border p-3 hover:shadow-sm transition-shadow">
       
       {post.image_url &&

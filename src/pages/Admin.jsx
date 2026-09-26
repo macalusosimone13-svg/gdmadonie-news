@@ -24,6 +24,7 @@ import CoalitionGroupManager from '@/components/admin/CoalitionGroupManager';
 import BackupManager from '@/components/admin/BackupManager';
 import RedazionePanel from '@/components/admin/RedazionePanel';
 import StatsPanel from '@/components/admin/StatsPanel';
+import RichiestePanel from '@/components/admin/RichiestePanel';
 import { CATEGORIES } from '@/lib/categories';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -134,6 +135,7 @@ export default function Admin() {
       { id: 'post', label: 'Nuovo post', desc: 'Scrivi e pubblica un comunicato, con foto o video.', show: true },
       { id: 'event', label: 'Nuovo evento', desc: 'Crea un evento con data, luogo e iscrizioni.', show: isAdmin },
       { id: 'manage', label: 'Post ed eventi pubblicati', desc: 'Modifica, elimina o pubblica le bozze.', show: true },
+      { id: 'richieste', label: 'Richieste dal sito', desc: 'Iscrizioni, segnalazioni e proposte arrivate dal modulo Partecipa.', show: true },
       { id: 'iscrizioni', label: 'Iscrizioni agli eventi', desc: 'Chi si è iscritto agli eventi. Puoi scaricare l\'elenco.', show: isAdmin },
     ] },
     { group: 'News GD', items: [
@@ -248,6 +250,7 @@ export default function Admin() {
           </div>
           }
         </TabsContent>
+        <TabsContent value="richieste" className="mt-0"><RichiestePanel /></TabsContent>
         {isEditor && <TabsContent value="mia-pagina" className="mt-0"><MyTeamPageManager /></TabsContent>}
         {isAdmin && <>
                   <TabsContent value="redazione" className="mt-0"><RedazionePanel /></TabsContent>

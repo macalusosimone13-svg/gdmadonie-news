@@ -17,13 +17,16 @@ export default function Privacy() {
       </div></div>
       <div className="wrap" style={{ maxWidth: 820, paddingTop: 36, paddingBottom: 72 }}>
       <div className="prose prose-sm max-w-none text-foreground space-y-4 leading-relaxed legal-text">
-        <p><em>Ultimo aggiornamento: 05/09/2026</em></p>
+        <p><em>Ultimo aggiornamento: 26/09/2026</em></p>
 
         <h2 className="text-lg font-semibold">Titolare del trattamento</h2>
         <p>Il titolare del trattamento dei dati raccolti tramite questo sito è Giovani Democratici Madonie, contattabile all'indirizzo <a href="mailto:gdmadonie@gmail.com" className="text-primary underline">gdmadonie@gmail.com</a>.</p>
 
         <h2 className="text-lg font-semibold">Dati raccolti</h2>
         <p>Il sito raccoglie dati forniti volontariamente dall'utente in fase di registrazione (nome, email) e dati di navigazione tramite cookie tecnici e, se attivi, cookie pubblicitari di terze parti (Google AdSense).</p>
+
+        <h2 className="text-lg font-semibold">Modulo "Partecipa"</h2>
+        <p>Chi compila il modulo della pagina <Link to="/partecipa" className="text-primary underline">Partecipa</Link> ci fornisce nome, comune (facoltativo), un contatto (email o telefono) e un messaggio. Questi dati servono solo per rispondere alla richiesta (iscrizione al circolo, segnalazione o proposta), sono visibili solo agli amministratori del sito e non vengono ceduti a terzi. Per evitare invii automatici ripetuti conserviamo anche un'impronta cifrata e non reversibile dell'indirizzo di rete. Puoi chiedere in qualsiasi momento la cancellazione della tua richiesta scrivendo a <a href="mailto:gdmadonie@gmail.com" className="text-primary underline">gdmadonie@gmail.com</a>.</p>
 
         <h2 className="text-lg font-semibold">Google AdSense e cookie di terze parti</h2>
         <p>Questo sito utilizza Google AdSense per mostrare pubblicità. Google e i suoi partner possono utilizzare cookie per personalizzare gli annunci in base alle visite precedenti dell'utente su questo sito o su altri siti web. Puoi disattivare la pubblicità personalizzata visitando le <a href="https://adssettings.google.com/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Impostazioni annunci di Google</a>.</p>
