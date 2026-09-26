@@ -176,3 +176,10 @@
 .share-check input{margin-top:3px;width:16px;height:16px;accent-color:#2F5BD8}
 .share-msg{font-size:13px;line-height:1.5;color:#0F1B3A;background:#F2F5FF;border-radius:14px;padding:12px 14px}
 .share-dl{font-weight:700;font-size:13px;color:#2F5BD8;text-align:center;padding:6px}
+
+
+/* iPhone/iPad: Safari ingrandisce la pagina quando si tocca un campo con testo sotto i 16px
+   e poi non torna indietro. Solo sui dispositivi iOS portiamo i campi a 16px. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type="checkbox"]):not([type="radio"]), textarea, select { font-size: 16px !important; }
+}
