@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabaseClient';
 import { getCurrentUser } from '@/lib/supabaseAuth';
 import { CATEGORIES, getCategoryLabel } from '@/lib/categories';
 import { useSiteContent } from '@/lib/useSiteContent';
-import { getContent } from '@/lib/siteContent';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { setBackTarget, sectionForPost } from '@/lib/backTarget';
@@ -27,10 +26,26 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Film, Image as ImageIcon } from 'lucide-react';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const getPostBySlug = async (slug) => {
-  const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).maybeSingle();
-  if (error) return null;
+// Cerca la notizia dall'indirizzo leggibile o dal vecchio codice (uuid).
+// Restituisce null se la notizia non esiste; lancia un errore solo se il
+// database non risponde (cosi' "non trovata" e "problema di connessione"
+// restano due messaggi diversi).
+const fetchPost = async (key) => {
+  const col = UUID_RE.test(key) ? 'id' : 'slug';
+  const { data, error } = await supabase.from('posts').select('*').eq(col, key).maybeSingle();
+  if (error) throw error;
   return data;
+};
+// Nome leggibile della fonte quando manca (es. link a Instagram).
+const sourceLabel = (post) => {
+  if (post.source_name) return post.source_name;
+  try {
+    const h = new URL(post.external_link).hostname.replace(/^www\./, '');
+    if (h.includes('instagram.')) return 'Instagram';
+    if (h.includes('facebook.') || h === 'fb.com') return 'Facebook';
+    if (h.includes('youtube.') || h === 'youtu.be') return 'YouTube';
+    return h;
+  } catch { return 'la fonte originale'; }
 };
 
 export default function PostDetail() {
@@ -50,7 +65,6 @@ export default function PostDetail() {
   const [shareMsg, setShareMsg] = useState('');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [fromSupabase, setFromSupabase] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const queryClient = useQueryClient();
   const { data: content } = useSiteContent();
@@ -75,12 +89,6 @@ export default function PostDetail() {
 
   const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 
-  // Il vecchio sistema Base44 serve solo come ripiego per articoli
-  // vecchissimi mai passati a Supabase (ormai rarissimo). Caricarlo solo
-  // quando serve davvero, invece che sempre, toglie un pezzo pesante di
-  // codice dal caricamento di ogni singola notizia (la pagina piu' visitata
-  // del sito) — velocizza il sito senza cambiare come funziona.
-  const getBase44 = async () => (await import('@/api/base44Client')).base44;
 
   useEffect(() => {
     setLoadError(false);
@@ -92,21 +100,17 @@ export default function PostDetail() {
         // indirizzo con il codice (/articolo/a4e9b3c8-...): i vecchi link
         // condivisi continuano a funzionare e vengono portati su quello nuovo.
         const isUuid = UUID_RE.test(id);
-        let p = await withTimeout(isUuid ? sb44.entities.Post.get(id) : getPostBySlug(id), 9000).catch(() => null);
-        let onSupabase = !!p;
-        if (!p && isUuid) {
-          const base44 = await getBase44();
-          p = await withTimeout(base44.entities.Post.get(id), 6000).catch(() => null);
-          onSupabase = false;
-        }
-        if (!p) { setLoadError(true); }
+        let failed = false;
+        const p = await withTimeout(fetchPost(id), 9000).catch(() => { failed = true; return null; });
+        // Notizia inesistente: messaggio "non trovata". Errore di rete: "riprova".
+        if (!p) { setPost(null); setLoadError(failed); }
         // 'duplicate' = notizia uguale a un'altra gia' in lista: nascosta dagli elenchi ma apribile dai link.
         if (p && p.status !== 'published' && p.status !== 'duplicate') {
           let admin = false;
           try {const u = await getCurrentUser();admin = u?.role === 'admin' || u?.role === 'editor';} catch {}
           if (!admin) {setPost(null);setLoading(false);return;}
         }
-        if (p) { setFromSupabase(onSupabase); setPost(p); setNoteDraft(p.editorial_note || ''); setLoadError(false); }
+        if (p) { setPost(p); setNoteDraft(p.editorial_note || ''); setLoadError(false); }
         if (p) markRead(p.id);
         if (p && isUuid && p.slug) navigate(`/articolo/${p.slug}${window.location.search}${window.location.hash}`, { replace: true });
       } catch {}
@@ -118,8 +122,7 @@ export default function PostDetail() {
     if (!post) return;
     setSavingNote(true);
     try {
-      if (fromSupabase) await sb44.entities.Post.update(post.id, { editorial_note: noteDraft });
-      else await (await getBase44()).entities.Post.update(post.id, { editorial_note: noteDraft });
+      await sb44.entities.Post.update(post.id, { editorial_note: noteDraft });
       setPost({ ...post, editorial_note: noteDraft });
       setEditingNote(false);
     } catch {}
@@ -130,8 +133,7 @@ export default function PostDetail() {
     if (!post) return;
     setDeleting(true);
     try {
-      if (fromSupabase) await sb44.entities.Post.delete(post.id);
-      else await (await getBase44()).entities.Post.delete(post.id);
+      await sb44.entities.Post.delete(post.id);
       navigate('/rassegna-stampa');
     } catch {
       alert('Eliminazione non riuscita. Riprova.');
@@ -141,14 +143,19 @@ export default function PostDetail() {
 
   const permalink = post ? `${window.location.origin}/articolo/${post.slug || post.id}` : window.location.href;
   const shareLink = post ? `${window.location.origin}/functions/sharePost?id=${post.id}` : permalink;
-  const seoImage = post?.media && post.media.length ? post.media[0].url : post?.image_url;
+  // Per i video l'anteprima e' la copertina (poster), non il file .mp4.
+  const firstMedia = post?.media && post.media.length ? post.media[0] : null;
+  const seoImage = firstMedia
+    ? (firstMedia.type === 'video' ? (firstMedia.poster_url || undefined) : firstMedia.url)
+    : (/\.(mp4|mov|webm)(\?|$)/i.test(post?.image_url || '') ? undefined : post?.image_url);
   useSEO({
     title: post ? `${post.title} — GD Madonie News` : 'GD Madonie News',
     description: (post?.excerpt || 'Notizia dei Giovani Democratici Madonie').replace(/\s+/g, ' ').slice(0, 160),
     image: seoImage,
     url: permalink,
     type: 'article',
-    noindex: post ? post.source_type !== 'gd_madonie' : false
+    // Notizia non trovata: fuori da Google.
+    noindex: post ? post.source_type !== 'gd_madonie' : !loading
   });
 
   useEffect(() => {
@@ -427,7 +434,7 @@ export default function PostDetail() {
       }
       {post.external_link &&
       <a href={post.external_link} target="_blank" rel="noopener noreferrer" className="ad-external">
-          Leggi l'articolo completo su {post.source_name} <ExternalLink className="w-4 h-4" />
+          Leggi l'articolo completo su {sourceLabel(post)} <ExternalLink className="w-4 h-4" />
         </a>
       }
       <div className="share-row">

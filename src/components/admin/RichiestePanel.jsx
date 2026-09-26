@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { Loader2, Mail, Phone, Trash2, MapPin, Check, RotateCcw } from 'lucide-react';
+import { Loader2, Mail, Phone, Trash2, Check, RotateCcw } from 'lucide-react';
 
 // Richieste arrivate dal modulo "Partecipa" del sito (tabella partecipa_richieste).
 const TIPI = {

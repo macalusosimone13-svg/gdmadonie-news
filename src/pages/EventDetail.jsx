@@ -4,7 +4,7 @@ import { sized, fallbackTo } from '@/lib/imgSize';
 import { sb44 } from '@/api/supabaseEntities';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { MapPin, Calendar, Clock, Share2, Bookmark, BookmarkCheck, Facebook, Instagram, Mail, Copy, Link2 } from 'lucide-react';
+import { MapPin, Calendar, Clock, Share2, Bookmark, BookmarkCheck, Copy, Link2 } from 'lucide-react';
 import { markRead } from '@/lib/readArticles';
 import { useToast } from '@/components/ui/use-toast';
 import { useSEO } from '@/lib/useSEO';

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { uploadFile } from '@/lib/uploadFile';
 import { sb44 } from '@/api/supabaseEntities';
 import { getCurrentUser } from '@/lib/supabaseAuth';
-import { Save, Loader2, User, Upload, X } from 'lucide-react';
+import { Loader2, User, Upload, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

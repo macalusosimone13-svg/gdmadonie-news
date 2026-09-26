@@ -2,8 +2,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 // Adattatore che imita l'interfaccia di base44.entities (.filter, .list, .get)
 // così le pagine esistenti richiedono modifiche minime durante la migrazione
-// progressiva da Base44 a Supabase. Una volta spostate tutte le pagine, questo
-// file può sostituire del tutto base44Client.js.
+// progressiva da Base44 a Supabase (completata: Base44 non e' piu' usato).
 
 function applyFilters(qb, query) {
   for (const [key, val] of Object.entries(query || {})) {

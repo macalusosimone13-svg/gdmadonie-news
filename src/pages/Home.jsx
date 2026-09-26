@@ -3,15 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { sb44 } from '@/api/supabaseEntities';
 import PullToRefresh from '@/components/PullToRefresh';
-import { CATEGORIES, getCategoryLabel } from '@/lib/categories';
+import { getCategoryLabel } from '@/lib/categories';
 import { useSiteContent } from '@/lib/useSiteContent';
-import { useSEO } from '@/lib/useSEO';
-import { useJsonLd } from '@/lib/useJsonLd';
 import AdSlot from '@/components/AdSlot';
 import Reveal from '@/components/Reveal';
 import { ADS_ENABLED } from '@/lib/adsConfig';
 import { sized, fallbackTo } from '@/lib/imgSize';
-import { Card, Lead, TrendBox, postImg, fmtDate, postLink, metaSource } from '@/components/redesign/Cards';
+import { Card, Lead, TrendBox, postImg, fmtDate, postLink } from '@/components/redesign/Cards';
 import { Newsletter, FollowStats } from '@/components/redesign/SideBoxes';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -39,7 +37,7 @@ function Featured({ post, isEvent, siteContent }) {
           <span className="date">{date}{isEvent && post.location ? ` · ${post.location}` : ''}</span>
           <span className="feat-cta">{isEvent ? "Scopri l'evento" : 'Leggi la notizia'} →</span>
         </div>
-        <div className="featured-img"><img src={sized(img, 1000)} onError={fallbackTo(img)} alt="" fetchpriority="high" decoding="async" /></div>
+        <div className="featured-img"><img src={sized(img, 1000)} onError={fallbackTo(img)} alt="" fetchPriority="high" decoding="async" /></div>
       </Link>
     </div></div>);
 }
