@@ -18,5 +18,19 @@ export default defineConfig({
   },
   plugins: [
     react(),
-  ]
+  ],
+  build: {
+    rollupOptions: {
+      output: {
+        // Le librerie di base (React, router, Supabase) in un file a parte:
+        // cambiano di rado, quindi dopo ogni aggiornamento del sito il
+        // browser dei visitatori riscarica solo il codice nostro.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\//.test(id)) return 'vendor-react';
+          if (id.includes('node_modules/@supabase/')) return 'vendor-supabase';
+        },
+      },
+    },
+  },
 });
