@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { sb44 } from '@/api/supabaseEntities';
 import { supabase } from '@/lib/supabaseClient';
 import { getCurrentUser } from '@/lib/supabaseAuth';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { RefreshCw, Trash2, Loader2, FileText, Calendar, Download, Users, Send, Film, Pencil } from 'lucide-react';
 import PostForm, { FramePicker } from '@/components/admin/PostForm';
@@ -15,7 +15,6 @@ import SplashConfigManager from '@/components/admin/SplashConfigManager';
 import ContentTextManager from '@/components/admin/ContentTextManager';
 import MyTeamPageManager from '@/components/admin/MyTeamPageManager';
 import EmailTemplateManager from '@/components/admin/EmailTemplateManager';
-import CodeExporter from '@/components/admin/CodeExporter';
 import UxDesignManager from '@/components/admin/UxDesignManager';
 import StoryShareConfigManager from '@/components/admin/StoryShareConfigManager';
 import PollManager from '@/components/admin/PollManager';
@@ -160,7 +159,6 @@ export default function Admin() {
     { group: 'Avanzate', items: [
       { id: 'log', label: 'Registro attività', desc: 'Cronologia delle importazioni e delle operazioni automatiche.', show: isAdmin },
       { id: 'backup', label: 'Backup', desc: 'Salva una copia dei contenuti del sito.', show: isAdmin },
-      { id: 'codice', label: 'Esporta codice', desc: 'Per chi gestisce il sito: scarica il codice.', show: isAdmin },
       { id: 'splash', label: 'Splash (vecchio design)', desc: 'Non più usato nel nuovo design.', show: isAdmin },
       { id: 'ux', label: 'Design UX (vecchio design)', desc: 'Non più usato nel nuovo design.', show: isAdmin },
       { id: 'storia', label: 'Storie IG (vecchio design)', desc: 'Non più usato nel nuovo design.', show: isAdmin },
@@ -319,7 +317,6 @@ export default function Admin() {
             }
           </div>
         </TabsContent>
-        <TabsContent value="codice" className="mt-0"><CodeExporter /></TabsContent>
         <TabsContent value="backup" className="mt-0"><BackupManager /></TabsContent>
         </>}
           </Tabs>
