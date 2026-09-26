@@ -29,7 +29,48 @@ const GD_EMAIL = 'gdmadonie@gmail.com';
 const corpoRisposta = (r) => `Ciao ${String(r.nome || '').split(' ')[0]},\n\ngrazie per averci scritto dal sito.\n\n\nGiovani Democratici Madonie\nwww.gdmadonie-news.com`;
 // Apre la finestra "Scrivi" di Gmail già sull'account GD Madonie (authuser), con destinatario, oggetto e testo pronti.
 const gmailHref = (r, oggetto) => `https://mail.google.com/mail/?authuser=${encodeURIComponent(GD_EMAIL)}&view=cm&fs=1&to=${encodeURIComponent(r.contatto)}&su=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(corpoRisposta(r))}`;
-const mailtoHref = (r, oggetto) => `mailto:${r.contatto}?subject=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(corpoRisposta(r))}`;
+
+// Risposta scritta e inviata dal pannello: parte sempre a nome di GD Madonie,
+// qualunque sia l'account email aperto sul telefono o sul computer. Le risposte
+// della persona arrivano a gdmadonie@gmail.com, che riceve anche una copia.
+function RispostaBox({ r, oggetto, onSent }) {
+  const [open, setOpen] = useState(false);
+  const [sub, setSub] = useState(oggetto);
+  const [testo, setTesto] = useState(corpoRisposta(r));
+  const [stato, setStato] = useState('idle'); // idle | invio | errore
+  const [errore, setErrore] = useState('');
+  const invia = async () => {
+    setStato('invio'); setErrore('');
+    const { data, error } = await supabase.functions.invoke('rispondi-richiesta', { body: { id: r.id, oggetto: sub, testo } });
+    if (error || !data?.ok) {
+      let msg = data?.error;
+      try { if (!msg && error?.context) msg = (await error.context.json())?.error; } catch { /* ignora */ }
+      setErrore(msg || 'Invio non riuscito. Riprova tra poco.'); setStato('errore'); return;
+    }
+    setOpen(false); setStato('idle');
+    onSent({ risposta: testo, risposta_oggetto: sub, risposta_at: new Date().toISOString(), stato: 'gestita' });
+  };
+  if (!open) return (
+    <button type="button" onClick={(e) => { e.stopPropagation(); setOpen(true); }} className="inline-flex items-center gap-1.5 text-sm font-bold text-white px-3 py-2 rounded-full bg-[#2F5BD8]">
+      <Mail className="w-4 h-4" />{r.risposta ? 'Rispondi di nuovo' : 'Rispondi come GD Madonie'}
+    </button>);
+  return (
+    <div onClick={(e) => e.stopPropagation()} className="basis-full rounded-xl border border-border p-3 space-y-2 bg-background">
+      <p className="text-xs text-muted-foreground">A: <b className="text-foreground">{r.contatto}</b> · Da: <b className="text-foreground">GD Madonie</b> · Le risposte arrivano a {GD_EMAIL}</p>
+      <label className="block text-xs font-bold text-muted-foreground" htmlFor={`ogg-${r.id}`}>Oggetto</label>
+      <input id={`ogg-${r.id}`} value={sub} onChange={(e) => setSub(e.target.value)} maxLength={200} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-base" />
+      <label className="block text-xs font-bold text-muted-foreground" htmlFor={`txt-${r.id}`}>Messaggio</label>
+      <textarea id={`txt-${r.id}`} value={testo} onChange={(e) => setTesto(e.target.value)} rows={7} maxLength={8000} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-base" />
+      {errore && <p className="text-sm text-red-600">{errore}</p>}
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" disabled={stato === 'invio' || testo.trim().length < 5} onClick={invia} className="inline-flex items-center gap-1.5 text-sm font-bold text-white px-4 py-2 rounded-full bg-[#2F5BD8] disabled:opacity-50">
+          {stato === 'invio' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}{stato === 'invio' ? 'Invio…' : 'Invia risposta'}
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="text-sm font-bold px-3 py-2 rounded-full border border-border">Annulla</button>
+        <a href={gmailHref(r, sub)} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-muted-foreground underline px-1 py-2">oppure scrivi da Gmail</a>
+      </div>
+    </div>);
+}
 
 const isEmail = (s) => /@/.test(s || '');
 const telHref = (s) => 'tel:' + String(s || '').replace(/[^\d+]/g, '');
@@ -107,18 +148,19 @@ export default function RichiestePanel() {
                     <p className="text-sm text-foreground whitespace-pre-line">{r.messaggio}</p> :
                     <p className="text-sm text-muted-foreground italic">Nessun messaggio: ha lasciato solo i suoi dati per essere ricontattato.</p>}
                 </div>
+                {r.risposta &&
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900 px-3 py-2">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-700 mb-1">Risposta inviata{r.risposta_at ? ` il ${format(new Date(r.risposta_at), "d MMM yyyy, HH:mm", { locale: it })}` : ''}</p>
+                    <p className="text-sm text-foreground whitespace-pre-line">{r.risposta}</p>
+                  </div>}
                 <p className="text-sm text-foreground pt-1">
                   {isEmail(r.contatto) ?
-                    <>Ti ha lasciato la sua <b>email</b>: rispondigli dalla casella di GD Madonie.</> :
+                    <>Ti ha lasciato la sua <b>email</b>: rispondigli da qui, la risposta parte a nome di GD Madonie.</> :
                     <>Ti ha lasciato il suo <b>numero di telefono</b>: chiamalo o scrivigli su WhatsApp.</>}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   {isEmail(r.contatto) ?
-                    <>
-                      <a href={gmailHref(r, m.oggetto)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-sm font-bold text-white px-3 py-2 rounded-full bg-[#2F5BD8]"><Mail className="w-4 h-4" />Rispondi come GD Madonie</a>
-                      <a href={mailtoHref(r, m.oggetto)} onClick={(e) => e.stopPropagation()} className="text-xs font-bold text-muted-foreground underline px-1 py-2">oppure con l'app Mail</a>
-                      <span className="basis-full text-xs text-muted-foreground">Destinatario: {r.contatto} · la risposta parte da {GD_EMAIL}</span>
-                    </> :
+                    <RispostaBox r={r} oggetto={m.oggetto} onSent={(patch) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, ...patch } : x))} /> :
                     <>
                       <a href={telHref(r.contatto)} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2F5BD8] px-3 py-2 rounded-full bg-[#EAF0FD]"><Phone className="w-4 h-4" />Chiama {r.contatto}</a>
                       <a href={waHref(r.contatto)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sm font-bold text-emerald-700 px-3 py-2 rounded-full bg-emerald-100">WhatsApp</a>
