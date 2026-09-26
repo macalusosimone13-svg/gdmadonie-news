@@ -29,7 +29,11 @@ export async function loginWithPassword(email, password) {
 }
 
 export async function loginWithGoogle(redirectTo) {
-  const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    // select_account: Google mostra sempre la scelta dell'account, così si può entrare con un profilo diverso da quello già collegato.
+    options: { redirectTo, queryParams: { prompt: 'select_account' } },
+  });
   if (error) throw error;
 }
 
