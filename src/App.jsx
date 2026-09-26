@@ -12,6 +12,7 @@ import ScrollToTop from './components/ScrollToTop';
 import Layout from '@/components/Layout';
 import AdminRoute from '@/components/AdminRoute';
 import { UxConfigProvider } from '@/lib/UxConfigContext';
+import { useRouteSeoDefaults } from '@/lib/useSEO';
 
 
 // Dopo un nuovo rilascio i vecchi file JS cambiano nome: una scheda rimasta
@@ -92,6 +93,7 @@ const PageSpinner = () => (
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const location = useLocation();
+  useRouteSeoDefaults(location.pathname);
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings) {
