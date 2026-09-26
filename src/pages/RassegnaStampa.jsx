@@ -254,7 +254,7 @@ function RassegnaCard({ post, saved, onToggleSave }) {
   const img = post.image_url && post.media_type !== 'video' ? post.image_url : post.poster_url;
   return (
     <article className={`article-card${img ? '' : ' noimg'}`} style={{ position: 'relative', height: '100%' }}>
-      <Link to={`/articolo/${post.id}`} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <Link to={`/articolo/${post.slug || post.id}`} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         {img && <div className="card-media"><img src={sized(img, 640)} onError={fallbackTo(img)} alt="" loading="lazy" decoding="async" /></div>}
         <div className="card-body" style={{ paddingBottom: 56 }}>
           <div className="meta-line">{post.source_name} <span className="d">· {date}</span>{isUnread(post.id) && <span className="chip-blu" style={{ marginLeft: 8, padding: '2px 8px', fontSize: 10 }}>Nuovo</span>}</div>

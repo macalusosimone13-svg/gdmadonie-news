@@ -42,8 +42,6 @@ export default function ChiSiamo() {
   { ruolo: 'Resp. Comunicazione', nome: getContent(content, 'org_resp_comunicazione') },
   { ruolo: 'Tesoriere', nome: getContent(content, 'org_tesoriere') }];
 
-  const emailLink = links.find((l) => l.platform === 'email');
-  const mailHref = emailLink ? (emailLink.url.startsWith('mailto:') ? emailLink.url : `mailto:${emailLink.url}`) : 'mailto:gdmadonie@gmail.com';
 
   return (
     <div className="rd-page">
@@ -87,7 +85,7 @@ export default function ChiSiamo() {
             })}
           </div></div></section>
 
-        <div className="cta-band"><div><h2>VUOI SCRIVERE CON NOI?</h2><p>Cerchiamo sempre nuove voci per raccontare il territorio delle Madonie. Se vuoi proporre un articolo, un'iniziativa o entrare a far parte del circolo, scrivici.</p></div><a href={mailHref} className="btn-pill">Scrivici</a></div>
+        <div className="cta-band"><div><h2>VUOI SCRIVERE CON NOI?</h2><p>Cerchiamo sempre nuove voci per raccontare il territorio delle Madonie. Se vuoi proporre un articolo, un'iniziativa o entrare a far parte del circolo, scrivici.</p></div><Link to="/partecipa" className="btn-pill">Scrivici</Link></div>
         <div style={{ height: 90 }} />
       </div>
     </div>);

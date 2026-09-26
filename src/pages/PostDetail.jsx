@@ -26,6 +26,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Film, Image as ImageIcon } from 'lucide-react';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const getPostBySlug = async (slug) => {
+  const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).maybeSingle();
+  if (error) return null;
+  return data;
+};
+
 export default function PostDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -60,7 +67,7 @@ export default function PostDetail() {
       for (const q of queryClient.getQueryCache().getAll()) {
         const d = q.state.data;
         const list = Array.isArray(d) ? d : Array.isArray(d?.pages) ? d.pages.flat() : null;
-        const hit = list?.find?.((x) => x && x.id === id && x.title && x._type !== 'event');
+        const hit = list?.find?.((x) => x && (x.id === id || x.slug === id) && x.title && x._type !== 'event');
         if (hit && hit.status !== 'draft') { setPost(hit); setLoading(false); break; }
       }
     } catch {}
@@ -77,23 +84,31 @@ export default function PostDetail() {
 
   useEffect(() => {
     setLoadError(false);
+    // Appena portati dal vecchio indirizzo a quello leggibile: la notizia e' gia' caricata.
+    if (post && post.slug === id) { setLoading(false); return; }
     (async () => {
       try {
-        let p = await withTimeout(sb44.entities.Post.get(id), 9000).catch(() => null);
+        // Indirizzo leggibile (/articolo/titolo-della-notizia) oppure vecchio
+        // indirizzo con il codice (/articolo/a4e9b3c8-...): i vecchi link
+        // condivisi continuano a funzionare e vengono portati su quello nuovo.
+        const isUuid = UUID_RE.test(id);
+        let p = await withTimeout(isUuid ? sb44.entities.Post.get(id) : getPostBySlug(id), 9000).catch(() => null);
         let onSupabase = !!p;
-        if (!p) {
+        if (!p && isUuid) {
           const base44 = await getBase44();
           p = await withTimeout(base44.entities.Post.get(id), 6000).catch(() => null);
           onSupabase = false;
         }
         if (!p) { setLoadError(true); }
-        if (p && p.status !== 'published') {
+        // 'duplicate' = notizia uguale a un'altra gia' in lista: nascosta dagli elenchi ma apribile dai link.
+        if (p && p.status !== 'published' && p.status !== 'duplicate') {
           let admin = false;
           try {const u = await getCurrentUser();admin = u?.role === 'admin' || u?.role === 'editor';} catch {}
           if (!admin) {setPost(null);setLoading(false);return;}
         }
         if (p) { setFromSupabase(onSupabase); setPost(p); setNoteDraft(p.editorial_note || ''); setLoadError(false); }
         if (p) markRead(p.id);
+        if (p && isUuid && p.slug) navigate(`/articolo/${p.slug}${window.location.search}${window.location.hash}`, { replace: true });
       } catch {}
       setLoading(false);
     })();
@@ -124,7 +139,7 @@ export default function PostDetail() {
     }
   };
 
-  const permalink = post ? `${window.location.origin}/articolo/${post.id}` : window.location.href;
+  const permalink = post ? `${window.location.origin}/articolo/${post.slug || post.id}` : window.location.href;
   const shareLink = post ? `${window.location.origin}/functions/sharePost?id=${post.id}` : permalink;
   const seoImage = post?.media && post.media.length ? post.media[0].url : post?.image_url;
   useSEO({
