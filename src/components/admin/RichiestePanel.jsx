@@ -24,6 +24,13 @@ const FILTRI = [
   { id: 'tutte', label: 'Tutte' },
 ];
 
+// Le risposte partono dalla casella di GD Madonie, non da quella personale di chi è collegato.
+const GD_EMAIL = 'gdmadonie@gmail.com';
+const corpoRisposta = (r) => `Ciao ${String(r.nome || '').split(' ')[0]},\n\ngrazie per averci scritto dal sito.\n\n\nGiovani Democratici Madonie\nwww.gdmadonie-news.com`;
+// Apre la finestra "Scrivi" di Gmail già sull'account GD Madonie (authuser), con destinatario, oggetto e testo pronti.
+const gmailHref = (r, oggetto) => `https://mail.google.com/mail/?authuser=${encodeURIComponent(GD_EMAIL)}&view=cm&fs=1&to=${encodeURIComponent(r.contatto)}&su=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(corpoRisposta(r))}`;
+const mailtoHref = (r, oggetto) => `mailto:${r.contatto}?subject=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(corpoRisposta(r))}`;
+
 const isEmail = (s) => /@/.test(s || '');
 const telHref = (s) => 'tel:' + String(s || '').replace(/[^\d+]/g, '');
 const waHref = (s) => {
@@ -102,12 +109,16 @@ export default function RichiestePanel() {
                 </div>
                 <p className="text-sm text-foreground pt-1">
                   {isEmail(r.contatto) ?
-                    <>Ti ha lasciato la sua <b>email</b>: rispondigli da qui.</> :
+                    <>Ti ha lasciato la sua <b>email</b>: rispondigli dalla casella di GD Madonie.</> :
                     <>Ti ha lasciato il suo <b>numero di telefono</b>: chiamalo o scrivigli su WhatsApp.</>}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   {isEmail(r.contatto) ?
-                    <a href={`mailto:${r.contatto}?subject=${encodeURIComponent(m.oggetto)}&body=${encodeURIComponent(`Ciao ${String(r.nome || '').split(' ')[0]},\n\ngrazie per averci scritto dal sito.\n\n`)}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2F5BD8] px-3 py-2 rounded-full bg-[#EAF0FD]"><Mail className="w-4 h-4" />Scrivi a {r.contatto}</a> :
+                    <>
+                      <a href={gmailHref(r, m.oggetto)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-sm font-bold text-white px-3 py-2 rounded-full bg-[#2F5BD8]"><Mail className="w-4 h-4" />Rispondi come GD Madonie</a>
+                      <a href={mailtoHref(r, m.oggetto)} onClick={(e) => e.stopPropagation()} className="text-xs font-bold text-muted-foreground underline px-1 py-2">oppure con l'app Mail</a>
+                      <span className="basis-full text-xs text-muted-foreground">Destinatario: {r.contatto} · la risposta parte da {GD_EMAIL}</span>
+                    </> :
                     <>
                       <a href={telHref(r.contatto)} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2F5BD8] px-3 py-2 rounded-full bg-[#EAF0FD]"><Phone className="w-4 h-4" />Chiama {r.contatto}</a>
                       <a href={waHref(r.contatto)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sm font-bold text-emerald-700 px-3 py-2 rounded-full bg-emerald-100">WhatsApp</a>
