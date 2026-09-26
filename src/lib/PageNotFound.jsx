@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useSEO } from '@/lib/useSEO';
 
 // Pagina 404 nel nuovo stile.
 export default function PageNotFound() {
+  useSEO({ title: 'Pagina non trovata — GD Madonie News', noindex: true });
   return (
     <div className="min-h-screen flex items-center justify-center px-5 text-center" style={{ background: '#0F1B3A' }}>
       <div style={{ maxWidth: 420 }}>

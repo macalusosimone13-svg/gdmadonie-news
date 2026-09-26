@@ -41,8 +41,16 @@ function toCanonicalUrl(url) {
   }
 }
 
+// Pagine private o di servizio: mai nei risultati di Google.
+const NOINDEX_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/impostazioni', '/admin'];
+
 export function useSEO({ title, description, image, url, type = 'website', noindex = false }) {
   useEffect(() => {
+    // Senza un url esplicito l'indirizzo ufficiale e' quello della pagina stessa
+    // (prima restava quello della home, scritto in index.html: Google poteva
+    // scambiare Chi siamo, Partecipa, Privacy... per doppioni della home).
+    if (!url && typeof window !== 'undefined') url = window.location.href;
+    if (typeof document !== 'undefined') document.head.dataset.seoPath = window.location.pathname;
     if (title) document.title = title;
     if (description) upsertMeta('name', 'description', description);
     upsertMeta('property', 'og:title', title);
@@ -76,4 +84,24 @@ export function useSEO({ title, description, image, url, type = 'website', noind
     }
     robots.setAttribute('content', (noindex ? 'noindex, follow' : 'index, follow') + ', max-image-preview:large, max-snippet:-1');
   }, [title, description, image, url, type, noindex]);
+}
+
+// Valori di base per le pagine che non chiamano useSEO (login, impostazioni,
+// assistente, 404...): indirizzo ufficiale = la pagina stessa, e le pagine
+// private escluse da Google. Se la pagina chiama useSEO, vince quella.
+export function useRouteSeoDefaults(pathname) {
+  useEffect(() => {
+    if (document.head.dataset.seoPath === pathname) return;
+    document.title = 'GD Madonie News — Giovani Democratici Madonie';
+    upsertLink('canonical', CANONICAL_HOST + pathname);
+    upsertMeta('property', 'og:url', CANONICAL_HOST + pathname);
+    let robots = document.head.querySelector('meta[name="robots"]');
+    if (!robots) {
+      robots = document.createElement('meta');
+      robots.setAttribute('name', 'robots');
+      document.head.appendChild(robots);
+    }
+    const privata = NOINDEX_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
+    robots.setAttribute('content', (privata ? 'noindex, follow' : 'index, follow') + ', max-image-preview:large, max-snippet:-1');
+  }, [pathname]);
 }
