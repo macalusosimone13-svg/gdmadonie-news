@@ -83,10 +83,11 @@ export default function Home() {
   const postsQuery = useQuery({
     queryKey: ['home-posts'],
     queryFn: async () => {
-      const [gd, ras] = await Promise.all([
+      const [gd, newsGd, ras] = await Promise.all([
       sb44.entities.Post.filter({ status: 'published', category: { $in: GD_CATS } }, '-published_date', 50),
+      sb44.entities.Post.filter({ status: 'published', source_type: 'gd_madonie', category: 'news_gd' }, '-published_date', 5),
       sb44.entities.Post.filter({ status: 'published', category: { $in: ['politica_nazionale', 'politica_regionale', 'rassegna_stampa'] } }, '-published_date', 100)]);
-      return [...(gd || []), ...(ras || [])];
+      return [...(gd || []), ...(newsGd || []), ...(ras || [])];
     },
     staleTime: 3 * 60 * 1000
   });
@@ -112,7 +113,8 @@ export default function Home() {
   const DAY_MS = 24 * 60 * 60 * 1000;
   const hasRealImage = (p) => !!postImg(p) && p.media_type !== 'video';
   const isImminentEvent = (p) => p._type === 'event' && new Date(p.date).getTime() - now <= 7 * DAY_MS;
-  const isFreshComunicato = (p) => p._type !== 'event' && GD_CATS.includes(p.category) && now - new Date(p.published_date || 0).getTime() <= 2 * DAY_MS;
+  // Comunicati e News GD restano "In evidenza" per lo stesso tempo (48 ore).
+  const isFreshComunicato = (p) => p._type !== 'event' && [...GD_CATS, 'news_gd'].includes(p.category) && now - new Date(p.published_date || 0).getTime() <= 2 * DAY_MS;
   const heroPost =
   posts.find((p) => isImminentEvent(p) && hasRealImage(p)) ||
   posts.find((p) => isFreshComunicato(p) && hasRealImage(p)) ||
