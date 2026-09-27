@@ -163,11 +163,11 @@ export default function GDMadonie() {
       {value && <button onClick={() => set('')} aria-label="Cancella ricerca"><X size={16} /></button>}
     </div>;
 
-  const list = (items, loadingNow, sentinel, more, q) =>
+  const list = (items, loadingNow, sentinel, more, label) =>
   loadingNow ? <Loading /> :
   items.length === 0 ? <Empty /> :
   <>
-      <Lead post={items[0]} wide label="Comunicato GD" siteContent={null} />
+      <Lead post={items[0]} wide label={label} siteContent={content} />
       {items.length > 1 && <div className="news-main-grid gd-grid">{items.slice(1).map((p) => <Card key={p.id} post={p} />)}</div>}
       <div ref={sentinel} aria-hidden="true" />
       {more && <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><div className="w-7 h-7 border-4 border-slate-200 border-t-primary rounded-full animate-spin" /></div>}
