@@ -113,8 +113,14 @@ export default function Home() {
   const DAY_MS = 24 * 60 * 60 * 1000;
   const hasRealImage = (p) => !!postImg(p) && p.media_type !== 'video';
   const isImminentEvent = (p) => p._type === 'event' && new Date(p.date).getTime() - now <= 7 * DAY_MS;
-  // Comunicati e News GD restano "In evidenza" per lo stesso tempo (48 ore).
-  const isFreshComunicato = (p) => p._type !== 'event' && [...GD_CATS, 'news_gd'].includes(p.category) && now - new Date(p.published_date || 0).getTime() <= 2 * DAY_MS;
+  // Corsia preferenziale "In evidenza": comunicati per 48 ore, News GD per
+  // 2 ore. Passato quel tempo le News GD tornano a competere con le altre
+  // notizie (resta in alto la piu' recente con foto).
+  const HOUR_MS = 60 * 60 * 1000;
+  const ageMs = (p) => now - new Date(p.published_date || 0).getTime();
+  const isFreshComunicato = (p) => p._type !== 'event' && (
+  GD_CATS.includes(p.category) && ageMs(p) <= 2 * DAY_MS ||
+  p.category === 'news_gd' && ageMs(p) <= 2 * HOUR_MS);
   const heroPost =
   posts.find((p) => isImminentEvent(p) && hasRealImage(p)) ||
   posts.find((p) => isFreshComunicato(p) && hasRealImage(p)) ||
