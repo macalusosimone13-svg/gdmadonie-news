@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { ThemeProvider } from 'next-themes';
 import PageNotFound from './lib/PageNotFound';
 import SplashScreen from '@/components/SplashScreen';
@@ -13,6 +13,7 @@ import Layout from '@/components/Layout';
 import AdminRoute from '@/components/AdminRoute';
 import { UxConfigProvider } from '@/lib/UxConfigContext';
 import { useRouteSeoDefaults } from '@/lib/useSEO';
+import { trackVisit } from '@/lib/trackVisit';
 
 
 // Dopo un nuovo rilascio i vecchi file JS cambiano nome: una scheda rimasta
@@ -94,6 +95,7 @@ const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const location = useLocation();
   useRouteSeoDefaults(location.pathname);
+  useEffect(() => { trackVisit(location.pathname); }, [location.pathname]);
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings) {
