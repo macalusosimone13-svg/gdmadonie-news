@@ -3,6 +3,7 @@ import { sb44 } from '@/api/supabaseEntities';
 import { sized, fallbackTo } from '@/lib/imgSize';
 import { Eye, Share2, Loader2, ExternalLink, Newspaper, Megaphone } from 'lucide-react';
 import { format } from 'date-fns';
+import VisitsPanel from '@/components/admin/VisitsPanel';
 import { it } from 'date-fns/locale';
 
 // Piccolo cruscotto "cosa funziona meglio": classifica dei post per letture
@@ -88,7 +89,13 @@ export default function StatsPanel() {
   }, [posts]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
+      <section className="space-y-3">
+        <h3 className="text-base font-extrabold text-foreground">Visite al sito</h3>
+        <VisitsPanel />
+      </section>
+    <section className="space-y-4">
+      <h3 className="text-base font-extrabold text-foreground">Notizie più lette e condivise</h3>
       <p className="text-sm text-muted-foreground">
         Le notizie più lette e più condivise sul sito, per capire cosa interessa di più ai lettori e cosa scrivere in più.
         Il conteggio parte da oggi: le notizie pubblicate prima non hanno ancora numeri.
@@ -114,6 +121,7 @@ export default function StatsPanel() {
       {loading ?
       <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div> :
       <RankedList posts={filtered} metric={metric} />}
+    </section>
     </div>);
 
 }
