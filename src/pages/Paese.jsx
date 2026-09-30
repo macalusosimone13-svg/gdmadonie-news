@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
@@ -86,6 +86,7 @@ export default function Paese() {
   return (
     <div className="rd-page">
       <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
+        <Link to="/paesi" className="tab" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 22, textDecoration: 'none' }}><ArrowLeft size={15} /> Tutti i paesi</Link>
         <span className="section-kicker"><Link to="/paesi">Paesi delle Madonie</Link></span>
         <h1>{isLoading ? '…' : nome.toUpperCase()}</h1>
         <p>Politica e amministrazione a {nome || '…'}: consiglio comunale, bilancio, fondi, opere pubbliche e servizi. Dal sito del Comune e dai giornali, aggiornato in automatico.</p>
@@ -141,6 +142,7 @@ export default function Paese() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {data.altri.map((c) => <Link key={c.slug} to={`/paesi/${c.slug}`} className="topic" style={{ padding: '9px 16px', fontSize: 13 }}>{c.nome}</Link>)}
                 </div>
+                <Link to="/paesi" style={{ display: 'inline-block', marginTop: 14, fontWeight: 800, fontSize: 13, textTransform: 'uppercase', color: 'var(--acc)' }}>← Tutti i paesi</Link>
               </div>}
           </aside>
         </div>
