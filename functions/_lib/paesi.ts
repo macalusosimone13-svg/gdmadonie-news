@@ -10,6 +10,7 @@ const SB = 'https://fxfckcpdxuyrhuinkyxq.supabase.co';
 // Chiave "anon public" (la stessa del sito): lettura protetta dalle regole RLS.
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4ZmNrY3BkeHV5cmh1aW5reXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0Njc2NDAsImV4cCI6MjEwNTA0MzY0MH0.FVIFZkQ5enyTSKBy8tlYDYvbI36w1P9ZnT0C7Metd_k';
 const SITE = 'https://www.gdmadonie-news.com';
+const OG_INDICE = 'https://pub-1b641aacf1b949cfadd9ca8ab453df1b.r2.dev/paesi/og/_indice.jpg';
 const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 
 const esc = (s: unknown) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -24,7 +25,7 @@ async function sb(path: string) {
 
 const STYLE = `<style>.ssr-paesi{background:#FFFDF9;color:#1c2233;font-family:Figtree,system-ui,sans-serif;min-height:100vh;padding:32px 20px 60px}.ssr-paesi .w{max-width:1100px;margin:0 auto}.ssr-paesi h1{font-family:Rubik,sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(2.4rem,8vw,4.4rem);color:#0F1B3A;margin:6px 0 12px}.ssr-paesi .k{color:#2F5BD8;font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:13px}.ssr-paesi h2{font-family:Rubik,sans-serif;font-weight:900;text-transform:uppercase;font-size:18px;color:#2F5BD8;margin:28px 0 10px}.ssr-paesi article{background:#fff;border-radius:20px;padding:18px 20px;margin:0 0 14px;box-shadow:0 1px 3px rgba(28,34,51,.08)}.ssr-paesi h3{font-size:18px;margin:6px 0;color:#0F1B3A}.ssr-paesi .m{font-size:12.5px;font-weight:700;color:#2F5BD8;text-transform:uppercase}.ssr-paesi a{color:#2F5BD8}.ssr-paesi p{line-height:1.6}</style>`;
 
-function sostituisci(res: Response, o: { title: string; description: string; url: string; jsonLd: unknown; body: string; status?: number }) {
+function sostituisci(res: Response, o: { title: string; description: string; url: string; jsonLd: unknown; body: string; status?: number; image?: string | null }) {
   const set = (attr: string) => ({ element(e: any) { e.setAttribute(attr === 'href' ? 'href' : 'content', attr === 'href' ? o.url : attr); } });
   const rw = new HTMLRewriter()
     .on('title', { element(e: any) { e.setInnerContent(o.title); } })
@@ -32,8 +33,11 @@ function sostituisci(res: Response, o: { title: string; description: string; url
     .on('link[rel="canonical"]', set('href'))
     .on('meta[property="og:title"]', { element(e: any) { e.setAttribute('content', o.title); } })
     .on('meta[property="og:description"]', { element(e: any) { e.setAttribute('content', o.description); } })
+    // immagine di anteprima del paese (WhatsApp, Instagram, Facebook), creata da og-paesi
+    .on('meta[property="og:image"]', { element(e: any) { if (o.image) e.setAttribute('content', o.image); } })
     .on('head', { element(e: any) {
       e.append(`<meta property="og:url" content="${esc(o.url)}" />`, { html: true });
+      if (o.image) e.append(`<meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" /><meta property="og:image:type" content="image/jpeg" /><meta name="twitter:image" content="${esc(o.image)}" />`, { html: true });
       e.append(`<meta name="robots" content="${o.status === 404 ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1'}" />`, { html: true });
       e.append(`<script type="application/ld+json" data-jsonld="page">${JSON.stringify(o.jsonLd).replace(/</g, '\\u003c')}</script>`, { html: true });
       e.append(STYLE, { html: true });
@@ -50,7 +54,7 @@ export async function paginaPaesi(context: any, slug: string | null): Promise<Re
   const res: Response = await context.next();
   if (!(res.headers.get('content-type') || '').includes('text/html')) return res;
 
-  const comuni = (await sb('comuni?select=slug,nome,sito_url,punto,punto_aggiornato_at&attivo=eq.true&order=sort_order')) || [];
+  const comuni = (await sb('comuni?select=slug,nome,sito_url,punto,punto_aggiornato_at,og_image_url&attivo=eq.true&order=sort_order')) || [];
 
   if (!slug) {
     const ultime = (await sb('comuni_notizie?select=comune_slug,titolo,published_date&stato=eq.pubblicata&order=published_date.desc&limit=300')) || [];
@@ -63,7 +67,7 @@ export async function paginaPaesi(context: any, slug: string | null): Promise<Re
       }).join('');
     const jsonLd = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Paesi delle Madonie', url: `${SITE}/paesi`, description,
       hasPart: comuni.map((c: any) => ({ '@type': 'WebPage', name: c.nome, url: `${SITE}/paesi/${c.slug}` })) };
-    return sostituisci(res, { title, description, url: `${SITE}/paesi`, jsonLd, body });
+    return sostituisci(res, { title, description, url: `${SITE}/paesi`, jsonLd, body, image: OG_INDICE });
   }
 
   const c = comuni.find((x: any) => x.slug === slug);
@@ -92,5 +96,5 @@ export async function paginaPaesi(context: any, slug: string | null): Promise<Re
     ] },
     mainEntity: { '@type': 'ItemList', itemListElement: notizie.slice(0, 20).map((n: any, i: number) => ({ '@type': 'ListItem', position: i + 1, name: n.titolo, url: n.link })) },
   };
-  return sostituisci(res, { title, description, url, jsonLd, body });
+  return sostituisci(res, { title, description, url, jsonLd, body, image: c.og_image_url || OG_INDICE });
 }

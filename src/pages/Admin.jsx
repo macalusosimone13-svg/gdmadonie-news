@@ -24,6 +24,7 @@ import BackupManager from '@/components/admin/BackupManager';
 import RedazionePanel from '@/components/admin/RedazionePanel';
 import StatsPanel from '@/components/admin/StatsPanel';
 import RichiestePanel from '@/components/admin/RichiestePanel';
+import PaesiPanel from '@/components/admin/PaesiPanel';
 import { CATEGORIES } from '@/lib/categories';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -143,6 +144,9 @@ export default function Admin() {
     { group: 'Rassegna stampa', items: [
       { id: 'rss', label: 'Giornali e importazione', desc: 'Importa le notizie dai giornali e scegli quali testate mostrare.', show: isAdmin },
     ] },
+    { group: 'Paesi', items: [
+      { id: 'paesi', label: 'Notizie dei paesi', desc: 'Nascondi le notizie sbagliate o fuori tema della sezione Paesi, o pubblica quelle scartate dall\'IA.', show: isAdmin },
+    ] },
     { group: 'Statistiche', items: [
       { id: 'statistiche', label: 'Cosa funziona meglio', desc: 'Le notizie più lette e più condivise, per capire cosa scrivere di più.', show: isAdmin },
     ] },
@@ -253,6 +257,7 @@ export default function Admin() {
         {isAdmin && <>
                   <TabsContent value="redazione" className="mt-0"><RedazionePanel /></TabsContent>
                   <TabsContent value="statistiche" className="mt-0"><StatsPanel /></TabsContent>
+        {isAdmin && <TabsContent value="paesi" className="mt-0"><PaesiPanel /></TabsContent>}
         <TabsContent value="rss" className="mt-0 space-y-4">
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-foreground mb-1">Aggregazione RSS</h3>
