@@ -159,6 +159,8 @@ export default function Layout() {
         <Link to="/paesi">Paesi</Link>
         <Link to="/sondaggi">Sondaggi</Link>
         <Link to="/chi-siamo">Chi siamo</Link>
+        <Link to="/partecipa">Partecipa</Link>
+        <Link to="/assistente">Assistente eventi</Link>
         {isAdmin && <Link to="/admin">Admin</Link>}
         {authChecked && !user && <Link to="/login">Accedi</Link>}
       </div>
@@ -178,6 +180,7 @@ export default function Layout() {
               <Link to="/paesi">Paesi</Link>
               <Link to="/sondaggi">Sondaggi</Link>
               <Link to="/chi-siamo">Chi siamo</Link>
+              <Link to="/partecipa">Partecipa</Link>
               <Link to="/privacy">Privacy</Link>
               <Link to="/termini">Termini</Link>
             </nav>
@@ -193,7 +196,8 @@ export default function Layout() {
           }
           <div className="footer-bottom">© {new Date().getFullYear()} Giovani Democratici Madonie</div>
         </div>
-        <button onClick={scrollToTop} aria-label="Torna su" className="to-top"><ArrowUp size={20} /></button>
+        {/* nell'assistente copriva il tasto Invia della chat */}
+        {location.pathname !== '/assistente' && <button onClick={scrollToTop} aria-label="Torna su" className="to-top"><ArrowUp size={20} /></button>}
       </footer>
     </div>);
 

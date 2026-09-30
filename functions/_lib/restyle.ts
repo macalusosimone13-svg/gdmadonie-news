@@ -24,7 +24,7 @@ const CSS = `<style>
 // WhatsApp non mostra l'anteprima se la foto pesa troppo (le foto originali
 // sono di parecchi MB) o se il sito che la ospita la blocca: si passa da un
 // servizio di ridimensionamento che la restituisce 1200x630, ~200 KB.
-function ogSized(url: string): string {
+export function ogSized(url: string): string {
   if (!/^https?:\/\//i.test(url) || url.includes('wsrv.nl')) return url;
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1200&h=630&fit=cover&a=attention&output=jpg&q=78`;
 }

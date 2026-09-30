@@ -48,7 +48,8 @@ function sostituisci(res: Response, o: { title: string; description: string; url
     .on('meta[property="og:type"]', { element(e: any) { if (o.type) e.setAttribute('content', o.type); } })
     .on('head', { element(e: any) {
       e.append(`<meta property="og:url" content="${esc(o.url)}" />`, { html: true });
-      if (o.image) e.append(`<meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" /><meta property="og:image:type" content="image/jpeg" /><meta name="twitter:image" content="${esc(o.image)}" />`, { html: true });
+      // og:image:width/height/type (1200x630 jpg) sono gia' in index.html
+      if (o.image) e.append(`<meta name="twitter:image" content="${esc(o.image)}" />`, { html: true });
       e.append(`<meta name="robots" content="${o.status === 404 || o.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1'}" />`, { html: true });
       e.append(`<script type="application/ld+json" data-jsonld="page">${JSON.stringify(o.jsonLd).replace(/</g, '\\u003c')}</script>`, { html: true });
       e.append(STYLE, { html: true });

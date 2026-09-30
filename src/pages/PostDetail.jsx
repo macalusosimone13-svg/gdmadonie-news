@@ -63,6 +63,7 @@ export default function PostDetail() {
   const [prepFailed, setPrepFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [shareMsg, setShareMsg] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -271,9 +272,11 @@ export default function PostDetail() {
   const shareUrl = shareLink;
   const shareWa = `https://wa.me/?text=${encodeURIComponent(`📰 *${post.title}*\n\nLeggi su GD Madonie News:\n${shareUrl}`)}`;
   const shareFb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-  const shareNative = async () => {
-    if (navigator.share) {try {await navigator.share({ title: post.title, url: shareUrl });trackShare();} catch (e) {}} else
-    {navigator.clipboard?.writeText(shareUrl);alert('Link copizzato');trackShare();}
+  // "Copia link" copia davvero il link (prima sul telefono apriva la
+  // condivisione e da computer mostrava un avviso del browser con un refuso).
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(shareUrl); } catch { window.prompt('Copia il link:', shareUrl); return; }
+    setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); trackShare();
   };
 
   const isVideo = post ? (post.media?.[0]?.type || post.media_type) === 'video' : false;
@@ -441,7 +444,7 @@ export default function PostDetail() {
         <span className="share-label"><Share2 className="w-4 h-4" /> Condividi</span>
         <a href={shareWa} target="_blank" rel="noopener noreferrer" onClick={trackShare} className="share-btn">WhatsApp</a>
         <button onClick={shareStory} className="share-btn share-primary"><Instagram className="w-4 h-4" /> Storie e Post</button>
-        <button onClick={shareNative} className="share-btn">Copia link</button>
+        <button onClick={copyLink} className="share-btn">{linkCopied ? 'Link copiato ✓' : 'Copia link'}</button>
       </div>
       <Comments postId={post.id} />
       <RelatedPosts post={post} />
