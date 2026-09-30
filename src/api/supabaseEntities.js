@@ -44,7 +44,8 @@ function makeEntity(table) {
       return this.filter({}, sort, limit);
     },
     async get(id) {
-      const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
+      // maybeSingle: se non c'e' nessuna riga restituisce null senza errore 406 in console
+      const { data, error } = await supabase.from(table).select('*').eq('id', id).maybeSingle();
       if (error) {
         console.error(`[supabase] ${table}.get`, error);
         return null;
