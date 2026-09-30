@@ -96,7 +96,10 @@ async function saveNewsGDPost({ id, title, body, imageBlob, status, attachmentUr
 // vedere subito accanto l'anteprima della locandina così come apparirà
 // pubblicata su News GD, e pubblicare. Usata sia dalla Rassegna (con
 // l'articolo di partenza) sia da "Scrivi tu" (con un argomento libero).
-function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerate, startBlank, onPublished }) {
+// existingPost: una bozza già salvata (es. una rubrica scritta dall'IA) da
+// rileggere, correggere e pubblicare: si apre già compilata e, chiudendo,
+// la bozza resta dov'è invece di essere eliminata.
+function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerate, startBlank, onPublished, existingPost }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -119,6 +122,8 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
   const [attachUrl, setAttachUrl] = useState('');
   const [attachName, setAttachName] = useState('');
   const [attachUploading, setAttachUploading] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
   const objUrl = useRef(null);
 
   useEffect(() => {
@@ -136,6 +141,16 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     setAttachUrl('');
     setAttachName('');
     setEditing(!!startBlank);
+    setDraftSaved(false);
+    if (existingPost) {
+      setTitle(existingPost.title || '');
+      setBody(existingPost.content || '');
+      setPostId(existingPost.id);
+      setAttachUrl(existingPost.attachment_url || '');
+      setAttachName(existingPost.attachment_name || '');
+      setEditing(true);
+      return;
+    }
     // Se veniamo dalla rassegna, o abbiamo già un argomento, l'IA parte
     // subito da sola: un click in meno.
     if (sourceArticle) generate();
@@ -277,9 +292,25 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     setPreviewingSite(false);
   };
 
+  // Salva le correzioni senza pubblicare (solo per le bozze già esistenti).
+  const saveDraft = async () => {
+    if (!title.trim() || !body.trim()) return;
+    setSavingDraft(true); setError(null);
+    try {
+      await saveNewsGDPost({ id: postId, title, body, imageBlob: null, status: 'draft', attachmentUrl: attachUrl, attachmentName: attachName, publishedDate: existingPost?.published_date });
+      setDraftSaved(true);
+      onPublished?.();
+    } catch (e) {
+      setError(e.message);
+    }
+    setSavingDraft(false);
+  };
+
   // "Annulla e scarta": se avevamo già salvato una bozza (per l'anteprima)
   // la elimina, cosi' non resta nulla in giro; poi chiude la finestra.
   const discardAndClose = async () => {
+    // una bozza esistente non si elimina chiudendo: resta nell'elenco
+    if (existingPost) { onClose(); return; }
     if (postId && !published && !scheduled) {
       try { await sb44.entities.Post.delete(postId); } catch {}
     }
@@ -289,7 +320,8 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
   return (
     <Dialog open={open} onOpenChange={(o) => !o && discardAndClose()}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Scrivi su News GD</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{existingPost ? 'Rivedi e pubblica' : 'Scrivi su News GD'}</DialogTitle></DialogHeader>
+        {existingPost && <p className="text-xs text-muted-foreground -mt-2">Testo scritto dall'IA: rileggilo, controlla nomi e cifre, correggi quello che serve e poi pubblica.</p>}
 
         {sourceArticle &&
         <div className="bg-muted rounded-xl p-3 text-sm">
@@ -298,13 +330,14 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
           </div>
         }
 
-        {!sourceArticle &&
+        {!sourceArticle && !existingPost &&
         <div className="space-y-2">
             <label className="text-sm font-medium text-foreground block">Di cosa vuoi parlare?</label>
             <Textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={3} placeholder="Scrivi anche solo due righe, il fatto o l'argomento — es. «il piano paesaggistico delle Madonie, è successo questo...»" />
           </div>
         }
 
+        {!existingPost &&
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={generate} disabled={generating || (!sourceArticle && !topic.trim())} className={PILL_AI}>
             {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
@@ -316,13 +349,14 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
             </button>
           }
         </div>
+        }
         {error && <p className="text-xs text-red-600">{error}</p>}
 
         {editing &&
         <div className="grid md:grid-cols-[1fr,230px] gap-4 pt-1">
             <div className="space-y-3 min-w-0">
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titolo" className="font-semibold" />
-              <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={9} placeholder="Testo del post..." />
+              <Textarea value={body} onChange={(e) => { setBody(e.target.value); setDraftSaved(false); }} rows={existingPost ? 16 : 9} placeholder="Testo del post..." />
               <p className="text-[11px] text-muted-foreground">{body.length} caratteri — puoi modificare tutto prima di pubblicare.</p>
 
               <div className="space-y-1.5">
@@ -414,9 +448,20 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
               Vedi l'anteprima <ExternalLink className="w-3.5 h-3.5" />
             </a>
           }
-          {!published && !scheduled &&
+          {existingPost && !published && !scheduled &&
+          <button type="button" onClick={saveDraft} disabled={savingDraft || !title.trim() || !body.trim()} className={PILL_SECONDARY} title="Salva le correzioni: la bozza resta invisibile ai visitatori">
+              {savingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : draftSaved ? <Check className="w-4 h-4" /> : <PenLine className="w-4 h-4" />}
+              {draftSaved ? 'Bozza salvata' : 'Salva bozza'}
+            </button>
+          }
+          {!published && !scheduled && !existingPost &&
           <button type="button" onClick={discardAndClose} className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 px-2 ml-auto">
               <Trash2 className="w-3.5 h-3.5" /> Annulla e scarta
+            </button>
+          }
+          {existingPost && !published && !scheduled &&
+          <button type="button" onClick={onClose} className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground px-2 ml-auto">
+              <X className="w-3.5 h-3.5" /> Chiudi
             </button>
           }
         </div>
@@ -530,6 +575,142 @@ function ScriviTuTab() {
     </div>);
 }
 
+// --- Tab "Rubriche IA": "Il punto della settimana" (Madonie, Sicilia, Italia)
+// e "Dove nasci conta", scritti dall'IA (function rubriche-ai) partendo dalle
+// notizie raccolte in automatico. Arrivano da soli come bozze il lunedì e il
+// venerdì alle 7; da qui si possono anche generare quando si vuole. Nessuna
+// bozza esce sul sito senza essere riletta e pubblicata da qui. ---
+const RUBRICHE = {
+  punto_paesi: { label: 'Il punto · Madonie', body: { tipo: 'punto', ambito: 'paesi' } },
+  punto_regionale: { label: 'Il punto · Sicilia', body: { tipo: 'punto', ambito: 'regionale' } },
+  punto_nazionale: { label: 'Il punto · Italia', body: { tipo: 'punto', ambito: 'nazionale' } },
+  dove_nasci_conta: { label: 'Dove nasci conta', body: { tipo: 'dnc' } }
+};
+
+function RubricheTab({ onChange }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    supabase.from('posts').select('*').not('rubrica', 'is', null).order('created_at', { ascending: false }).limit(40)
+      .then(({ data }) => setItems(data || []))
+      .finally(() => setLoading(false));
+    onChange?.();
+  };
+  useEffect(() => { load(); }, []);
+
+  const genera = async (key) => {
+    setBusy(key); setMsg(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('rubriche-ai', { body: RUBRICHE[key].body });
+      if (error) throw new Error(error.message || 'Generazione non riuscita');
+      if (data?.error) throw new Error(data.error);
+      setMsg({ ok: true, text: `Bozza pronta: «${data.post?.title}». La trovi qui sotto.` });
+      load();
+    } catch (e) {
+      setMsg({ ok: false, text: e.message || 'Generazione non riuscita, riprova tra poco.' });
+    }
+    setBusy(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await sb44.entities.Post.delete(pendingDelete.id);
+      setPendingDelete(null);
+      load();
+    } catch {}
+    setDeleting(false);
+  };
+
+  const bozze = items.filter((p) => p.status === 'draft');
+  const altri = items.filter((p) => p.status !== 'draft');
+
+  const riga = (p) =>
+  <div key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 bg-card border border-border rounded-xl p-3">
+      <div className="flex-1 min-w-[220px]">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-[#2F5BD8]">{RUBRICHE[p.rubrica]?.label || p.rubrica}</p>
+        <p className="text-sm font-medium text-foreground leading-snug">{p.title}</p>
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+          {p.status === 'draft' && <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Bozza</span>}
+          {p.status === 'scheduled' && <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[#EAF0FD] text-[#2F5BD8]">Programmato</span>}
+          {p.status === 'published' && <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Pubblicato</span>}
+          {p.status === 'draft' ? 'scritta il ' + format(new Date(p.created_at), 'd MMM, HH:mm', { locale: it }) : p.published_date ? format(new Date(p.published_date), 'd MMM yyyy, HH:mm', { locale: it }) : ''}
+        </p>
+      </div>
+      {p.status === 'draft' &&
+    <button type="button" onClick={() => setEditing(p)} className={`${PILL_PRIMARY} !min-h-[40px] !px-4 text-xs`}><PenLine className="w-3.5 h-3.5" /> Rivedi e pubblica</button>
+    }
+      <a href={`/articolo/${p.id}`} target="_blank" rel="noopener noreferrer" aria-label="Vedi" title="Vedi (le bozze le vedi solo tu)" className="text-muted-foreground hover:text-primary p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><ExternalLink className="w-4 h-4" /></a>
+      <button onClick={() => setPendingDelete(p)} aria-label="Elimina" title="Elimina" className="text-red-500 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
+    </div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+        <p className="text-sm text-foreground leading-relaxed">
+          Ogni <b>lunedì alle 7</b> l'IA prepara <b>Il punto della settimana</b> in tre versioni (Madonie, Sicilia, Italia) e ogni <b>venerdì alle 7</b> la puntata di <b>Dove nasci conta</b>, sul tema di cui si è parlato di più nella settimana. Arrivano qui come <b>bozze</b>: nessuno le vede finché non le rileggi e le pubblichi.
+        </p>
+        <p className="text-xs text-muted-foreground">Vuoi farne una adesso? Ci vogliono circa 20–30 secondi.</p>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(RUBRICHE).map(([key, r]) =>
+          <button key={key} type="button" onClick={() => genera(key)} disabled={!!busy} className={PILL_AI}>
+              {busy === key ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {busy === key ? 'Scrivo…' : r.label}
+            </button>
+          )}
+        </div>
+        {msg && <p className={`text-sm ${msg.ok ? 'text-emerald-700' : 'text-red-600'}`}>{msg.text}</p>}
+      </div>
+
+      {loading ?
+      <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div> :
+      items.length === 0 ?
+      <p className="text-sm text-muted-foreground text-center py-8">Ancora nessuna rubrica. La prima arriva lunedì alle 7, oppure generala adesso con i pulsanti qui sopra.</p> :
+      <div className="space-y-5">
+          {bozze.length > 0 &&
+        <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Da rivedere ({bozze.length})</p>
+              {bozze.map(riga)}
+            </div>
+        }
+          {altri.length > 0 &&
+        <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Già pubblicate o programmate</p>
+              {altri.map(riga)}
+            </div>
+        }
+        </div>
+      }
+
+      <ComposerModal
+        open={!!editing}
+        onClose={() => { setEditing(null); load(); }}
+        existingPost={editing}
+        onPublished={load} />
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminare questa rubrica?</AlertDialogTitle>
+            <AlertDialogDescription>{pendingDelete?.status === 'draft' ? 'È una bozza, non è visibile ai visitatori.' : 'Non sarà più visibile sul sito.'} Non si può annullare.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Elimina</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>);
+}
+
 // --- Tab "Pubblicati": tutti i post scritti da qui, con la possibilità di
 // eliminarli — le bozze lasciate a metà (dalle anteprime mai pubblicate)
 // compaiono qui con l'etichetta "Bozza", così non restano invisibili. ---
@@ -538,6 +719,7 @@ function PubblicatiTab() {
   const [loading, setLoading] = useState(true);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -581,12 +763,21 @@ function PubblicatiTab() {
                   {p.published_date ? format(new Date(p.published_date), 'd MMM yyyy, HH:mm', { locale: it }) : ''}
                 </p>
               </div>
+              {p.status === 'draft' &&
+            <button onClick={() => setEditing(p)} aria-label="Rivedi e pubblica" title="Rivedi e pubblica" className="text-muted-foreground hover:text-primary p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><PenLine className="w-4 h-4" /></button>
+            }
               <a href={`/articolo/${p.id}`} target="_blank" rel="noopener noreferrer" aria-label="Vedi" title="Vedi" className="text-muted-foreground hover:text-primary p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><ExternalLink className="w-4 h-4" /></a>
               <button onClick={() => setPendingDelete(p)} aria-label="Elimina" title="Elimina" className="text-red-500 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
             </div>
           )}
         </div>
       }
+
+      <ComposerModal
+        open={!!editing}
+        onClose={() => { setEditing(null); load(); }}
+        existingPost={editing}
+        onPublished={load} />
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <AlertDialogContent>
@@ -797,6 +988,13 @@ function RubricaSiciliaTab() {
 export default function RedazionePanel() {
   const [tab, setTab] = useState('rassegna');
   const [watchNew, setWatchNew] = useState(0);
+  const [bozzeIA, setBozzeIA] = useState(0);
+  const contaBozze = () => {
+    supabase.from('posts').select('id', { count: 'exact', head: true }).not('rubrica', 'is', null).eq('status', 'draft')
+      .then(({ count }) => setBozzeIA(count || 0))
+      .catch(() => {});
+  };
+  useEffect(() => { contaBozze(); }, [tab]);
 
   useEffect(() => {
     supabase.from('sicilia_watch').select('id', { count: 'exact', head: true }).eq('status', 'new')
@@ -812,8 +1010,11 @@ export default function RedazionePanel() {
         <button type="button" onClick={() => setTab('siciliawatch')} className={`px-4 py-2 rounded-full ${tab === 'siciliawatch' ? 'bg-[#2F5BD8] text-white' : 'text-muted-foreground'}`}>
           Rubrica Sicilia{watchNew > 0 ? ` (${watchNew})` : ''}
         </button>
+        <button type="button" onClick={() => setTab('rubriche')} className={`px-4 py-2 rounded-full ${tab === 'rubriche' ? 'bg-[#2F5BD8] text-white' : 'text-muted-foreground'}`}>
+          Rubriche IA{bozzeIA > 0 ? ` (${bozzeIA})` : ''}
+        </button>
         <button type="button" onClick={() => setTab('pubblicati')} className={`px-4 py-2 rounded-full ${tab === 'pubblicati' ? 'bg-[#2F5BD8] text-white' : 'text-muted-foreground'}`}>Pubblicati</button>
       </div>
-      {tab === 'rassegna' ? <RassegnaTab /> : tab === 'scrivitu' ? <ScriviTuTab /> : tab === 'siciliawatch' ? <RubricaSiciliaTab /> : <PubblicatiTab />}
+      {tab === 'rassegna' ? <RassegnaTab /> : tab === 'scrivitu' ? <ScriviTuTab /> : tab === 'siciliawatch' ? <RubricaSiciliaTab /> : tab === 'rubriche' ? <RubricheTab onChange={contaBozze} /> : <PubblicatiTab />}
     </div>);
 }
