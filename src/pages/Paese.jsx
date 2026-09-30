@@ -9,6 +9,7 @@ import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
 import { sized, fallbackTo } from '@/lib/imgSize';
 import Reveal from '@/components/Reveal';
+import { MappaPaese } from '@/components/MappaPaese';
 
 // Pagina di un paese delle Madonie (/paesi/:slug). Tutto il contenuto arriva
 // in automatico dalla funzione "aggrega-paesi": notizie del sito del Comune e
@@ -87,9 +88,14 @@ export default function Paese() {
     <div className="rd-page">
       <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
         <Link to="/paesi" className="tab" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 22, textDecoration: 'none' }}><ArrowLeft size={15} /> Tutti i paesi</Link>
-        <span className="section-kicker"><Link to="/paesi">Paesi delle Madonie</Link></span>
-        <h1>{isLoading ? '…' : nome.toUpperCase()}</h1>
-        <p>Politica e amministrazione a {nome || '…'}: consiglio comunale, bilancio, fondi, opere pubbliche e servizi. Dal sito del Comune e dai giornali, aggiornato in automatico.</p>
+        <div className="paese-head">
+          <div>
+            <span className="section-kicker"><Link to="/paesi">Paesi delle Madonie</Link></span>
+            <h1>{isLoading ? '…' : nome.toUpperCase()}</h1>
+            <p>Politica e amministrazione a {nome || '…'}: consiglio comunale, bilancio, fondi, opere pubbliche e servizi. Dal sito del Comune e dai giornali, aggiornato in automatico.</p>
+          </div>
+          <MappaPaese slug={slug} nome={nome || slug} />
+        </div>
         {temi.length > 1 &&
           <div className="tabs">
             <button className={`tab ${tema === 'tutti' ? 'active' : ''}`} onClick={() => setTema('tutti')}>Tutto<span className="n">{notizie.length}</span></button>
