@@ -167,7 +167,6 @@ export default function Layout() {
         <Link to="/sondaggi">Sondaggi</Link>
         <Link to="/chi-siamo">Chi siamo</Link>
         <Link to="/partecipa">Partecipa</Link>
-        <Link to="/assistente">Assistente eventi</Link>
         {isAdmin && <Link to="/admin">Admin</Link>}
         {authChecked && !user && <Link to="/login">Accedi</Link>}
       </div>
