@@ -77,6 +77,8 @@ const TeamMemberDetail = lazyRetry(() => import('@/pages/TeamMemberDetail'));
 const ChiSiamo = lazyRetry(() => import('@/pages/ChiSiamo'));
 const Sondaggi = lazyRetry(() => import('@/pages/Sondaggi'));
 const Partecipa = lazyRetry(() => import('@/pages/Partecipa'));
+const Paesi = lazyRetry(() => import('@/pages/Paesi'));
+const Paese = lazyRetry(() => import('@/pages/Paese'));
 // Pagine di accesso: pochi visitatori le aprono rispetto a chi legge le
 // notizie, quindi anche queste si scaricano solo quando servono davvero
 // invece di appesantire il caricamento iniziale di tutto il sito.
@@ -133,6 +135,8 @@ const AuthenticatedApp = () => {
           <Route path="/chi-siamo" element={<ChiSiamo />} />
           <Route path="/sondaggi" element={<Sondaggi />} />
           <Route path="/partecipa" element={<Partecipa />} />
+          <Route path="/paesi" element={<Paesi />} />
+          <Route path="/paesi/:slug" element={<Paese />} />
           <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
         </Route>
         <Route path="/login" element={<Login />} />
