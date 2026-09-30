@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { uploadFile } from '@/lib/uploadFile';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { getCurrentUser, updateProfile, logout as supabaseLogout } from '@/lib/supabaseAuth';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
@@ -130,12 +130,23 @@ export default function Settings() {
   return (
     <div>
       <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
-        <span className="section-kicker">Il tuo account</span>
-        <h1>IMPOSTAZIONI</h1><p>Gestisci il tuo account e le preferenze.</p>
+        <span className="section-kicker">{user ? 'Il tuo account' : 'Preferenze'}</span>
+        <h1>IMPOSTAZIONI</h1><p>{user ? 'Gestisci il tuo account e le preferenze.' : 'Scegli il tema e condividi l\'app.'}</p>
       </div></div>
       <div className="wrap" style={{ maxWidth: 820, paddingTop: 36, paddingBottom: 72 }}>
       <div className="space-y-5">
 
+      {/* Chi non ha fatto l'accesso vedeva "Utente", "Aggiungi immagine" ed "Esci": ora vede solo l'invito ad accedere. */}
+      {!user &&
+      <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-foreground mb-1">Non hai ancora fatto l'accesso</h2>
+        <p className="text-muted-foreground mb-4 font-serif font-normal text-base">Con un account puoi commentare, salvare gli eventi e usare l'assistente. Il tema e la condivisione funzionano anche senza.</p>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/login?returnTo=%2Fimpostazioni" className="flex items-center gap-2 bg-primary text-primary-foreground rounded-xl px-4 py-2.5 text-sm font-medium min-h-[44px] hover:bg-primary/90 transition-colors">Accedi</Link>
+          <Link to="/register?returnTo=%2Fimpostazioni" className="flex items-center gap-2 border border-border rounded-xl px-4 py-2.5 text-sm font-medium text-foreground min-h-[44px] hover:bg-muted transition-colors">Registrati</Link>
+        </div>
+      </div>}
+      {user &&
       <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
           <UserAvatar user={user} src={user?.image_url} size={64} />
@@ -169,7 +180,7 @@ export default function Settings() {
             </button>
           }
         </div>
-      </div>
+      </div>}
 
       <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
         <h2 className="text-lg text-foreground mb-3 font-serif font-normal">Tema</h2>
@@ -188,6 +199,7 @@ export default function Settings() {
         </div>
       </div>
 
+      {user &&
       <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-foreground mb-1">Cambia account</h2>
         <p className="text-muted-foreground mb-4 font-serif font-normal text-base">Esci da questo account per accederne con un altro.</p>
@@ -197,7 +209,7 @@ export default function Settings() {
           className="flex items-center gap-2 border border-border rounded-xl px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors min-h-[44px]">
           <LogOut className="w-4 h-4" /> Esci e cambia account
         </button>
-      </div>
+      </div>}
 
       <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-foreground mb-1">Condividi l'app</h2>
@@ -232,6 +244,7 @@ export default function Settings() {
         </div>
       </div>
 
+      {user &&
       <div className="rounded-2xl border border-destructive/30 p-5 shadow-sm bg-[hsl(var(--background))]">
         <h2 className="text-lg text-foreground mb-1 font-serif font-normal">Elimina account</h2>
         <p className="text-muted-foreground mb-4 font-serif font-normal text-base">La cancellazione è definitiva: tutti i tuoi dati associati verranno rimossi e non potrai più accedere con questo account.</p>
@@ -261,7 +274,7 @@ export default function Settings() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </div>}
       </div>
       </div>
     </div>);

@@ -20,7 +20,8 @@ export default function EventDetail() {
   useEffect(() => {
     (async () => {
       try {
-        const e = await sb44.entities.Event.get(id);
+        // codice non valido: niente richiesta al database (dava errori in console)
+        const e = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || '') ? await sb44.entities.Event.get(id) : null;
         setEvent(e);
         if (e) markRead(e.id);
         try {
@@ -63,8 +64,10 @@ export default function EventDetail() {
     title: event ? `${event.title} — GD Madonie News` : 'GD Madonie News',
     description: (event?.description || `${date} ore ${time}${event?.location ? ' · ' + event.location : ''}`).replace(/\s+/g, ' ').slice(0, 160),
     image: event?.image_url,
-    url: shareUrl,
-    type: 'article'
+    // indirizzo ufficiale = la pagina dell'evento (prima era la funzione di condivisione)
+    url: event ? `${window.location.origin}/evento/${event.id}` : undefined,
+    type: 'article',
+    noindex: !loading && !event
   });
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-10 h-10 rounded-full animate-spin" style={{ border: '4px solid #DDE5FB', borderTopColor: '#2F5BD8' }}></div></div>;
@@ -82,7 +85,7 @@ export default function EventDetail() {
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast({ description: 'Link copizzato negli appunti' });
+      toast({ description: 'Link copiato negli appunti' });
     } catch {
       toast({ description: 'Impossibile copiare il link', variant: 'destructive' });
     }
