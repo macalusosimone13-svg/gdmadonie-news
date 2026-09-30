@@ -634,8 +634,8 @@ function RubricheTab({ onChange }) {
   const altri = items.filter((p) => p.status !== 'draft');
 
   const riga = (p) =>
-  <div key={p.id} className="flex items-center gap-3 bg-card border border-border rounded-xl p-3">
-      <div className="flex-1 min-w-0">
+  <div key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 bg-card border border-border rounded-xl p-3">
+      <div className="flex-1 min-w-[220px]">
         <p className="text-[10px] font-bold uppercase tracking-wide text-[#2F5BD8]">{RUBRICHE[p.rubrica]?.label || p.rubrica}</p>
         <p className="text-sm font-medium text-foreground leading-snug">{p.title}</p>
         <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
