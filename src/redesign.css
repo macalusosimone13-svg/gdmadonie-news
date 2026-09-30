@@ -468,3 +468,13 @@
 /* Header da computer: spazio fisso tra il menu e i pulsanti a destra (prima, con la freccia indietro visibile, "Chi siamo" toccava il pulsante del tema) */
 .rd .header-actions { margin-left:24px; }
 @media (min-width:901px) and (max-width:1180px){ .rd nav.main-nav{ gap:16px; font-size:12.5px; } .rd .header-actions{ margin-left:16px; } }
+
+/* Mappe dei paesi (MappaPaese.jsx): a destra del nome, su telefono sotto */
+.paese-head { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:32px; align-items:center; }
+.mappa-paese { display:block; width:300px; height:300px; color:var(--notte); }
+.mappa-paese.grande { width:420px; height:auto; aspect-ratio:1060/853; }
+.mappa-paese .mappa-sel { fill:var(--acc); stroke:currentColor; }
+.mappa-madonie .mappa-comune { cursor:pointer; transition:fill .2s ease; outline:none; }
+.mappa-madonie .mappa-comune:hover, .mappa-madonie .mappa-comune:focus-visible { fill:var(--acc); }
+@media (max-width:760px){ .paese-head{ grid-template-columns:1fr; gap:18px; } .mappa-paese{ width:220px; height:220px; justify-self:center; margin:-10px 0; } .mappa-paese.grande{ width:100%; max-width:420px; height:auto; } }
+.dark .rd .mappa-paese { color:#C9D5FF; }
