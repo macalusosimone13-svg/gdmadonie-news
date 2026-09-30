@@ -76,6 +76,10 @@
 .dark .rd .ev-poster{ background:var(--tint); }
 .dark .rd footer.site-footer{ background:#060B1C; }
 .dark .rd .legal-text{ color:var(--testo); }
+/* titoli di Privacy e Termini: nel chiaro sono navy, nello scuro diventavano invisibili */
+.dark .rd .legal-text h2, .dark .rd .legal-text h3{ color:var(--txt-strong); }
+/* etichette (Politica regionale, Comunicato GD, Nuovo, temi dei paesi): testo scuro sul blu chiaro, leggibile */
+.dark .rd .chip-blu{ color:#0A1128; }
 .dark .rd footer.site-footer{ color:#E6ECFF; }
 .dark .rd footer .footer-bottom{ border-top-color:rgba(255,255,255,.14); }
 .dark .rd .al-a{ fill:#C9D8FF; }
@@ -86,7 +90,7 @@
 .dark .rd .assist-card .border-slate-200{ border-color:rgba(255,255,255,.16); }
 .dark .rd .assist-card .text-slate-800, .dark .rd .assist-card .prose{ color:#E6ECFF; --tw-prose-body:#E6ECFF; --tw-prose-bold:#fff; --tw-prose-links:#8FB0FF; }
 .dark .rd .assist-card .text-slate-400{ color:#93A2C9; }
-.dark .rd .assist-card button.bg-white{ color:#9DB8FF; border-color:rgba(157,184,255,.5); }
+.dark .rd .assist-card button.bg-white, .dark .rd .assist-card a.bg-white{ color:#9DB8FF; border-color:rgba(157,184,255,.5); }
 .dark .rd .assist-card button.bg-white:hover{ background:#6F95FF; color:#0A1128; }
 .dark .rd .assist-card textarea{ background:#0E1735; color:#fff; border-color:rgba(255,255,255,.2); }
 .dark .rd .assist-card .bg-primary{ background:#2F5BD8; color:#fff; }
