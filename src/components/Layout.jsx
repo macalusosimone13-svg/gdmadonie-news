@@ -10,7 +10,7 @@ import { useUxConfig } from '@/lib/UxConfigContext';
 
 // Pagine gia' riprogettate col nuovo stile: hanno il loro contenitore.
 // Le altre restano nel contenitore stretto di prima finche' non le migro.
-const REDESIGNED = ['/', '/rassegna-stampa', '/gd-madonie', '/chi-siamo', '/in-evidenza', '/sondaggi', '/articolo', '/post', '/assistente', '/impostazioni', '/privacy', '/termini', '/evento', '/admin'];
+const REDESIGNED = ['/', '/rassegna-stampa', '/gd-madonie', '/chi-siamo', '/in-evidenza', '/sondaggi', '/articolo', '/post', '/assistente', '/impostazioni', '/privacy', '/termini', '/evento', '/admin', '/paesi'];
 
 const SOCIAL_ICONS = { instagram: Instagram, facebook: Facebook, telegram: Send, twitter: Twitter, youtube: Youtube, website: Globe, email: Mail, custom: LinkIcon };
 
@@ -129,6 +129,7 @@ export default function Layout() {
                 </div>
               </div>
             }
+            <NavLink to="/paesi" className={linkCls}>Paesi</NavLink>
             <NavLink to="/sondaggi" className={linkCls}>Sondaggi</NavLink>
             <NavLink to="/chi-siamo" className={linkCls}>Chi siamo</NavLink>
             {isAdmin && <NavLink to="/admin" className={linkCls}>Admin</NavLink>}
@@ -155,6 +156,7 @@ export default function Layout() {
         {showNews && <Link to="/rassegna-stampa">News</Link>}
         <Link className="sub" to="/rassegna-stampa/nazionale">Nazionale</Link>
         <Link className="sub" to="/rassegna-stampa/regionale">Regionale</Link>
+        <Link to="/paesi">Paesi</Link>
         <Link to="/sondaggi">Sondaggi</Link>
         <Link to="/chi-siamo">Chi siamo</Link>
         {isAdmin && <Link to="/admin">Admin</Link>}
@@ -173,6 +175,7 @@ export default function Layout() {
               <Link to="/">Feed</Link>
               <Link to="/gd-madonie">GD Madonie</Link>
               <Link to="/rassegna-stampa">News</Link>
+              <Link to="/paesi">Paesi</Link>
               <Link to="/sondaggi">Sondaggi</Link>
               <Link to="/chi-siamo">Chi siamo</Link>
               <Link to="/privacy">Privacy</Link>
