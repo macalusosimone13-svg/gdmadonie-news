@@ -468,3 +468,8 @@
 /* Header da computer: spazio fisso tra il menu e i pulsanti a destra (prima, con la freccia indietro visibile, "Chi siamo" toccava il pulsante del tema) */
 .rd .header-actions { margin-left:24px; }
 @media (min-width:901px) and (max-width:1180px){ .rd nav.main-nav{ gap:16px; font-size:12.5px; } .rd .header-actions{ margin-left:16px; } }
+
+/* Pulsanti "Condividi" nella testata del paese (senza la riga sopra) */
+.paese-share .share-row { border-top:0; padding-top:0; margin-top:22px; }
+.paese-share .share-btn { min-height:40px; padding:0 16px; }
+@media (max-width:640px){ .paese-share .share-label{ width:100%; } }
