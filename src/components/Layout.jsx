@@ -81,6 +81,13 @@ export default function Layout() {
   }, [location.pathname, location.search]);
 
   useEffect(() => { setMenuOpen(false); setNewsOpen(false); setGdOpen(false); }, [location.pathname]);
+  // Con il menu aperto la pagina sotto non scorre: il dito scorre solo il menu.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [menuOpen]);
 
   useEffect(() => {
     const onDoc = (e) => {
