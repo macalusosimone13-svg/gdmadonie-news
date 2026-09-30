@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Send, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import AssistantLogo from '@/components/AssistantLogo';
 import { supabase } from '@/lib/supabaseClient'; // client Supabase già esistente nel progetto
 
@@ -13,6 +14,8 @@ export default function AssistantChat({ title }) {
   const scrollRef = useRef(null);
   const [greeting, setGreeting] = useState(null); // messaggio di benvenuto (solo locale)
   const [greeting_typing, setGreetingTyping] = useState(true);
+  // null = non ancora controllato; false = non ha fatto l'accesso
+  const [loggedIn, setLoggedIn] = useState(null);
 
   // Benvenuto appena si apre l'assistente: personalizzato col nome se si e' entrati.
   useEffect(() => {
@@ -21,6 +24,7 @@ export default function AssistantChat({ title }) {
       let first = '';
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        if (alive) setLoggedIn(!!session?.access_token);
         const full = session?.user?.user_metadata?.full_name || '';
         if (full && !full.includes('@')) first = full.split(' ')[0];
       } catch {}
@@ -84,7 +88,18 @@ export default function AssistantChat({ title }) {
             <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 text-sm text-slate-800 prose prose-sm prose-p:my-1 max-w-none" style={{ animation: 'mn-rise .5s ease-out both' }}>
                 <ReactMarkdown>{greeting}</ReactMarkdown>
               </div>}
-            {!greeting_typing && messages.length === 0 &&
+            {/* Senza accesso l'assistente non puo' rispondere: lo diciamo subito,
+                invece di far scoprire il login solo dopo la prima domanda. */}
+            {!greeting_typing && loggedIn === false &&
+            <div className="mt-3 bg-white border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-800" style={{ animation: 'mn-rise .6s .15s ease-out both' }}>
+                <p className="m-0 mb-2">Per usare l'assistente serve un account (è gratis): così posso registrarti agli eventi e mandarti i promemoria.</p>
+                <div className="flex flex-wrap gap-2">
+                  <Link to="/login?returnTo=%2Fassistente" className="px-4 py-2 rounded-full bg-[#2F5BD8] text-white text-[13px] font-bold no-underline">Accedi</Link>
+                  <Link to="/register?returnTo=%2Fassistente" className="px-4 py-2 rounded-full border border-[#2F5BD8]/40 text-[#2F5BD8] text-[13px] font-bold bg-white no-underline">Registrati</Link>
+                  <Link to="/gd-madonie?tab=eventi" className="px-4 py-2 rounded-full border border-[#2F5BD8]/40 text-[#2F5BD8] text-[13px] font-bold bg-white no-underline">Vedi gli eventi</Link>
+                </div>
+              </div>}
+            {!greeting_typing && loggedIn !== false && messages.length === 0 &&
             <div className="flex flex-wrap gap-2 mt-3" style={{ animation: 'mn-rise .6s .15s ease-out both' }}>
                 {['Quali eventi ci sono in arrivo?', 'Come mi registro a un evento?', 'Chi siete e cosa fate?'].map((q) =>
               <button key={q} onClick={() => send(q)} className="px-4 py-2 rounded-full border border-[#2F5BD8]/40 text-[#2F5BD8] text-[13px] font-bold bg-white hover:bg-[#2F5BD8] hover:text-white transition-colors">{q}</button>
@@ -108,12 +123,13 @@ export default function AssistantChat({ title }) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           rows={1}
-          placeholder="Scrivi un messaggio..."
+          placeholder={loggedIn === false ? 'Accedi per scrivere all\'assistente' : 'Scrivi un messaggio...'}
+          disabled={loggedIn === false}
           className="flex-1 resize-none max-h-32 px-3 py-2.5 rounded-2xl border border-slate-200 bg-white text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         />
         <button
           onClick={() => send()}
-          disabled={!input.trim() || sending}
+          disabled={!input.trim() || sending || loggedIn === false}
           className="flex-shrink-0 w-10 h-10 rounded-full text-primary-foreground flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 bg-[#2F5BD8]"
         >
           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
