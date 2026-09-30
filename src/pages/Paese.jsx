@@ -3,12 +3,14 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
 import { sized, fallbackTo } from '@/lib/imgSize';
 import Reveal from '@/components/Reveal';
+import CondividiRiga from '@/components/CondividiRiga';
+import { linkNotizia } from '@/lib/paesiLink';
 
 // Pagina di un paese delle Madonie (/paesi/:slug). Tutto il contenuto arriva
 // in automatico dalla funzione "aggrega-paesi": notizie del sito del Comune e
@@ -90,6 +92,7 @@ export default function Paese() {
         <span className="section-kicker"><Link to="/paesi">Paesi delle Madonie</Link></span>
         <h1>{isLoading ? '…' : nome.toUpperCase()}</h1>
         <p>Politica e amministrazione a {nome || '…'}: consiglio comunale, bilancio, fondi, opere pubbliche e servizi. Dal sito del Comune e dai giornali, aggiornato in automatico.</p>
+        {comune && <div className="paese-share"><CondividiRiga url={`${SITE}/paesi/${slug}`} title={`${nome}: politica e amministrazione`} label={`Condividi ${nome}`} testoWa={`📍 *${nome}*: cosa succede in Comune, consiglio comunale, fondi e opere pubbliche.\n\nSegui le notizie su GD Madonie News:\n${SITE}/paesi/${slug}`} /></div>}
         {temi.length > 1 &&
           <div className="tabs">
             <button className={`tab ${tema === 'tutti' ? 'active' : ''}`} onClick={() => setTema('tutti')}>Tutto<span className="n">{notizie.length}</span></button>
@@ -105,7 +108,7 @@ export default function Paese() {
             visibili.length === 0 ?
               <div className="side-box" style={{ textAlign: 'center', opacity: .75 }}>Ancora nessuna notizia politica o amministrativa su {nome}. La pagina si aggiorna da sola ogni ora.</div> :
               <div className="mini-grid two">
-                {visibili.map((n) => <Reveal key={n.id}><NotiziaCard n={n} /></Reveal>)}
+                {visibili.map((n) => <Reveal key={n.id}><NotiziaCard n={n} slug={slug} /></Reveal>)}
               </div>}
           </div>
 
@@ -151,11 +154,12 @@ export default function Paese() {
     </div>);
 }
 
-function NotiziaCard({ n }) {
-  const daComune = n.fonte_tipo === 'comune';
+// La card apre la pagina della notizia sul nostro sito (da li' si condivide
+// e si va alla fonte), non piu' direttamente il giornale.
+function NotiziaCard({ n, slug }) {
   return (
     <article className={`article-card${n.image_url ? '' : ' noimg'}`} style={{ height: '100%' }}>
-      <a href={n.link} target="_blank" rel="noopener nofollow" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <Link to={linkNotizia(slug, n)} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         {n.image_url && <div className="card-media" style={{ aspectRatio: '16/9' }}><img src={sized(n.image_url, 640)} onError={fallbackTo(n.image_url)} alt="" loading="lazy" decoding="async" /></div>}
         <div className="card-body">
           <div className="meta-line">{n.fonte_nome}<span className="d"> · {fmt(n.published_date)}</span></div>
@@ -164,10 +168,10 @@ function NotiziaCard({ n }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
             {n.tema && <span className="chip-blu" style={{ fontSize: 10.5, padding: '5px 11px' }}>{n.tema}</span>}
             <span style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--acc)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-              {daComune ? 'Leggi sul sito del Comune' : `Leggi su ${n.fonte_nome}`} <ExternalLink size={12} />
+              Leggi e condividi →
             </span>
           </div>
         </div>
-      </a>
+      </Link>
     </article>);
 }
