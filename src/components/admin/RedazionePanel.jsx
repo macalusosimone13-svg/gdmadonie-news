@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
-import { Sparkles, Send, Search, Check, Loader2, ExternalLink, Download, PenLine, X, Eye, Trash2, Paperclip, Upload, RefreshCw, Clock } from 'lucide-react';
+import { Sparkles, Send, Search, Check, Loader2, ExternalLink, Download, PenLine, X, Eye, Trash2, Paperclip, Upload, RefreshCw, Clock, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
@@ -114,7 +114,9 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
   // Id del post già salvato (come bozza per l'anteprima, o pubblicato):
   // finché non è pubblicato, "Annulla" lo elimina di nuovo.
   const [postId, setPostId] = useState(null);
-  const [previewingSite, setPreviewingSite] = useState(false);
+  // Anteprima dentro la finestra: l'articolo come apparirà sul sito, senza
+  // aprire un'altra pagina. Le bozze già pronte (rubriche IA) si aprono così.
+  const [showPreview, setShowPreview] = useState(false);
   const [fmt, setFmt] = useState('post');
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewBlob, setPreviewBlob] = useState(null);
@@ -142,6 +144,7 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     setAttachName('');
     setEditing(!!startBlank);
     setDraftSaved(false);
+    setShowPreview(false);
     if (existingPost) {
       setTitle(existingPost.title || '');
       setBody(existingPost.content || '');
@@ -149,6 +152,7 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
       setAttachUrl(existingPost.attachment_url || '');
       setAttachName(existingPost.attachment_name || '');
       setEditing(true);
+      setShowPreview(true);
       return;
     }
     // Se veniamo dalla rassegna, o abbiamo già un argomento, l'IA parte
@@ -275,23 +279,6 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
-  // Salva come bozza (invisibile a tutti tranne l'admin, per via delle
-  // regole del sito) e apre la pagina vera dell'articolo in un'altra
-  // scheda: è la stessa identica pagina che vedrebbero i visitatori,
-  // solo che finché resta una bozza la vedi soltanto tu.
-  const previewOnSite = async () => {
-    if (!title.trim() || !body.trim()) return;
-    setPreviewingSite(true); setError(null);
-    try {
-      const saved = await saveNewsGDPost({ id: postId, title, body, imageBlob: previewBlob, status: 'draft', attachmentUrl: attachUrl, attachmentName: attachName });
-      setPostId(saved.id);
-      window.open(`/articolo/${saved.id}`, '_blank', 'noopener,noreferrer');
-    } catch (e) {
-      setError(e.message);
-    }
-    setPreviewingSite(false);
-  };
-
   // Salva le correzioni senza pubblicare (solo per le bozze già esistenti).
   const saveDraft = async () => {
     if (!title.trim() || !body.trim()) return;
@@ -352,7 +339,7 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
         }
         {error && <p className="text-xs text-red-600">{error}</p>}
 
-        {editing &&
+        {editing && !showPreview &&
         <div className="grid md:grid-cols-[1fr,230px] gap-4 pt-1">
             <div className="space-y-3 min-w-0">
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titolo" className="font-semibold" />
@@ -394,7 +381,36 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
               <button type="button" onClick={downloadPng} disabled={!previewBlob} className={`${PILL_SECONDARY} w-full !min-h-[40px] text-xs`}>
                 <Download className="w-3.5 h-3.5" /> Scarica PNG
               </button>
-              <p className="text-[11px] text-muted-foreground leading-snug">Questa è solo la grafica di copertina. Per vedere l'intera pagina come apparirà sul sito, usa "Anteprima sul sito" qui sotto.</p>
+              <p className="text-[11px] text-muted-foreground leading-snug">Questa è solo la grafica di copertina. Per vedere l'intera pagina come apparirà sul sito, usa "Anteprima" qui sotto.</p>
+            </div>
+          </div>
+        }
+
+        {editing && showPreview &&
+        <div className="rounded-2xl border border-border overflow-hidden">
+            <div className="bg-muted px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+              <Eye className="w-3.5 h-3.5" /> Anteprima: così apparirà su News GD
+            </div>
+            <div className="rd">
+              <div className="article-detail space-y-5" style={{ padding: '20px 18px 24px' }}>
+                {previewUrl ?
+              <div className="rounded-[28px] overflow-hidden relative max-w-[420px] mx-auto">
+                    <img src={previewUrl} alt="" className="w-full h-auto block" />
+                    <span className="absolute left-3 bottom-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-[#0f1b3a] text-white shadow-sm">News GD</span>
+                  </div> :
+              previewBusy ?
+              <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div> :
+              null}
+                <div className="space-y-2">
+                  <h1>{title || 'Titolo'}</h1>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{format(scheduleMode && scheduleAt ? new Date(scheduleAt) : new Date(), "dd MMMM yyyy 'alle ore' HH:mm", { locale: it })}</span>
+                    <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" />GD Madonie</span>
+                  </div>
+                </div>
+                <div className="ad-content"><p>{body}</p></div>
+                {attachUrl && <span className="ad-external">{attachName || 'Scarica allegato'}</span>}
+              </div>
             </div>
           </div>
         }
@@ -433,9 +449,9 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
             </button>
           }
           {!published && !scheduled &&
-          <button type="button" onClick={previewOnSite} disabled={previewingSite || !title.trim() || !body.trim()} className={PILL_SECONDARY} title="Si apre come sul sito vero, ma la vedi solo tu finché non pubblichi">
-              {previewingSite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
-              Anteprima sul sito
+          <button type="button" onClick={() => setShowPreview((v) => !v)} disabled={!showPreview && (!title.trim() || !body.trim())} className={PILL_SECONDARY} title={showPreview ? 'Torna a modificare il testo' : "Guarda l'articolo come apparirà sul sito, senza uscire da qui"}>
+              {showPreview ? <PenLine className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPreview ? 'Modifica' : 'Anteprima'}
             </button>
           }
           {published &&
@@ -646,9 +662,11 @@ function RubricheTab({ onChange }) {
         </p>
       </div>
       {p.status === 'draft' &&
-    <button type="button" onClick={() => setEditing(p)} className={`${PILL_PRIMARY} !min-h-[40px] !px-4 text-xs`}><PenLine className="w-3.5 h-3.5" /> Rivedi e pubblica</button>
+    <button type="button" onClick={() => setEditing(p)} className={`${PILL_PRIMARY} !min-h-[40px] !px-4 text-xs`}><Eye className="w-3.5 h-3.5" /> Guarda e pubblica</button>
     }
-      <a href={`/articolo/${p.id}`} target="_blank" rel="noopener noreferrer" aria-label="Vedi" title="Vedi (le bozze le vedi solo tu)" className="text-muted-foreground hover:text-primary p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><ExternalLink className="w-4 h-4" /></a>
+      {p.status !== 'draft' &&
+    <a href={`/articolo/${p.id}`} target="_blank" rel="noopener noreferrer" aria-label="Vedi sul sito" title="Vedi sul sito" className="text-muted-foreground hover:text-primary p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><ExternalLink className="w-4 h-4" /></a>
+    }
       <button onClick={() => setPendingDelete(p)} aria-label="Elimina" title="Elimina" className="text-red-500 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><Trash2 className="w-4 h-4" /></button>
     </div>;
 
