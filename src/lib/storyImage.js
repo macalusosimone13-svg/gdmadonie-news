@@ -652,7 +652,9 @@ const g = ctx.createLinearGradient(0, 0, 0, vh);
   }
 
   try {
-    return await canvasToBlob(canvas);
+    const outBlob = await canvasToBlob(canvas);
+outBlob.photoDrawn = photoDrawn;
+return outBlob;
   } catch {
     // Il canvas e' stato "sporcato" da una foto o dal logo senza i permessi
     // giusti (CORS): si ricostruisce tutto su un foglio NUOVO, stavolta senza
@@ -665,6 +667,8 @@ const g = ctx.createLinearGradient(0, 0, 0, vh);
     drawBase(ctx2, W, H, primaryColor, bgGradientStart, bgGradientEnd);
     drawTextOnlyCard(ctx2, W, H, { dateText, category, title, domain, categoryBg, categoryText, titleColor, showCategory, showDomain });
     await badgeScaled(ctx2, W, H, null, brandTitle, brandSubtitle, logoSize);
-    return await canvasToBlob(fallbackCanvas);
+    const fbBlob = await canvasToBlob(fallbackCanvas);
+fbBlob.photoDrawn = false;
+return fbBlob;
   }
 }
