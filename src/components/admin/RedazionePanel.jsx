@@ -758,8 +758,51 @@ function PubblicatiTab() {
     setDeleting(false);
   };
 
-  return (
-    <div className="space-y-3">
+  const [renewing, setRenewing] = useState(false);
+const [renewMsg, setRenewMsg] = useState('');
+
+// Rifà con la grafica nuova (solo titolo) le immagini delle rubriche IA
+// (Il punto, Dove nasci conta) già pubblicate o in bozza: quelle vecchie
+// erano immagini salvate con titolo e paragrafo tagliato.
+const renewImages = async () => {
+setRenewing(true); setRenewMsg('');
+const targets = posts.filter((p) => p.rubrica && /news-gd-/.test(p.image_url || ''));
+let done = 0; let failed = 0;
+for (const p of targets) {
+setRenewMsg('Rinnovo ' + (done + failed + 1) + ' di ' + targets.length + '…');
+try {
+const blob = await buildStoryBlob({
+format: 'post',
+category: 'News GD',
+title: p.title,
+bodyText: '',
+dateText: p.published_date ? format(new Date(p.published_date), 'd MMMM yyyy', { locale: it }).toUpperCase() : '',
+imageUrl: undefined,
+logoUrl: null,
+...NEWS_GD_BRAND
+});
+const file = new File([blob], 'news-gd-' + Date.now() + '.png', { type: 'image/png' });
+const { file_url } = await uploadFile(file);
+const media = { url: file_url, type: 'image', orientation: 'vertical' };
+await sb44.entities.Post.update(p.id, { image_url: file_url, media_type: 'image', media_orientation: 'vertical', media: [media] });
+done++;
+} catch { failed++; }
+}
+setRenewMsg(targets.length ? 'Fatto: ' + done + ' immagini rinnovate' + (failed ? ', ' + failed + ' non riuscite' : '') + '.' : 'Nessuna immagine da rinnovare.');
+load();
+setRenewing(false);
+};
+
+return (
+<div className="space-y-3">
+<div className="flex flex-wrap items-center gap-3">
+<button type="button" onClick={renewImages} disabled={renewing || loading} className={PILL_SECONDARY + ' !min-h-[40px] text-xs'}>
+{renewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+Rinnova le immagini delle rubriche
+</button>
+{renewMsg && <span className="text-xs text-muted-foreground">{renewMsg}</span>}
+</div>
+
       {loading ?
       <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div> :
       posts.length === 0 ?
