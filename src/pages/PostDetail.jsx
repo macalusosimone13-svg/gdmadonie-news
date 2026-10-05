@@ -227,6 +227,7 @@ export default function PostDetail() {
     const imgSource = isVideo ? post.poster_url : post.image_url;
     run('story', () => buildBrandedFile(imgSource, 'story', isAdmin && cleanShare));
     run('post', () => buildBrandedFile(imgSource, 'post', isAdmin && cleanShare));
+run('landscape', () => buildBrandedFile(imgSource, 'landscape', isAdmin && cleanShare));
     if (isVideo && videoUrl) run('video', buildVideoFile);
     return () => { cancelled = true; };
   }, [shareChoiceOpen, cleanShare, post?.id]);
@@ -305,6 +306,7 @@ export default function PostDetail() {
       showCategory: storyCfg.show_category,
       showDomain: storyCfg.show_domain,
       minimal,
+      dateText: post.published_date ? format(new Date(post.published_date), 'd MMMM yyyy', { locale: it }).toUpperCase() : '',
       topBandEnabled: storyCfg.top_band_enabled,
       topBandColor: storyCfg.top_band_color,
       topBandOpacity: storyCfg.top_band_opacity,
@@ -464,7 +466,8 @@ export default function PostDetail() {
             {[
             ...(isVideo && !videoFailed ? [['video', 'Video vero', 'Si muove e ha l\'audio, senza testo sopra', Film]] : []),
             ['story', 'Immagine per le Storie', 'Verticale 9:16, per Storie Instagram, Facebook e WhatsApp', ImageIcon],
-            ['post', 'Immagine per il Feed', 'Più quadrata 4:5, per un post normale', ImageIcon]].
+            ['post', 'Immagine per il Feed', 'Più quadrata 4:5, per un post normale', ImageIcon],
+['landscape', 'Immagine orizzontale', 'Formato 1,91:1, per anteprime e siti web', ImageIcon]].
             map(([key, title, desc, Icon]) =>
             <button key={key} onClick={() => pickShareChoice(key)} disabled={!prepared[key]} className="share-option">
               <span className="share-ico">{prepared[key] ? <Icon className="w-5 h-5" /> : <Loader2 className="w-5 h-5 animate-spin" />}</span>
