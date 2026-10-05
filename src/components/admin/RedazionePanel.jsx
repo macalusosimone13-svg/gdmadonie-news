@@ -131,6 +131,8 @@ function ComposerModal({ open, onClose, sourceArticle, initialTopic, autoGenerat
 const [coverUrl, setCoverUrl] = useState('');
 const [coverUploading, setCoverUploading] = useState(false);
 const [regenCover, setRegenCover] = useState(false);
+const [usePhoto, setUsePhoto] = useState(true);
+const [photoMissing, setPhotoMissing] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const objUrl = useRef(null);
 const isEdit = !!existingPost && existingPost.status !== 'draft';
@@ -152,6 +154,8 @@ const isEdit = !!existingPost && existingPost.status !== 'draft';
     setEditing(!!startBlank);
     setDraftSaved(false);
     setShowPreview(false);
+setUsePhoto(true);
+setPhotoMissing(false);
 setCoverUrl('');
 setRegenCover(false);
     if (existingPost) {
@@ -207,11 +211,12 @@ setRegenCover(false);
         // come sfondo (come le condivisioni degli altri articoli del sito):
         // così la locandina mostra subito di cosa parla la notizia, non solo
         // il nostro commento.
-        imageUrl: sourceArticle?.image_url || undefined,
+        imageUrl: usePhoto ? (sourceArticle?.image_url || undefined) : undefined,
         logoUrl: null,
         ...NEWS_GD_BRAND
       }).then((b) => {
         if (cancelled) return;
+setPhotoMissing(!!(usePhoto && sourceArticle?.image_url && b.photoDrawn === false));
         if (objUrl.current) URL.revokeObjectURL(objUrl.current);
         const u = URL.createObjectURL(b);
         objUrl.current = u;
@@ -220,7 +225,7 @@ setRegenCover(false);
       }).finally(() => !cancelled && setPreviewBusy(false));
     }, 450);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [open, fmt, title, body, sourceArticle]);
+  }, [open, fmt, title, body, sourceArticle, usePhoto]);
 
   // Carica un file (PDF o foto) come allegato: stesso helper usato altrove
   // sul sito, cosi' l'admin puo' anche non avere gia' un link pronto.
@@ -412,6 +417,12 @@ Rifai la copertina con il titolo (grafica nuova)
                 <button type="button" onClick={() => setFmt('post')} className={`px-3 py-1.5 rounded-full ${fmt === 'post' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}>Post</button>
                 <button type="button" onClick={() => setFmt('story')} className={`px-3 py-1.5 rounded-full ${fmt === 'story' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}>Storia</button>
               </div>
+{sourceArticle?.image_url &&
+<div className="flex bg-muted rounded-full p-1 text-xs font-medium w-fit">
+<button type="button" onClick={() => setUsePhoto(true)} className={'px-3 py-1.5 rounded-full ' + (usePhoto ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground')}>Con la foto</button>
+<button type="button" onClick={() => setUsePhoto(false)} className={'px-3 py-1.5 rounded-full ' + (!usePhoto ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground')}>Solo titolo</button>
+</div>}
+{photoMissing && <p className="text-[11px] text-red-600 leading-snug">La foto di questa notizia non si è caricata (il giornale non la lascia usare): esce solo il titolo.</p>}
               <div className={`w-full ${fmt === 'post' ? 'aspect-[4/5]' : 'aspect-[9/16]'} rounded-2xl border border-border bg-muted overflow-hidden flex items-center justify-center relative`}>
                 {previewUrl && <img src={previewUrl} alt="Anteprima" className="w-full h-full object-cover" />}
                 {previewBusy && <div className="absolute inset-0 bg-white/60 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>}
