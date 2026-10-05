@@ -23,7 +23,8 @@
 // cosi' la condivisione riesce sempre.
 export const FORMATS = {
   story: { width: 1080, height: 1920 },
-  post: { width: 1080, height: 1350 }
+  post: { width: 1080, height: 1350 },
+landscape: { width: 1200, height: 630 }
 };
 
 export const STORY_DEFAULTS = {
@@ -261,90 +262,110 @@ function drawCategoryPill(ctx, x, y, category, categoryBg, categoryText) {
 // Layout "solo testo": usato quando l'articolo non ha una foto (o non si
 // legge). Invece di lasciare vuota gran parte dell'immagine, dà priorità al
 // testo scritto: titolo grande ed estratto occupano lo spazio centrale.
-function drawTextOnlyCard(ctx, W, H, { category, title, bodyText, domain, categoryBg, categoryText, titleColor, showCategory, showDomain }) {
-  const left = 64;
-  const right = W - 64;
-  const maxWidth = right - left;
-  let y = 300;
+// Layout "solo titolo": titolo grande in maiuscolo che si adatta da solo
+// alla lunghezza (mai tagliato), categoria, data e sito. Niente paragrafo.
+function fitTitle(ctx, text, maxW, maxH, maxSize, minSize) {
+const setF = (n) => { ctx.font = '900 ' + n + 'px Rubik, "Arial Black", Arial, sans-serif'; };
+for (let n = maxSize; n >= minSize; n -= 2) {
+setF(n);
+const lines = wrapText(ctx, text, maxW);
+const widest = Math.max(...lines.map((l) => ctx.measureText(l).width));
+if (lines.length * n * 1.08 <= maxH && widest <= maxW) return { size: n, lh: n * 1.08, lines };
+}
+setF(minSize);
+let lines = wrapText(ctx, text, maxW);
+const maxLines = Math.max(1, Math.floor(maxH / (minSize * 1.08)));
+if (lines.length > maxLines) {
+lines = lines.slice(0, maxLines);
+lines[maxLines - 1] = truncateToWidth(ctx, lines[maxLines - 1] + '…', maxW);
+}
+return { size: minSize, lh: minSize * 1.08, lines };
+}
 
-  if (category && showCategory !== false) {
-    const pillH = drawCategoryPill(ctx, left, y, category, categoryBg, categoryText);
-    y += pillH + 36;
-  }
+async function badgeScaled(ctx, W, H, logoUrl, brandTitle, brandSubtitle, logoSize) {
+const small = W > H;
+if (small) { ctx.save(); ctx.scale(0.62, 0.62); }
+await drawBrandBadge(ctx, logoUrl, brandTitle, brandSubtitle, logoSize);
+if (small) ctx.restore();
+}
 
-  if (title) {
-    ctx.fillStyle = titleColor || '#ffffff';
-    ctx.font = '800 56px Rubik, Arial, sans-serif';
-    ctx.textBaseline = 'alphabetic';
-    const lines = wrapText(ctx, title, maxWidth).slice(0, 6);
-    lines.forEach((line) => {
-      y += 66;
-      ctx.fillText(line, left, y);
-    });
-    y += 50;
-  }
-
-  if (bodyText) {
-    ctx.fillStyle = 'rgba(255,255,255,0.88)';
-    ctx.font = '400 34px -apple-system, sans-serif';
-    ctx.textBaseline = 'alphabetic';
-    const bottomLimit = H - (showDomain !== false && domain ? 170 : 110);
-    const lines = wrapText(ctx, bodyText, maxWidth);
-    for (const line of lines) {
-      y += 46;
-      if (y > bottomLimit) break;
-      ctx.fillText(line, left, y);
-    }
-  }
-
-  if (domain && showDomain !== false) {
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = '400 28px -apple-system, sans-serif';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(domain, left, H - 100);
-  }
+function drawTextOnlyCard(ctx, W, H, { dateText, category, title, domain, categoryBg, categoryText, titleColor, showCategory, showDomain }) {
+const landscape = W > H;
+const story = H / W > 1.6;
+const left = landscape ? 72 : 64;
+const maxW = W - left * 2;
+let y = story ? 440 : landscape ? 150 : 330;
+const domainY = story ? H - 270 : landscape ? H - 46 : H - 90;
+if (category && showCategory !== false) {
+const ph = drawCategoryPill(ctx, left, y, category, categoryBg, categoryText);
+y += ph + (landscape ? 28 : 44);
+}
+ctx.fillStyle = '#2F5BD8';
+ctx.fillRect(left, y, landscape ? 56 : 72, landscape ? 6 : 8);
+y += landscape ? 30 : 44;
+const hasDomain = domain && showDomain !== false;
+const reserve = (dateText ? (landscape ? 52 : 80) : 0) + (hasDomain ? (landscape ? 60 : 110) : 30);
+const maxH = domainY - reserve - y;
+const t = fitTitle(ctx, (title || '').toUpperCase(), maxW, maxH, story ? 124 : landscape ? 76 : 112, story ? 60 : landscape ? 38 : 54);
+ctx.textAlign = 'left';
+ctx.textBaseline = 'alphabetic';
+ctx.font = '900 ' + t.size + 'px Rubik, "Arial Black", Arial, sans-serif';
+t.lines.forEach((line, i) => {
+ctx.fillStyle = (t.lines.length > 1 && i === t.lines.length - 1) ? '#8FB0FF' : (titleColor || '#ffffff');
+ctx.fillText(line, left, y + t.size * 0.9 + i * t.lh);
+});
+y += t.lines.length * t.lh + (landscape ? 20 : 34);
+if (dateText) {
+ctx.fillStyle = '#C9D6F5';
+ctx.font = '600 ' + (landscape ? 24 : 32) + 'px Figtree, Arial, sans-serif';
+try { ctx.letterSpacing = '2px'; } catch {}
+ctx.fillText(dateText, left, y + (landscape ? 24 : 32));
+try { ctx.letterSpacing = '0px'; } catch {}
+}
+if (hasDomain) {
+const ly = domainY - (landscape ? 34 : 48);
+ctx.strokeStyle = 'rgba(143,176,255,0.28)';
+ctx.lineWidth = 2;
+ctx.beginPath(); ctx.moveTo(left, ly); ctx.lineTo(W - left, ly); ctx.stroke();
+ctx.fillStyle = '#8FB0FF';
+ctx.font = '600 ' + (landscape ? 24 : 30) + 'px Figtree, Arial, sans-serif';
+ctx.fillText(domain, left, domainY);
+}
 }
 
 function drawTextBlock(ctx, W, H, { category, title, domain, categoryBg, categoryText, titleColor, overlayIntensity, showCategory, showDomain, categoryGap }) {
-  // Velo scuro in basso per far risaltare il testo sopra qualunque foto.
-  // L'intensita' e' regolabile da admin (0 = quasi trasparente, 1 = quasi nero).
-  // Parte piuttosto in basso (62% dell'altezza) perche' la foto ora viene
-  // mostrata intera e non a tutto schermo: se il velo cominciasse a meta',
-  // finirebbe per scurire la parte bassa della foto stessa.
-  const intensity = overlayIntensity == null ? 0.85 : overlayIntensity;
-  const overlay = ctx.createLinearGradient(0, H * 0.62, 0, H);
-  overlay.addColorStop(0, 'rgba(0,0,0,0)');
-  overlay.addColorStop(0.45, `rgba(0,0,0,${(intensity * 0.7).toFixed(2)})`);
-  overlay.addColorStop(1, `rgba(0,0,0,${intensity.toFixed(2)})`);
-  ctx.fillStyle = overlay;
-  ctx.fillRect(0, H * 0.62, W, H - H * 0.62);
-
-  let y = H - 100;
-
-  if (domain && showDomain !== false) {
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.font = '400 28px -apple-system, sans-serif';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(domain, 64, y);
-    y -= 60;
-  }
-
-  if (title) {
-    ctx.fillStyle = titleColor || '#ffffff';
-    ctx.font = '800 50px Rubik, Arial, sans-serif';
-    const lines = wrapText(ctx, title, W - 128).slice(0, 4);
-    y -= (lines.length - 1) * 62;
-    const titleTop = y;
-    lines.forEach((line, i) => {
-      ctx.fillText(line, 64, titleTop + i * 62);
-    });
-    y = titleTop - (categoryGap == null ? 40 : categoryGap);
-  }
-
-  if (category && showCategory !== false) {
-    const pillH = 54;
-    drawCategoryPill(ctx, 64, y - pillH, category, categoryBg, categoryText);
-  }
+const landscape = W > H;
+const story = H / W > 1.6;
+const pad = landscape ? 56 : 64;
+const intensity = overlayIntensity == null ? 0.85 : overlayIntensity;
+const top = H * (landscape ? 0.35 : 0.5);
+const overlay = ctx.createLinearGradient(0, top, 0, H);
+overlay.addColorStop(0, 'rgba(0,0,0,0)');
+overlay.addColorStop(0.45, 'rgba(0,0,0,' + (intensity * 0.7).toFixed(2) + ')');
+overlay.addColorStop(1, 'rgba(0,0,0,' + intensity.toFixed(2) + ')');
+ctx.fillStyle = overlay;
+ctx.fillRect(0, top, W, H - top);
+let y = story ? H - 270 : H - (landscape ? 44 : 100);
+ctx.textAlign = 'left';
+ctx.textBaseline = 'alphabetic';
+if (domain && showDomain !== false) {
+ctx.fillStyle = 'rgba(255,255,255,0.7)';
+ctx.font = '400 ' + (landscape ? 24 : 28) + 'px -apple-system, sans-serif';
+ctx.fillText(domain, pad, y);
+y -= landscape ? 46 : 64;
+}
+let pillBottom = y;
+if (title) {
+const t = fitTitle(ctx, title.toUpperCase(), W - pad * 2, landscape ? H * 0.36 : H * (story ? 0.2 : 0.26), story ? 92 : landscape ? 56 : 84, story ? 48 : landscape ? 34 : 46);
+ctx.fillStyle = titleColor || '#ffffff';
+ctx.font = '900 ' + t.size + 'px Rubik, "Arial Black", Arial, sans-serif';
+const firstBase = y - (t.lines.length - 1) * t.lh;
+t.lines.forEach((line, i) => ctx.fillText(line, pad, firstBase + i * t.lh));
+pillBottom = firstBase - t.size * 0.85 - (categoryGap == null ? 40 : categoryGap) * (landscape ? 0.6 : 1);
+}
+if (category && showCategory !== false) {
+drawCategoryPill(ctx, pad, pillBottom - 54, category, categoryBg, categoryText);
+}
 }
 
 // Variante "foto pulita": quando l'immagine ha gia' la sua grafica (scritte,
@@ -538,7 +559,8 @@ export async function buildStoryBlob({
   categoryBg, categoryText, titleColor, overlayIntensity, showCategory, showDomain,
   topBandEnabled, topBandColor, topBandOpacity, logoSize, categoryGap,
   minimal = false,
-  format = 'story'
+dateText = '',
+format = 'story'
 }) {
   const { width: W, height: H } = FORMATS[format] || FORMATS.story;
   const canvas = document.createElement('canvas');
@@ -546,7 +568,8 @@ export async function buildStoryBlob({
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  let photoDrawn = false;
+  try { await document.fonts.load('900 64px Rubik'); } catch {}
+let photoDrawn = false;
   if (imageUrl) {
     try {
       const img = await loadImage(imageUrl);
@@ -613,18 +636,19 @@ export async function buildStoryBlob({
     }
   } else {
     drawBase(ctx, W, H, primaryColor, bgGradientStart, bgGradientEnd);
-    drawTextOnlyCard(ctx, W, H, { category, title, bodyText, domain, categoryBg, categoryText, titleColor, showCategory, showDomain });
+    drawTextOnlyCard(ctx, W, H, { dateText, category, title, domain, categoryBg, categoryText, titleColor, showCategory, showDomain });
   }
   if (!clean) {
     if (photoDrawn) {
       // Velo blu notte dietro il logo: resta leggibile su qualsiasi foto.
-      const g = ctx.createLinearGradient(0, 0, 0, 340);
+      const vh = W > H ? 200 : 340;
+const g = ctx.createLinearGradient(0, 0, 0, vh);
       g.addColorStop(0, 'rgba(10,18,38,0.88)');
       g.addColorStop(1, 'rgba(10,18,38,0)');
       ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, 340);
+      ctx.fillRect(0, 0, W, vh);
     }
-    await drawBrandBadge(ctx, logoUrl, brandTitle, brandSubtitle, logoSize);
+    await badgeScaled(ctx, W, H, logoUrl, brandTitle, brandSubtitle, logoSize);
   }
 
   try {
@@ -639,8 +663,8 @@ export async function buildStoryBlob({
     fallbackCanvas.height = H;
     const ctx2 = fallbackCanvas.getContext('2d');
     drawBase(ctx2, W, H, primaryColor, bgGradientStart, bgGradientEnd);
-    drawTextOnlyCard(ctx2, W, H, { category, title, bodyText, domain, categoryBg, categoryText, titleColor, showCategory, showDomain });
-    await drawBrandBadge(ctx2, null, brandTitle, brandSubtitle, logoSize);
+    drawTextOnlyCard(ctx2, W, H, { dateText, category, title, domain, categoryBg, categoryText, titleColor, showCategory, showDomain });
+    await badgeScaled(ctx2, W, H, null, brandTitle, brandSubtitle, logoSize);
     return await canvasToBlob(fallbackCanvas);
   }
 }
