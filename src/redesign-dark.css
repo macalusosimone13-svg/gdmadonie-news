@@ -129,3 +129,9 @@
 .dark .rd .adm-main form button.w-full:not([role=combobox]):not([type=submit]){ color:#fff !important; background:transparent; }
 .dark .rd .adm-main form button[type=submit]{ background:#6F95FF; color:#0A1128; }
 .dark .rd .bg-card{ background:var(--card); }
+/* corpo degli articoli: titoletti, tabelle e riquadri */
+.dark .rd .ad-content h2, .dark .rd .ad-content h3, .dark .rd .ad-content h4{ color:var(--txt-strong); }
+.dark .rd .ad-content hr{ border-top-color:var(--line); }
+.dark .rd .ad-table{ background:var(--card); border-color:var(--line); }
+.dark .rd .ad-table th{ background:#1E3170; }
+.dark .rd .ad-table td{ border-top-color:var(--line); }

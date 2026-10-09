@@ -28,6 +28,50 @@ const taglia = (s: unknown, n = 158) => {
   return t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : t;
 };
 const paragrafi = (s: unknown) => String(s ?? '').replace(/\r/g, '').split(/\n\s*\n|\n/).map((p) => p.replace(/^#+\s*|^>\s*/, '').trim()).filter(Boolean);
+// Il testo degli articoli GD è in Markdown "leggero" (titoletti, grassetti,
+// elenchi, tabelle, riquadri in evidenza: vedi src/components/ArticleBody.jsx).
+// Qui lo si traduce per la pagina servita ai motori di ricerca: `html` con
+// titoletti, elenchi e tabelle veri, `testo` semplice per le descrizioni.
+const SEP_TABELLA = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
+const celle = (r: string) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+const senzaSegni = (r: string) => r.replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/(\*\*|__)(.+?)\1/g, '$2').replace(/`([^`]+)`/g, '$1');
+const inlineMd = (r: string) => esc(r)
+  .replace(/!?\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" rel="noopener">$1</a>')
+  .replace(/(\*\*|__)(.+?)\1/g, '<strong>$2</strong>');
+function articolo(s: unknown): { html: string; testo: string[] } {
+  const righe = String(s ?? '').replace(/\r/g, '').split('\n').map((r) => r.replace(/^(?:\t+| {4,})/, '').replace(/^\s*[•·▪◦]\s*/, '- '));
+  const html: string[] = [];
+  const testo: string[] = [];
+  const ELENCO = /^\s{0,3}(?:[-*+]|\d+[.)])\s+/;
+  for (let i = 0; i < righe.length; i++) {
+    const r = righe[i].trim();
+    if (!r || SEP_TABELLA.test(r)) continue;
+    if (/^\|.*\|$/.test(r) && SEP_TABELLA.test(righe[i + 1] || '') && (righe[i + 1] || '').includes('|')) {
+      const testa = celle(r);
+      const corpo: string[][] = [];
+      i += 1;
+      while (i + 1 < righe.length && /^\s*\|.*\|\s*$/.test(righe[i + 1])) { i += 1; corpo.push(celle(righe[i])); }
+      html.push(`<table><thead><tr>${testa.map((c) => `<th>${inlineMd(c)}</th>`).join('')}</tr></thead><tbody>${corpo.map((c) => `<tr>${c.map((x) => `<td>${inlineMd(x)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
+      [testa, ...corpo].forEach((c) => testo.push(senzaSegni(c.filter(Boolean).join(' · '))));
+    } else if (/^#{1,6}\s+/.test(r)) {
+      const t = r.replace(/^#{1,6}\s+/, '');
+      html.push(`<h2>${inlineMd(t)}</h2>`); testo.push(senzaSegni(t));
+    } else if (ELENCO.test(r)) {
+      const tag = /^\s{0,3}\d/.test(r) ? 'ol' : 'ul';
+      const voci = [r.replace(ELENCO, '')];
+      while (i + 1 < righe.length && ELENCO.test(righe[i + 1])) { i += 1; voci.push(righe[i].replace(ELENCO, '').trim()); }
+      html.push(`<${tag}>${voci.map((v) => `<li>${inlineMd(v)}</li>`).join('')}</${tag}>`);
+      voci.forEach((v) => testo.push(senzaSegni(v)));
+    } else if (/^>/.test(r)) {
+      const frasi = [r.replace(/^>\s?/, '')];
+      while (i + 1 < righe.length && /^\s*>/.test(righe[i + 1])) { i += 1; frasi.push(righe[i].trim().replace(/^>\s?/, '')); }
+      const piene = frasi.filter(Boolean);
+      html.push(`<blockquote>${piene.map((f) => `<p>${inlineMd(f)}</p>`).join('')}</blockquote>`);
+      piene.forEach((f) => testo.push(senzaSegni(f)));
+    } else { html.push(`<p>${inlineMd(r)}</p>`); testo.push(senzaSegni(r)); }
+  }
+  return { html: html.join(''), testo };
+}
 const dataIt = (d: string | null, conOra = false) => {
   if (!d) return '';
   try {
@@ -42,7 +86,7 @@ async function sb(path: string) {
   } catch { return null; }
 }
 
-const STYLE = `<style>.ssr-pagina{background:#FFFDF9;color:#1c2233;font-family:Figtree,system-ui,sans-serif;min-height:100vh;padding:32px 20px 60px}.ssr-pagina .w{max-width:820px;margin:0 auto}.ssr-pagina h1{font-family:Rubik,sans-serif;font-weight:900;font-size:clamp(1.8rem,5vw,2.8rem);line-height:1.1;color:#0F1B3A;margin:8px 0 14px}.ssr-pagina .k{color:#2F5BD8;font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:13px}.ssr-pagina .m{font-size:12.5px;font-weight:700;color:#2F5BD8;text-transform:uppercase;margin-bottom:16px}.ssr-pagina img{max-width:100%;height:auto;border-radius:20px;margin:6px 0 18px}.ssr-pagina a{color:#2F5BD8}.ssr-pagina p{line-height:1.7;font-size:17px}</style>`;
+const STYLE = `<style>.ssr-pagina{background:#FFFDF9;color:#1c2233;font-family:Figtree,system-ui,sans-serif;min-height:100vh;padding:32px 20px 60px}.ssr-pagina .w{max-width:820px;margin:0 auto}.ssr-pagina h1{font-family:Rubik,sans-serif;font-weight:900;font-size:clamp(1.8rem,5vw,2.8rem);line-height:1.1;color:#0F1B3A;margin:8px 0 14px}.ssr-pagina .k{color:#2F5BD8;font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:13px}.ssr-pagina .m{font-size:12.5px;font-weight:700;color:#2F5BD8;text-transform:uppercase;margin-bottom:16px}.ssr-pagina img{max-width:100%;height:auto;border-radius:20px;margin:6px 0 18px}.ssr-pagina a{color:#2F5BD8}.ssr-pagina p,.ssr-pagina li{line-height:1.7;font-size:17px}.ssr-pagina h2{font-family:Rubik,sans-serif;font-weight:800;font-size:1.4rem;color:#0F1B3A;margin:28px 0 10px}.ssr-pagina table{width:100%;border-collapse:collapse;margin:20px 0;font-size:16px}.ssr-pagina th{background:#0F1B3A;color:#fff;text-align:left;padding:11px 14px}.ssr-pagina td{padding:11px 14px;border-top:1px solid rgba(28,34,51,.12)}.ssr-pagina blockquote{margin:20px 0;padding:14px 18px;background:#EEF1F8;border-left:5px solid #2F5BD8;font-weight:600}</style>`;
 
 type Opzioni = {
   title: string; description: string; url: string;
@@ -109,14 +153,15 @@ export async function paginaArticolo(context: any, chiave: string): Promise<Resp
   const foto = primo ? (primo.type === 'video' ? (primo.poster_url || p.poster_url) : primo.url)
     : (p.media_type === 'video' || video.test(p.image_url || '') ? p.poster_url : p.image_url);
   const image = foto && !video.test(foto) ? ogSized(foto) : OG_HOME;
-  const testo = [...paragrafi(p.excerpt), ...paragrafi(p.content)];
+  const corpo = articolo(p.content);
+  const testo = [...paragrafi(p.excerpt), ...corpo.testo];
   const description = taglia(testo.join(' ') || (isGD ? `${p.title}: comunicato dei Giovani Democratici Madonie.` : `${p.title} — notizia da ${p.source_name || 'altre testate'}.`));
   const body =
     `<span class="k">${isGD ? 'Giovani Democratici Madonie' : esc(p.source_name || 'Rassegna stampa')}</span>` +
     `<h1>${esc(p.title)}</h1>` +
     `<div class="m">${esc(dataIt(p.published_date))}${p.author ? ' · ' + esc(p.author) : ''}</div>` +
     (foto && !video.test(foto) ? `<img src="${esc(foto)}" alt="${esc(p.title)}" width="1200" height="630" />` : '') +
-    testo.map((t) => `<p>${esc(t)}</p>`).join('') +
+    paragrafi(p.excerpt).map((t) => `<p>${esc(t)}</p>`).join('') + corpo.html +
     (!isGD && p.external_link ? `<p><a href="${esc(p.external_link)}" rel="noopener nofollow">Leggi l'articolo completo su ${esc(p.source_name || 'la fonte originale')}</a></p>` : '') +
     `<p><a href="/gd-madonie">Altre notizie dei Giovani Democratici Madonie</a></p>`;
   const jsonLd = isGD ? {

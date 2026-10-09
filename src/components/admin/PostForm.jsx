@@ -11,6 +11,7 @@ import { Upload, Loader2, Check, X, GripVertical, Film } from 'lucide-react';
 import { CATEGORIES, GD_CATEGORIES } from '@/lib/categories';
 import { useSiteContent } from '@/lib/useSiteContent';
 import { compressImage } from '@/lib/imageCompress';
+import ArticleEditor from '@/components/admin/ArticleEditor';
 
 // Scelta manuale del fotogramma di copertina per un video: l'utente scorre
 // una barra, il video (in pausa) mostra quel fotogramma, e alla conferma lo
@@ -240,7 +241,7 @@ export default function PostForm({ onCreated, editPost, onSaved }) {
       </div>
       <div className="space-y-1.5">
         <Label>Testo completo</Label>
-        <Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} placeholder="Testo del comunicato..." />
+        <ArticleEditor value={form.content} onChange={(content) => setForm((f) => ({ ...f, content }))} rows={12} placeholder="Testo del comunicato..." />
       </div>
       <div className="space-y-1.5">
         <Label>Data pubblicazione</Label>

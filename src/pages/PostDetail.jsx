@@ -12,6 +12,8 @@ import { setBackTarget, sectionForPost } from '@/lib/backTarget';
 import { ExternalLink, Calendar, User, Download, Share2, Pencil, Instagram, Loader2, Trash2 } from 'lucide-react';
 import { markRead } from '@/lib/readArticles';
 import { cleanExcerpt } from '@/lib/cleanText';
+import { plainArticle } from '@/lib/articleText';
+import ArticleBody from '@/components/ArticleBody';
 import SourceBadge from '@/components/SourceBadge';
 import { useSEO } from '@/lib/useSEO';
 import AdSlot from '@/components/AdSlot';
@@ -291,7 +293,7 @@ run('landscape', () => buildBrandedFile(imgSource, 'landscape', isAdmin && clean
       format: imgFormat,
       category: getCategoryLabel(content, post.category),
       title: post.title,
-      bodyText: (post.excerpt || post.content || '').replace(/\s+/g, ' ').trim(),
+      bodyText: (post.excerpt || plainArticle(post.content) || '').replace(/\s+/g, ' ').trim(),
       domain: isGD ? storyCfg.domain_text_gd : `${storyCfg.domain_text_rassegna_prefix} ${post.source_name || 'GD Madonie News'}`,
       primaryColor: '#0F1B3A',
       logoUrl: null,
@@ -430,7 +432,7 @@ run('landscape', () => buildBrandedFile(imgSource, 'landscape', isAdmin && clean
       </div>
       }
       {post.excerpt && !isGD && <p className="text-base text-muted-foreground leading-relaxed font-medium">{cleanExcerpt(post.excerpt)}</p>}
-      {post.content && <div className="ad-content"><p>{post.content}</p></div>}
+      <ArticleBody text={post.content} />
       {ADS_ENABLED && <AdSlot slot="1020089079" />}
       {post.attachment_url &&
       <a href={post.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-medium text-primary bg-primary/5 px-4 py-3 rounded-xl hover:bg-primary/10">
