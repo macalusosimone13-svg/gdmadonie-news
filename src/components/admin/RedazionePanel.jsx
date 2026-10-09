@@ -5,6 +5,9 @@ import { uploadFile } from '@/lib/uploadFile';
 import { buildStoryBlob } from '@/lib/storyImage';
 import { sized, fallbackTo } from '@/lib/imgSize';
 import { cleanExcerpt } from '@/lib/cleanText';
+import { plainArticle } from '@/lib/articleText';
+import ArticleBody from '@/components/ArticleBody';
+import ArticleEditor from '@/components/admin/ArticleEditor';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -67,10 +70,12 @@ async function saveNewsGDPost({ id, title, body, imageBlob, imageUrl, notify = t
 const orient = await new Promise((res) => { const im = new Image(); im.onload = () => res(im.naturalHeight > im.naturalWidth ? 'vertical' : 'horizontal'); im.onerror = () => res('horizontal'); im.src = imageUrl; });
 media = { url: imageUrl, type: 'image', orientation: orient };
 }
+  // l'estratto è testo semplice: senza i simboli di tabelle, titoletti e grassetti
+  const plain = plainArticle(body).replace(/\s+/g, ' ');
   const payload = {
     title,
     content: body,
-    excerpt: body.length > 220 ? body.slice(0, 217) + '…' : body,
+    excerpt: plain.length > 220 ? plain.slice(0, 217) + '…' : plain,
     category: 'news_gd',
     author: 'GD Madonie',
     source_type: 'gd_madonie',
@@ -206,7 +211,7 @@ setRegenCover(false);
         format: fmt,
         category: 'News GD',
         title,
-        bodyText: body,
+        bodyText: plainArticle(body),
         // Se veniamo da una notizia di rassegna con una sua foto, la si usa
         // come sfondo (come le condivisioni degli altri articoli del sito):
         // così la locandina mostra subito di cosa parla la notizia, non solo
@@ -370,7 +375,7 @@ setCoverUploading(false);
         <div className="grid md:grid-cols-[1fr,230px] gap-4 pt-1">
             <div className="space-y-3 min-w-0">
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titolo" className="font-semibold" />
-              <Textarea value={body} onChange={(e) => { setBody(e.target.value); setDraftSaved(false); }} rows={existingPost ? 16 : 9} placeholder="Testo del post..." />
+              <ArticleEditor value={body} onChange={(t) => { setBody(t); setDraftSaved(false); }} rows={existingPost ? 16 : 9} placeholder="Testo del post..." preview={false} />
               <p className="text-[11px] text-muted-foreground">{body.length} caratteri — puoi modificare tutto prima di pubblicare.</p>
 
               {existingPost &&
@@ -458,7 +463,7 @@ Rifai la copertina con il titolo (grafica nuova)
                     <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" />GD Madonie</span>
                   </div>
                 </div>
-                <div className="ad-content"><p>{body}</p></div>
+                <ArticleBody text={body} />
                 {attachUrl && <span className="ad-external">{attachName || 'Scarica allegato'}</span>}
               </div>
             </div>

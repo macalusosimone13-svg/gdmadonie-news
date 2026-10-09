@@ -180,7 +180,7 @@
   .ad-media { border-radius:28px; overflow:hidden; aspect-ratio:16/10; margin-bottom:26px; background:var(--tint); }
   .ad-media img { width:100%; height:100%; object-fit:cover; }
   .article-detail h1 { font-size:clamp(1.9rem,5vw,3rem); line-height:.98; margin:12px 0 22px; }
-  .ad-content p { font-size:18px; line-height:1.7; opacity:.88; margin:0 0 18px; white-space:pre-line; }
+  .ad-content p { font-size:18px; line-height:1.7; opacity:.88; margin:0 0 18px; }
   .ad-external { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; background:var(--blu); color:#fff; padding:17px; border-radius:16px; font-weight:800; margin-top:26px; }
   .ad-external:hover { background:var(--acc); }
   .related { max-width:1180px; margin:0 auto; padding:0 20px 100px; }
@@ -332,7 +332,37 @@
   .rd .tabs .tab { text-decoration:none; display:inline-block; }
   .rd .article-detail { padding-top:26px; }
   .rd .article-detail h1 { font-size:clamp(1.7rem,4.4vw,2.6rem); line-height:1; margin:6px 0 4px; text-transform:none; }
-  .rd .article-detail .ad-content p { font-size:18px; line-height:1.7; opacity:.9; white-space:pre-line; margin:0 0 16px; }
+  .rd .article-detail .ad-content p { font-size:18px; line-height:1.7; opacity:.9; margin:0 0 16px; }
+
+  /* Corpo degli articoli GD: titoletti, elenchi, tabelle e riquadri in evidenza (vedi ArticleBody.jsx) */
+  .rd .ad-content > :first-child { margin-top:0; }
+  .rd .ad-content > :last-child { margin-bottom:0; }
+  .rd .ad-content h2, .rd .ad-content h3, .rd .ad-content h4 { font-family:'Rubik',system-ui,sans-serif; font-weight:800; text-transform:none; letter-spacing:-.01em; color:var(--blu); line-height:1.15; margin:34px 0 12px; }
+  .rd .ad-content h2 { font-size:1.5rem; }
+  .rd .ad-content h3 { font-size:1.22rem; }
+  .rd .ad-content h4 { font-size:1.05rem; }
+  .rd .ad-content strong { font-weight:800; }
+  .rd .ad-content a { color:var(--acc); text-decoration:underline; text-underline-offset:3px; font-weight:600; overflow-wrap:anywhere; }
+  .rd .ad-content ul, .rd .ad-content ol { font-size:18px; line-height:1.65; margin:0 0 18px; padding-left:24px; }
+  .rd .ad-content ul { list-style:disc; }
+  .rd .ad-content ol { list-style:decimal; }
+  .rd .ad-content li { margin:0 0 8px; padding-left:4px; }
+  .rd .ad-content li::marker { color:var(--acc); font-weight:800; }
+  .rd .ad-content li > p { margin:0; opacity:1; }
+  .rd .ad-content blockquote { margin:26px 0; padding:18px 22px; background:var(--tint); border-left:5px solid var(--acc); border-radius:6px 16px 16px 6px; }
+  .rd .ad-content blockquote p { font-size:19px; line-height:1.5; font-weight:600; opacity:1; margin:0 0 10px; }
+  .rd .ad-content blockquote p:last-child { margin-bottom:0; }
+  .rd .ad-content hr { border:0; border-top:1px solid rgba(28,34,51,.14); margin:32px 0; }
+  .rd .ad-content img { border-radius:16px; margin:22px 0; height:auto; }
+  .rd .ad-table { margin:26px 0; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:16px; border:1px solid rgba(28,34,51,.12); background:#fff; }
+  .rd .ad-table table { width:100%; border-collapse:collapse; font-size:16px; line-height:1.4; font-variant-numeric:tabular-nums; }
+  .rd .ad-table th { background:var(--blu); color:#fff; font-family:'Rubik',system-ui,sans-serif; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.04em; text-align:left; padding:13px 16px; vertical-align:bottom; }
+  .rd .ad-table td { padding:13px 16px; border-top:1px solid rgba(28,34,51,.1); vertical-align:top; }
+  .rd .ad-table tbody tr:nth-child(even) td { background:var(--tint); }
+  .rd .ad-table td:first-child { font-weight:700; }
+  .rd .ad-table th[align="right"], .rd .ad-table td[align="right"] { text-align:right; }
+  .rd .ad-table th[align="center"], .rd .ad-table td[align="center"] { text-align:center; }
+  @media (max-width:560px){ .rd .ad-table table { font-size:15px; } .rd .ad-table th, .rd .ad-table td { padding:11px 12px; } }
   .rd .article-detail .ad-external { margin-top:6px; }
 
   /* desktop: hero + striscia scorrevole entrano tutti nella prima schermata */
