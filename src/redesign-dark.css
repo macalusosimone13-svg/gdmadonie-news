@@ -135,3 +135,14 @@
 .dark .rd .ad-table{ background:var(--card); border-color:var(--line); }
 .dark .rd .ad-table th{ background:#1E3170; }
 .dark .rd .ad-table td{ border-top-color:var(--line); }
+/* sondaggi: scheda Termometro Sicilia */
+.dark .rd .termo-big-pct{ color:var(--txt-strong); }
+.dark .rd .sondaggi-card.termo-scenario{ background:linear-gradient(160deg,#1E3170,#14224F); }
+.dark .rd .termo-lista, .dark .rd .termo-minori{ border-top-color:var(--line); }
+.dark .rd .termo-dot{ border-color:var(--card); box-shadow:0 0 0 1px rgba(255,255,255,.35); }
+.dark .rd .termo-band{ opacity:.45; }
+.dark .rd .termo-chips span{ background:rgba(255,255,255,.1); }
+.dark .rd .termo-chips .piu{ background:#DDF1E2; color:#17522A; }
+.dark .rd .termo-chips .meno{ background:#FDE3E0; color:#8E1B12; }
+.dark .rd .termo-admin.bozza{ background:#FFF1DC; color:#5C3300; }
+.dark .rd .termo-stack span, .dark .rd .termo-big-nome i, .dark .rd .termo-legenda i{ box-shadow:inset 0 0 0 1px rgba(255,255,255,.3); }

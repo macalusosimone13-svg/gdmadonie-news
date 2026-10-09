@@ -13,17 +13,28 @@ import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
 import AdSlot from '@/components/AdSlot';
 import { ADS_ENABLED } from '@/lib/adsConfig';
+import TermometroSicilia from '@/components/sondaggi/TermometroSicilia';
 
 const SCOPE_LABELS = {
   nazionale: 'Sondaggi Nazionali',
   regionale: 'Sondaggi Regionali (liste)',
-  candidati_sicilia: 'Intenzioni di voto regionali siciliane - candidati'
+  candidati_sicilia: 'Intenzioni di voto regionali siciliane - candidati',
+  termometro: 'Termometro Sicilia'
+};
+
+// La scheda "Termometro" non è un sondaggio: è la stima settimanale di GD Madonie News
+// (vedi components/sondaggi/TermometroSicilia.jsx). Si apre anche con /sondaggi?scheda=termometro.
+const schedaIniziale = () => {
+  if (typeof window === 'undefined') return 'nazionale';
+  const s = new URLSearchParams(window.location.search).get('scheda');
+  return s && SCOPE_LABELS[s] ? s : 'nazionale';
 };
 
 const FALLBACK_COLORS = ['#0F1B3A', '#2F5BD8', '#0ea5e9', '#16a34a', '#a8262c', '#7c3aed', '#ca8a04', '#0d9488'];
 
 export default function Sondaggi() {
-  const [scope, setScope] = useState('nazionale');
+  const [scope, setScope] = useState(schedaIniziale);
+  const isTermometro = scope === 'termometro';
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 640 : false);
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 639px)');
@@ -35,7 +46,8 @@ export default function Sondaggi() {
   const { data: entries, isLoading } = useQuery({
     queryKey: ['poll-entries', scope],
     queryFn: () => sb44.entities.PollEntry.filter({ scope }, 'survey_date', 1000),
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: !isTermometro
   });
 
   const [openCoal, setOpenCoal] = useState(null);
@@ -192,7 +204,9 @@ export default function Sondaggi() {
 
   useSEO({
     title: `${SCOPE_LABELS[scope] || 'Sondaggi'} — GD Madonie News`,
-    description: 'Rilevazioni sulle intenzioni di voto, nazionali e regionali, aggiornate dal circolo dei Giovani Democratici Madonie.',
+    description: isTermometro ?
+    'Termometro Sicilia: la stima settimanale di GD Madonie News sulle Regionali siciliane del 2027. Non è un sondaggio.' :
+    'Rilevazioni sulle intenzioni di voto, nazionali e regionali, aggiornate dal circolo dei Giovani Democratici Madonie.',
     url: typeof window !== 'undefined' ? window.location.href : undefined
   });
 
@@ -315,7 +329,7 @@ export default function Sondaggi() {
     return <span className={`delta ${c}`}>{ar} {d > 0 ? '+' : ''}{d.toFixed(1).replace('.', ',')}</span>;
   };
   const maxPct = latestChartData.length ? Math.max(...latestChartData.map((d) => d.percentage)) : 1;
-  const scopeTabs = [['nazionale', 'Nazionale'], ['regionale', 'Regionale (liste)'], ['candidati_sicilia', 'Candidati Sicilia']];
+  const scopeTabs = [['nazionale', 'Nazionale'], ['regionale', 'Regionale (liste)'], ['candidati_sicilia', 'Candidati Sicilia'], ['termometro', 'Termometro']];
 
   return (
     <div className="rd-page">
@@ -329,7 +343,9 @@ export default function Sondaggi() {
       </div></div>
 
       <div className="wrap-wide sond-body">
-        {isLoading ?
+        {isTermometro ?
+        <TermometroSicilia /> :
+        isLoading ?
         <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}><Loader2 className="w-6 h-6 animate-spin" style={{ opacity: .5 }} /></div> :
         !latest ?
         <p style={{ textAlign: 'center', padding: '32px 0', opacity: .6 }}>Nessun sondaggio {scope} ancora inserito.</p> :
