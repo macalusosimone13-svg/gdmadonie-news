@@ -268,6 +268,22 @@
   .termo-passi li::marker { font-family:'Rubik',sans-serif; font-weight:900; color:var(--acc); }
   .termo-fonti { padding:14px 16px; border-radius:18px; background:var(--tint); font-size:13px; line-height:1.5; }
   .termo-nota { margin:4px 6px 0; font-size:13px; line-height:1.5; opacity:.65; }
+  .termo-big-forbice { font-size:13px; font-weight:700; opacity:.7; }
+  .termo-verdetto { margin:18px 0 0; padding:14px 16px; border-radius:18px; background:var(--tint); font-size:14.5px; line-height:1.5; }
+  .termo-andamento { margin-top:16px; padding-top:16px; border-top:1px solid rgba(28,34,51,.08); font-size:13.5px; line-height:1.5; }
+  .termo-andamento > b { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.08em; opacity:.6; margin-bottom:8px; }
+  .termo-andamento > span { opacity:.7; }
+  .termo-andamento svg { display:block; width:100%; height:auto; max-height:120px; }
+  .termo-andamento-piede { display:flex; justify-content:space-between; font-size:12px; font-weight:600; opacity:.55; }
+  .termo-testo { margin:0 0 14px; font-size:14.5px; line-height:1.55; }
+  .termo-indecisi { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; margin-bottom:16px; font-size:14px; line-height:1.5; }
+  .termo-indecisi > span:last-child { flex:1; min-width:200px; }
+  .termo-prova { display:flex; flex-direction:column; gap:6px; padding:14px 16px; border-radius:18px; background:var(--tint); margin-top:12px; font-size:14px; }
+  .termo-prova table { width:100%; border-collapse:collapse; margin-top:6px; font-size:13.5px; }
+  .termo-prova th, .termo-prova td { text-align:left; padding:6px 4px; border-top:1px solid rgba(28,34,51,.1); }
+  .termo-prova th { font-size:12px; text-transform:uppercase; letter-spacing:.06em; opacity:.6; border-top:0; }
+  .termo-prova th:not(:first-child), .termo-prova td:not(:first-child) { text-align:right; font-variant-numeric:tabular-nums; }
+  .termo-prova tr.fuori td:last-child { font-weight:800; color:#8E1B12; }
 
 
   /* GD page */

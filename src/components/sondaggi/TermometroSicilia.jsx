@@ -39,7 +39,7 @@ export default function TermometroSicilia() {
       select('*').
       eq('ambito', 'sicilia').
       order('settimana', { ascending: false }).
-      limit(1);
+      limit(12);
       if (error) { console.error('[supabase] termometro_stime', error); return []; }
       return data || [];
     },
@@ -63,6 +63,8 @@ export default function TermometroSicilia() {
   }, [listeSito]);
 
   const stima = righe?.[0] || null;
+  // Le settimane pubblicate, dalla più vecchia alla più recente: servono per l'andamento.
+  const storia = (righe || []).filter((r) => r.stato === 'pubblicata').slice().reverse();
   const d = stima?.dati || {};
   const bozza = stima?.stato === 'bozza';
 
@@ -101,6 +103,34 @@ export default function TermometroSicilia() {
   const attenzione = d.attenzione || [];
   const attMax = Math.max(1, ...attenzione.map((a) => a.ora));
   const settimana = format(new Date(stima.settimana), 'd MMMM yyyy', { locale: it });
+  const giorno = (g, f = 'd MMMM yyyy') => format(new Date(g), f, { locale: it });
+
+  // Chi è avanti? Solo se la distanza supera il margine delle due coalizioni.
+  let verdetto = null;
+  if (principali.length === 2 && principali.every((c) => c.forbice != null)) {
+    const [a, b] = [...principali].sort((x, y) => y.valore - x.valore);
+    const distanza = Math.round((a.valore - b.valore) * 10) / 10;
+    const margine = Math.max(a.forbice, b.forbice);
+    verdetto = distanza <= margine ?
+    { testa: 'Testa a testa.', testo: `La distanza tra le due coalizioni (${num(distanza)} ${distanza === 1 ? 'punto' : 'punti'}) è più piccola del margine di errore (circa ${num(margine)}): oggi nessuno è davvero avanti.` } :
+    { testa: `${a.nome} avanti.`, testo: `Il vantaggio (${num(distanza)} punti) supera il margine di errore (circa ${num(margine)}).` };
+  }
+
+  // Andamento delle due coalizioni principali, settimana per settimana.
+  const andamento = principali.map((c) => ({
+    nome: c.nome, colore: c.colore,
+    punti: storia.map((r) => (r.dati?.coalizioni || []).find((x) => x.nome === c.nome)?.valore).filter((v) => v != null)
+  }));
+  const settimaneAndamento = Math.min(...andamento.map((a) => a.punti.length), storia.length);
+  const tuttiPunti = andamento.flatMap((a) => a.punti);
+  const yMin = Math.floor(Math.min(...tuttiPunti, 100) - 2), yMax = Math.ceil(Math.max(...tuttiPunti, 0) + 2);
+  const px = (i) => 14 + i * (272 / Math.max(1, settimaneAndamento - 1));
+  const py = (v) => 8 + (yMax - v) / Math.max(1, yMax - yMin) * 64;
+
+  const indecisi = d.indecisi || null;
+  const indecisiValori = (indecisi?.sondaggi || []).map((x) => x.indecisi).filter((v) => v != null);
+  const pagella = d.pagella;
+  const primaStima = storia[0]?.settimana || stima.settimana;
 
   return (
     <div className="termo">
@@ -132,6 +162,7 @@ export default function TermometroSicilia() {
                     <span className="termo-big-pct">{pct(c.valore)}</span>
                     <span className="termo-big-nome"><i style={{ background: c.colore }} />{c.nome}</span>
                     {c.nota && <span className="termo-big-nota">{c.nota}</span>}
+                    {c.min != null && c.max != null && <span className="termo-big-forbice">tra {num(c.min)} e {pct(c.max)}</span>}
                   </div>
               )}
               </div>}
@@ -141,6 +172,30 @@ export default function TermometroSicilia() {
             <div className="termo-legenda">
               {altre.map((c) => <div key={c.nome}><i style={{ background: c.colore }} /><span>{c.nome}</span><b>{pct(c.valore)}</b></div>)}
             </div>
+            {verdetto && <p className="termo-verdetto"><b>{verdetto.testa}</b> {verdetto.testo}</p>}
+            <div className="termo-andamento">
+              <b>Andamento</b>
+              {settimaneAndamento >= 2 ?
+              <>
+                  <svg viewBox="0 0 300 80" role="img" aria-label={andamento.map((a) => `${a.nome}: da ${pct(a.punti[0])} a ${pct(a.punti[a.punti.length - 1])}`).join('; ')}>
+                    {andamento.map((a) =>
+                  <g key={a.nome}>
+                        <polyline fill="none" stroke={a.colore} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" points={a.punti.map((v, i) => `${px(i)},${py(v)}`).join(' ')} />
+                        {a.punti.map((v, i) => <circle key={i} cx={px(i)} cy={py(v)} r="4" fill={a.colore} />)}
+                      </g>
+                  )}
+                  </svg>
+                  <div className="termo-andamento-piede"><span>{giorno(storia[storia.length - settimaneAndamento].settimana, 'd MMM')}</span><span>{giorno(stima.settimana, 'd MMM')}</span></div>
+                </> :
+              <span>È la prima stima: l'andamento settimana per settimana comparirà dal prossimo aggiornamento.</span>}
+            </div>
+          </div>
+
+          <div className="sondaggi-card">
+            <h2>La corsa per il presidente</h2>
+            <div className="card-meta">Chi vince davvero le Regionali</div>
+            <p className="termo-testo">{d.presidente?.testo || 'Le Regionali le vince il candidato presidente che prende più voti, non la lista più forte. E si può votare un candidato e, insieme, una lista di un\'altra coalizione: nel 2022 Schifani prese il 42,1% contro il 50% delle sue liste, De Luca il 24% contro il 18% delle sue.'}</p>
+            <div className="termo-fonti">{d.presidente?.stato || 'I candidati non sono ancora ufficiali. Quando lo saranno, qui comparirà una stima a parte per la presidenza. Intanto i sondaggi sui nomi sono nella scheda «Candidati Sicilia».'}</div>
           </div>
 
           {scenario &&
@@ -209,6 +264,27 @@ export default function TermometroSicilia() {
               </div>}
           </div>
 
+          {indecisi && (indecisiValori.length > 0 || indecisi.affluenza_precedente) &&
+          <div className="sondaggi-card">
+              <h2>Chi non ha ancora deciso</h2>
+              <div className="card-meta">Il motivo principale per cui tutto può cambiare</div>
+              {indecisiValori.length > 0 &&
+            <div className="termo-indecisi">
+                  <span className="termo-big-pct">{forbice(Math.min(...indecisiValori), Math.max(...indecisiValori))}</span>
+                  <span>degli intervistati non indica un partito, secondo i sondaggi usati. Le percentuali del Termometro sono calcolate solo su chi lo indica.</span>
+                </div>}
+              <div className="termo-legenda">
+                {(indecisi.sondaggi || []).map((x) =>
+              <div key={x.istituto + x.al}>
+                    <span>{x.istituto}, {giorno(x.al, 'MMMM yyyy')}</span>
+                    <b>{x.indecisi != null ? `${pct(x.indecisi)} indecisi` : `affluenza attesa ${String(x.affluenza).replace('-', '–')}`}</b>
+                  </div>
+              )}
+                {indecisi.affluenza_precedente &&
+              <div><span>{indecisi.affluenza_precedente.elezione}: ha votato</span><b>{pct(indecisi.affluenza_precedente.valore)}</b></div>}
+              </div>
+            </div>}
+
           {attenzione.length > 0 &&
           <div className="sondaggi-card">
               <h2>Di chi si parla</h2>
@@ -221,13 +297,36 @@ export default function TermometroSicilia() {
             )}
             </div>}
 
+          {Array.isArray(pagella) &&
+          <div className="sondaggi-card">
+              <h2>La pagella</h2>
+              <div className="card-meta">Quanto ci avevamo preso: la stima pubblicata prima, messa accanto ai sondaggi usciti dopo e al voto vero</div>
+              {pagella.length === 0 ?
+            <p className="termo-testo">Ancora nessuna prova. Dalla prima stima ({giorno(primaStima)}) non è uscito nessun sondaggio siciliano e non si è votato. Appena succede, il confronto compare qui: anche quando sbagliamo.</p> :
+            pagella.map((p) =>
+            <div className="termo-prova" key={p.titolo}>
+                  <span className="termo-evento-data">{p.tipo === 'voto' ? 'Voto vero' : 'Sondaggio'} · stima del {giorno(p.stima_del)}</span>
+                  <b>{p.titolo}{p.committente ? ` (committente ${p.committente})` : ''}</b>
+                  <span>Errore medio {num(p.errore_medio)} punti · {p.dentro} liste su {p.su} dentro la forbice</span>
+                  <table>
+                    <thead><tr><th>Lista</th><th>Stima</th><th>{p.tipo === 'voto' ? 'Voto' : 'Sondaggio'}</th></tr></thead>
+                    <tbody>
+                      {(p.righe || []).map((r) =>
+                  <tr key={r.lista} className={r.reale >= r.min && r.reale <= r.max ? '' : 'fuori'}><td>{r.lista}</td><td>{pct(r.stima)}</td><td>{pct(r.reale)}</td></tr>
+                  )}
+                    </tbody>
+                  </table>
+                </div>
+            )}
+            </div>}
+
           <div className="sondaggi-card">
             <h2>Come lo calcoliamo</h2>
             <div className="card-meta">Quattro passaggi, sempre gli stessi</div>
             <ol className="termo-passi">
-              <li><b>Partiamo dai sondaggi pubblicati.</b> Ne facciamo la media: pesano di più i recenti, quelli con più interviste e gli istituti che in passato hanno sbagliato meno; pesano meno quelli pagati da un partito e i dati isolati, lontani da tutti gli altri.</li>
+              <li><b>Partiamo dai sondaggi pubblicati.</b> Ne facciamo la media: pesano di più i recenti, quelli con più interviste e gli istituti che in passato hanno sbagliato meno; pesano meno quelli pagati da un partito e i dati isolati, lontani da tutti gli altri. Per i partiti nazionali teniamo conto anche di come si sono mossi nei sondaggi nazionali da allora.</li>
               <li><b>Teniamo conto del voto vero.</b> Il risultato delle ultime Regionali tira un po' la stima verso di sé: poco quando i sondaggi sono freschi, di più quando sono vecchi.</li>
-              <li><b>Leggiamo la settimana.</b> Eventi, tono delle notizie e attenzione spostano la stima di poco: al massimo 1,5 punti per volta.</li>
+              <li><b>Leggiamo la settimana.</b> Eventi, tono delle notizie e attenzione spostano la stima di poco: al massimo 1,5 punti per volta. E scadono: un evento pesa pieno per tre settimane, poi la metà ogni tre.</li>
               <li><b>Diamo una forbice.</b> Ogni percentuale esce con il suo margine: si allarga quando i sondaggi sono pochi, vecchi o in disaccordo tra loro, si stringe quando sono recenti e concordi.</li>
             </ol>
             {d.base?.testo &&
