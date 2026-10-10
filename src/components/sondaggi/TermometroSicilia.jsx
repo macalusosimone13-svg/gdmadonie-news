@@ -223,12 +223,15 @@ export default function TermometroSicilia() {
 
           <div className="sondaggi-card">
             <h2>Come lo calcoliamo</h2>
-            <div className="card-meta">Tre passaggi, sempre gli stessi</div>
+            <div className="card-meta">Quattro passaggi, sempre gli stessi</div>
             <ol className="termo-passi">
-              <li><b>Partiamo dai sondaggi pubblicati.</b> Ne facciamo la media: pesano di più i recenti e quelli con più interviste, meno quelli pagati da un partito.</li>
+              <li><b>Partiamo dai sondaggi pubblicati.</b> Ne facciamo la media: pesano di più i recenti, quelli con più interviste e gli istituti che in passato hanno sbagliato meno; pesano meno quelli pagati da un partito e i dati isolati, lontani da tutti gli altri.</li>
+              <li><b>Teniamo conto del voto vero.</b> Il risultato delle ultime Regionali tira un po' la stima verso di sé: poco quando i sondaggi sono freschi, di più quando sono vecchi.</li>
               <li><b>Leggiamo la settimana.</b> Eventi, tono delle notizie e attenzione spostano la stima di poco: al massimo 1,5 punti per volta.</li>
-              <li><b>Diamo una forbice.</b> Ogni percentuale esce con il suo margine, perché è un'ipotesi e non un conteggio.</li>
+              <li><b>Diamo una forbice.</b> Ogni percentuale esce con il suo margine: si allarga quando i sondaggi sono pochi, vecchi o in disaccordo tra loro, si stringe quando sono recenti e concordi.</li>
             </ol>
+            {d.base?.testo &&
+            <div className="termo-fonti" style={{ marginBottom: 10 }}><b>Quanto è solida la base.</b> {d.base.testo}</div>}
             {(d.sondaggi || []).length > 0 &&
             <div className="termo-fonti"><b>Sondaggi usati.</b> {d.sondaggi.join(' · ')}.</div>}
           </div>
