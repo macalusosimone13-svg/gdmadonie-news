@@ -139,6 +139,9 @@
 .dark .rd .termo-big-pct{ color:var(--txt-strong); }
 .dark .rd .sondaggi-card.termo-scenario{ background:linear-gradient(160deg,#1E3170,#14224F); }
 .dark .rd .termo-lista, .dark .rd .termo-minori{ border-top-color:var(--line); }
+.dark .rd .termo-andamento{ border-top-color:var(--line); }
+.dark .rd .termo-prova th, .dark .rd .termo-prova td{ border-top-color:var(--line); }
+.dark .rd .termo-prova tr.fuori td:last-child{ color:#FF9C92; }
 .dark .rd .termo-dot{ border-color:var(--card); box-shadow:0 0 0 1px rgba(255,255,255,.35); }
 .dark .rd .termo-band{ opacity:.45; }
 .dark .rd .termo-chips span{ background:rgba(255,255,255,.1); }
