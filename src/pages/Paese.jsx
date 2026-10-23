@@ -11,6 +11,7 @@ import { sized, fallbackTo } from '@/lib/imgSize';
 import Reveal from '@/components/Reveal';
 import CondividiRiga from '@/components/CondividiRiga';
 import { linkNotizia } from '@/lib/paesiLink';
+import { TIPI as TIPI_ARS, linkAtto } from '@/lib/ars';
 
 // Pagina di un paese delle Madonie (/paesi/:slug). Tutto il contenuto arriva
 // in automatico dalla funzione "aggrega-paesi": notizie del sito del Comune e
@@ -33,12 +34,13 @@ export default function Paese() {
       const { data: comune } = await supabase.from('comuni').select('slug, nome, sito_url, punto, punto_aggiornato_at').eq('slug', slug).eq('attivo', true).maybeSingle();
       if (!comune) return { comune: null };
       const like = `"%${comune.nome}%"`;
-      const [notizie, gd, altri] = await Promise.all([
+      const [notizie, gd, altri, ars] = await Promise.all([
         supabase.from('comuni_notizie').select('id, titolo, riassunto, tema, fonte_tipo, fonte_nome, link, image_url, published_date').eq('comune_slug', slug).eq('stato', 'pubblicata').order('published_date', { ascending: false }).limit(80),
         supabase.from('posts').select('id, slug, title, excerpt, image_url, published_date, created_at, category').in('category', GD_CATS).eq('status', 'published').or(`title.ilike.${like},content.ilike.${like}`).order('created_at', { ascending: false }).limit(6),
         supabase.from('comuni').select('slug, nome').eq('attivo', true).order('sort_order'),
+        supabase.rpc('ars_per_paese', { nome: comune.nome, limite: 5 }),
       ]);
-      return { comune, notizie: notizie.data || [], gd: gd.data || [], altri: (altri.data || []).filter((c) => c.slug !== slug) };
+      return { comune, notizie: notizie.data || [], gd: gd.data || [], altri: (altri.data || []).filter((c) => c.slug !== slug), ars: ars.data || null };
     },
   });
 
@@ -118,6 +120,17 @@ export default function Paese() {
                 <div className="side-title">Il punto su {nome}</div>
                 {puntoParas.map((p, i) => <p key={i} style={{ margin: '0 0 12px', lineHeight: 1.6, fontSize: 15 }}>{p}</p>)}
                 {comune?.punto_aggiornato_at && <div style={{ fontSize: 12, opacity: .55, marginTop: 6 }}>Sintesi automatica delle notizie qui accanto · aggiornata il {fmt(comune.punto_aggiornato_at)}</div>}
+              </div>}
+
+            {data?.ars?.atti?.length > 0 &&
+              <div className="side-box">
+                <div className="side-title">Dall'ARS su {nome}</div>
+                {data.ars.atti.map((a) =>
+                  <Link key={a.k} to={linkAtto(a.k)} style={{ display: 'block', padding: '10px 0', borderTop: '1px solid rgba(28,34,51,.08)' }}>
+                    <div className="meta-line">{TIPI_ARS[a.tipo]} n. {a.n} <span className="d">· {fmt(a.data)}{a.ha_risposta ? ' · il Governo ha risposto' : ''}</span></div>
+                    <div style={{ fontWeight: 800, lineHeight: 1.25, marginTop: 4 }}>{a.titolo}</div>
+                  </Link>)}
+                <Link to={`/ars/domande?luogo=${encodeURIComponent(nome)}&tipo=tutto`} style={{ display: 'inline-block', marginTop: 12, fontWeight: 800, fontSize: 13, textTransform: 'uppercase', color: 'var(--acc)' }}>Tutti gli atti dell'ARS su {nome} ({data.ars.totale}) →</Link>
               </div>}
 
             {data?.gd?.length > 0 &&

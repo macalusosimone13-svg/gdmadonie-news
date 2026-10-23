@@ -80,6 +80,15 @@ const Partecipa = lazyRetry(() => import('@/pages/Partecipa'));
 const Paesi = lazyRetry(() => import('@/pages/Paesi'));
 const Paese = lazyRetry(() => import('@/pages/Paese'));
 const PaeseNotizia = lazyRetry(() => import('@/pages/PaeseNotizia'));
+const ArsLayout = lazyRetry(() => import('@/pages/ars/ArsLayout'));
+const ArsPanoramica = lazyRetry(() => import('@/pages/ars/Panoramica'));
+const ArsLeggi = lazyRetry(() => import('@/pages/ars/Leggi'));
+const ArsLegge = lazyRetry(() => import('@/pages/ars/Legge'));
+const ArsDomande = lazyRetry(() => import('@/pages/ars/Domande'));
+const ArsAtto = lazyRetry(() => import('@/pages/ars/Atto'));
+const ArsAula = lazyRetry(() => import('@/pages/ars/Aula'));
+const ArsDeputati = lazyRetry(() => import('@/pages/ars/Deputati'));
+const ArsAvvisi = lazyRetry(() => import('@/pages/ars/Avvisi'));
 // Pagine di accesso: pochi visitatori le aprono rispetto a chi legge le
 // notizie, quindi anche queste si scaricano solo quando servono davvero
 // invece di appesantire il caricamento iniziale di tutto il sito.
@@ -139,6 +148,17 @@ const AuthenticatedApp = () => {
           <Route path="/paesi" element={<Paesi />} />
           <Route path="/paesi/:slug" element={<Paese />} />
           <Route path="/paesi/:slug/:notizia" element={<PaeseNotizia />} />
+          <Route path="/ars" element={<ArsLayout />}>
+            <Route index element={<ArsPanoramica />} />
+            <Route path="leggi" element={<ArsLeggi />} />
+            <Route path="legge/:id" element={<ArsLegge />} />
+            <Route path="domande" element={<ArsDomande />} />
+            <Route path="atto/:slug" element={<ArsAtto />} />
+            <Route path="aula" element={<ArsAula />} />
+            <Route path="deputati" element={<ArsDeputati />} />
+            <Route path="avvisi" element={<ArsAvvisi />} />
+            <Route path="*" element={<PageNotFound />} />
+          </Route>
           <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
         </Route>
         <Route path="/login" element={<Login />} />
