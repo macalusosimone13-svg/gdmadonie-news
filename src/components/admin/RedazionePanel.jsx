@@ -654,13 +654,14 @@ function ScriviTuTab() {
 // --- Tab "Rubriche IA": "Il punto della settimana" (Madonie, Sicilia, Italia)
 // e "Dove nasci conta", scritti dall'IA (function rubriche-ai) partendo dalle
 // notizie raccolte in automatico. Arrivano da soli come bozze il lunedì e il
-// venerdì alle 7; da qui si possono anche generare quando si vuole. Nessuna
+// venerdì alle 7 (anche "La settimana all'ARS", funzione ars-settimana); da qui si possono anche generare quando si vuole. Nessuna
 // bozza esce sul sito senza essere riletta e pubblicata da qui. ---
 const RUBRICHE = {
   punto_paesi: { label: 'Il punto · Madonie', body: { tipo: 'punto', ambito: 'paesi' } },
   punto_regionale: { label: 'Il punto · Sicilia', body: { tipo: 'punto', ambito: 'regionale' } },
   punto_nazionale: { label: 'Il punto · Italia', body: { tipo: 'punto', ambito: 'nazionale' } },
-  dove_nasci_conta: { label: 'Dove nasci conta', body: { tipo: 'dnc' } }
+  dove_nasci_conta: { label: 'Dove nasci conta', body: { tipo: 'dnc' } },
+  settimana_ars: { label: "La settimana all'ARS", body: {}, fn: 'ars-settimana' }
 };
 
 function RubricheTab({ onChange }) {
@@ -684,9 +685,10 @@ function RubricheTab({ onChange }) {
   const genera = async (key) => {
     setBusy(key); setMsg(null);
     try {
-      const { data, error } = await supabase.functions.invoke('rubriche-ai', { body: RUBRICHE[key].body });
+      const { data, error } = await supabase.functions.invoke(RUBRICHE[key].fn || 'rubriche-ai', { body: RUBRICHE[key].body });
       if (error) throw new Error(error.message || 'Generazione non riuscita');
       if (data?.error) throw new Error(data.error);
+      if (data?.saltato) throw new Error(data.saltato);
       setMsg({ ok: true, text: `Bozza pronta: «${data.post?.title}». La trovi qui sotto.` });
       load();
     } catch (e) {

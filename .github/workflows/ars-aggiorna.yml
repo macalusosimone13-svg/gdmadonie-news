@@ -1,0 +1,78 @@
+# Sezione ARS del sito: aggiornamento automatico dal sito dell'Assemblea
+# Regionale Siciliana, ogni 30 minuti. Legge solo le novita' (sedute,
+# ordini del giorno, resoconti, commissioni, deputati) e le manda al
+# database con la funzione ars-import, che poi spedisce gli "Avvisami".
+# Nessun segreto: ars-import riconosce questo workflow dal token OIDC di
+# GitHub. I documenti gia' letti restano nella cache di GitHub Actions;
+# se la cache manca si riparte dal ramo "ars-cache".
+name: ARS - aggiornamento automatico
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scripts/ars/**', '.github/workflows/ars-aggiorna.yml']
+
+permissions:
+  contents: read
+  id-token: write
+  actions: write
+
+concurrency:
+  group: ars-aggiorna
+  cancel-in-progress: false
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/ars
+          fetch-depth: 1
+
+      - name: Programma per leggere i PDF
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils > /dev/null
+
+      - name: Recupera i documenti gia' letti
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ars-cache
+          key: ars-cache-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ars-cache-v1-
+
+      - name: Cache di partenza (solo se manca)
+        if: steps.cache.outputs.cache-matched-key == ''
+        run: |
+          git fetch --depth 1 origin ars-cache
+          git show FETCH_HEAD:cache.tar.xz > /tmp/cache.tar.xz
+          mkdir -p ars-cache
+          tar -xJf /tmp/cache.tar.xz -C ars-cache
+          ls ars-cache | head
+
+      - name: Aggiorna dal sito dell'ARS
+        run: python3 -I scripts/ars/aggiorna.py --cache ars-cache
+
+      - name: Salva i documenti letti
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ars-cache
+          key: ars-cache-v1-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # GitHub spegne i workflow programmati dopo 60 giorni senza attivita'
+      # nel repository: una volta a settimana lo riattiviamo da soli.
+      - name: Tieni attivo l'aggiornamento
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(date -u +%u%H)" = "103" ] && [ "$(date -u +%M)" -lt 30 ]; then
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/ars-aggiorna.yml/enable" && echo "riattivato"
+          fi

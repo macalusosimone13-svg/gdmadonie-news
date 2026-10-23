@@ -5,7 +5,7 @@ import { paginaFissa } from './_lib/seo';
 // descrizione e indirizzo ufficiale giusti, invece di quelli della home.
 // Gli indirizzi che non esistono rispondono 404 (prima rispondevano 200).
 // File, immagini, JavaScript e le funzioni /functions/* passano senza modifiche.
-const DEDICATE = /^\/(paesi|articolo|post|evento|functions)(\/|$)/;
+const DEDICATE = /^\/(paesi|ars|articolo|post|evento|functions)(\/|$)/;
 
 export const onRequest: PagesFunction = async (context) => {
   const res = await context.next();
