@@ -211,17 +211,26 @@ def url_allegati(cache):
     return out
 
 
+def chiave_ddl(s):
+    """'1030/A Stralcio IV/A' o '(n. 1030/A stralcio IV/A)' -> ('1030', 'IV'); senza stralcio -> ('253', '')."""
+    m = re.search(r'(\d{2,5})\s*(?:/\s*[A-Z]+)?(?:[\s,-]*stralcio\s+([IVXL]+))?', s or '', re.I)
+    return (m.group(1), (m.group(2) or '').upper()) if m else None
+
+
 def testi_ddl(cache):
-    """Testi dei disegni di legge allegati ai resoconti: {(seduta, numero): testo}."""
+    """Testi dei disegni di legge allegati ai resoconti: {(seduta, chiave_ddl): testo}.
+    La chiave si legge dall'intestazione del testo stesso ("(n. 1030/A stralcio III/A)"),
+    cosi' ogni stralcio va solo alla sua legge."""
     out = {}
     for f in glob.glob(os.path.join(cache, 'ddl', '*.txt')):
         base = os.path.basename(f)[:-4]
         sn, _, etich = base.partition('_')
-        nums = re.findall(r'\d{2,5}', etich)
-        if not nums:
-            continue
         t = pulisci(open(f, encoding='utf-8', errors='ignore').read())
-        out[(int(sn), nums[0])] = t
+        m = re.search(r'\(\s*n\.\s*(\d{2,5}[^)]{0,40})\)', t[:3000], re.I)
+        k = chiave_ddl(m.group(1)) if m else chiave_ddl(etich.replace('-', ' '))
+        if not k:
+            continue
+        out[(int(sn), k)] = t
     return out
 
 
@@ -554,7 +563,8 @@ def costruisci(cache, deputati, conv):
         tutti = [x for x in dict.fromkeys(nums or [main]) if len(x) >= 2]
         comm = sorted({tuple(x) for n_ in tutti for x in iter_.get(n_, []) if not v['data'] or x[0] <= v['data']})
         pres = sorted(filter(None, [(items.get('D' + n_) or {}).get('dp') or (items.get('D' + n_) or {}).get('d') for n_ in tutti]))
-        testo = testi.get((v['seduta'], main)) or next((tx for (sn_, n_), tx in testi.items() if n_ == main), None)
+        kd = chiave_ddl(lab)
+        testo = testi.get((v['seduta'], kd)) or next((tx for (sn_, k_), tx in sorted(testi.items(), reverse=True) if k_ == kd), None)
         leggi.append(dict(id=lid, ddl=lab, num=main, titolo=t or None, data=v['data'], seduta=v['seduta'],
                           approvata=v['approvato'], favorevoli=v['favorevoli'], contrari=v['contrari'],
                           astenuti=v['astenuti'], presenti=v['presenti'], pagina=v['pagina'],

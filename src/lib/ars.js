@@ -48,7 +48,7 @@ export const cognomi = (nomi, max = 3) => {
   return s.slice(0, max).join(', ') + (s.length > max ? ` e altri ${s.length - max}` : '');
 };
 
-export const titoloLegge = (l) => l?.titolo_breve || l?.titolo || (l ? `Disegno di legge n. ${l.ddl}` : '');
+export const titoloLegge = (l) => String(l?.titolo_breve || l?.titolo || (l ? `Disegno di legge n. ${l.ddl}` : '')).replace(/\.\s*$/, '');
 
 // Glossario: si apre toccando la parola sottolineata.
 export const GLOSSARIO = {

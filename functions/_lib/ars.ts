@@ -20,7 +20,9 @@ const data = (d: string | null) => {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || '');
   return m ? `${+m[3]} ${MESI[+m[2] - 1]} ${m[1]}` : '';
 };
-const titoloLegge = (l: any) => l?.titolo_breve || l?.titolo || `Disegno di legge n. ${l?.ddl}`;
+const titoloLegge = (l: any) => String(l?.titolo_breve || l?.titolo || `Disegno di legge n. ${l?.ddl}`).replace(/\.\s*$/, '');
+// "il 22 ottobre", ma "l'8 luglio" e "l'11 marzo"
+const ilData = (d: string | null) => { const t = data(d); return /^(8|11) /.test(t) ? `l'${t}` : `il ${t}`; };
 const commissione = (c: string) => (/^commission/i.test(String(c || '').trim()) ? c : `Commissione ${c}`);
 const enc = encodeURIComponent;
 const MADONIE = ['Madonie', 'Alimena', 'Aliminusa', 'Blufi', 'Bompietro', 'Caccamo', 'Caltavuturo', 'Castelbuono', 'Castellana Sicula', 'Cefalù', 'Collesano', 'Gangi', 'Geraci Siculo', 'Gratteri', 'Isnello', 'Montemaggiore Belsito', 'Petralia Soprana', 'Petralia Sottana', 'Polizzi Generosa', 'Pollina', 'San Mauro Castelverde', 'Scillato', 'Sclafani Bagni'];
@@ -30,7 +32,7 @@ const NOTA = `<p><small>Dati presi dai documenti ufficiali pubblicati dall'Assem
 const testa = (k: string) => `<span class="k">${esc(k)}</span>`;
 
 const rigaAtto = (a: any) => `<li><a href="${linkAtto(a.k)}">${esc(TIPI[a.tipo] || 'Atto')} n. ${a.n}</a> — ${esc(taglia(a.titolo, 180))}${a.data ? ` <small>(${esc(data(a.data))})</small>` : ''}</li>`;
-const rigaLegge = (l: any) => `<li><a href="${linkLegge(l.id)}">${esc(titoloLegge(l))}</a> — ${l.approvata ? 'approvata' : 'respinta'} il ${esc(data(l.data))}${l.favorevoli != null ? ` (${l.favorevoli} sì, ${l.contrari ?? 0} no)` : ''}</li>`;
+const rigaLegge = (l: any) => `<li><a href="${linkLegge(l.id)}">${esc(titoloLegge(l))}</a> — ${l.approvata ? 'approvata' : 'respinta'} ${esc(ilData(l.data))}${l.favorevoli != null ? ` (${l.favorevoli} sì, ${l.contrari ?? 0} no)` : ''}</li>`;
 
 const BREAD = (voci: [string, string][]) => ({
   '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -85,9 +87,9 @@ async function legge(res: Response, slug: string) {
   const breve: string[] = Array.isArray(l.extra?.breve) ? l.extra.breve : [];
   const tit = titoloLegge(l);
   const voto = l.favorevoli != null ? `${l.favorevoli} favorevoli, ${l.contrari ?? 0} contrari, ${l.astenuti ?? 0} astenuti` : '';
-  const description = taglia(breve.join(' ') || `${l.approvata ? 'Approvata' : 'Respinta'} dall'ARS il ${data(l.data)}: ${l.titolo || tit}.${voto ? ' ' + voto + '.' : ''}`);
+  const description = taglia(breve.join(' ') || `${l.approvata ? 'Approvata' : 'Respinta'} dall'ARS ${ilData(l.data)}: ${String(l.titolo || tit).replace(/\.\s*$/, '')}.${voto ? ' ' + voto + '.' : ''}`);
   const body = testa(`ARS · Disegno di legge n. ${l.ddl}`) + `<h1>${esc(tit)}</h1>` +
-    `<div class="m">${l.approvata ? 'Approvata' : 'Respinta'} il ${esc(data(l.data))}${voto ? ' · ' + esc(voto) : ''}</div>` +
+    `<div class="m">${l.approvata ? 'Approvata' : 'Respinta'} ${esc(ilData(l.data))}${voto ? ' · ' + esc(voto) : ''}</div>` +
     (l.titolo && l.titolo !== tit ? `<p><em>${esc(l.titolo)}</em></p>` : '') +
     breve.map((t) => `<p>${esc(t)}</p>`).join('') +
     (l.commissione ? `<p>Esaminata da: ${esc(commissione(l.commissione))}</p>` : '') +
@@ -161,7 +163,7 @@ async function aula(res: Response) {
   const description = "Le sedute dell'Aula dell'Assemblea Regionale Siciliana e le riunioni delle commissioni: cosa si discute, cosa si è votato, con i resoconti ufficiali.";
   const body = testa('ARS · Aula e commissioni') + `<h1>Aula e commissioni</h1><p>${esc(description)}</p>` + NAV +
     ((conv || []).length ? `<h2>Prossime riunioni delle commissioni</h2><ul>${conv.map((c: any) => `<li>${esc(data(c.data))} — ${esc(commissione(c.commissione))}${c.odg ? ': ' + esc(taglia(c.odg, 200)) : ''}</li>`).join('')}</ul>` : '') +
-    `<h2>Le ultime sedute dell'Aula</h2><ul>${sedute.map((s: any) => `<li>Seduta n. ${s.n} del ${esc(data(s.data))}${(s.odg || []).length ? ': ' + esc(taglia(s.odg.join(' · '), 220)) : ''}</li>`).join('')}</ul>` + NOTA;
+    `<h2>Le ultime sedute dell'Aula</h2><ul>${sedute.map((s: any) => `<li>Seduta n. ${s.n} — ${esc(data(s.data))}${(s.odg || []).length ? ': ' + esc(taglia(s.odg.join(' · '), 220)) : ''}</li>`).join('')}</ul>` + NOTA;
   return riscrivi(res, { title: "Sedute dell'ARS e commissioni — GD Madonie News", description, url: `${SITE}/ars/aula`, image: OG, body, jsonLd: BREAD([['ARS', '/ars'], ['Aula e commissioni', '/ars/aula']]) });
 }
 
