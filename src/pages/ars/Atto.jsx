@@ -76,7 +76,7 @@ export default function Atto() {
   const url = `${SITE}${linkAtto(a.k)}`;
   const orale = a.orale && ['svolta', 'parzialmente svolta'].includes(a.orale.stato) ? a.orale : null;
   const sedDoc = extra?.sedute || {};
-  const linkRisp = a.risposta ? conPagina(a.risposta.src === 'r' ? sedDoc[a.risposta.s]?.res_url : sedDoc[a.risposta.s]?.odg_url, a.risposta.p) : null;
+  const linkRisp = a.risposta ? conPagina(a.risposta.u || (a.risposta.src === 'r' ? sedDoc[a.risposta.s]?.res_url : sedDoc[a.risposta.s]?.odg_url), a.risposta.p) : null;
   const linkOrale = orale ? conPagina(sedDoc[orale.seduta]?.res_url, orale.pagina) : null;
   const linkDoc = conPagina(a.url_doc, a.pagina);
   const comuni = (a.luoghi || []).filter((l) => l !== 'Madonie');
@@ -159,7 +159,7 @@ export default function Atto() {
         {linkDoc && <a href={linkDoc} target="_blank" rel="noopener noreferrer" className="btn ghost small">Documento ufficiale dell'ARS{a.pagina ? ` (pagina ${a.pagina})` : ''} ↗</a>}
 
         <CondividiRiga url={url} title={a.titolo} testoWa={`🏛️ *${a.titolo}*\n${TIPI[a.tipo]} n. ${a.n} all'ARS${a.ha_risposta ? ' · il Governo ha risposto' : ''}.\n\n${url}`} />
-        <div className="sources">Fonte: Assemblea Regionale Siciliana, {a.fonte === 'r' ? 'resoconto' : 'ordine del giorno'} della seduta n. {a.seduta}. <Segnala pagina={linkAtto(a.k)} /></div>
+        <div className="sources">Fonte: Assemblea Regionale Siciliana, {a.fonte === 'r' ? 'resoconto' : a.fonte === 'a' ? 'allegato al resoconto' : 'ordine del giorno'} della seduta n. {a.seduta}. <Segnala pagina={linkAtto(a.k)} /></div>
       </article>
 
       {extra?.vicini?.length > 0 &&

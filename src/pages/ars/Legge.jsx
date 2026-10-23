@@ -19,11 +19,11 @@ export default function Legge() {
     queryKey: ['ars-legge', id],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { data: l } = await supabase.from('ars_leggi').select('*').ilike('id', String(id || '')).maybeSingle();
+      const { data: l } = await supabase.from('ars_leggi').select('id, ddl, num, titolo, titolo_breve, data, seduta, approvata, favorevoli, contrari, astenuti, presenti, pagina, commissione, gurs, extra, manuale, unita_a, percorso').ilike('id', String(id || '')).maybeSingle();
       if (!l) return { l: null };
       const nums = [...new Set([l.num, ...(String(l.ddl).match(/\d{2,5}/g) || [])].filter(Boolean).map(Number))];
       const [m, d, s] = await Promise.all([
-        supabase.from('ars_misure').select('*').eq('legge_id', l.id).order('ordine'),
+        supabase.from('ars_misure').select('id, ordine, articolo, tema, titolo, sintesi, mln, origine, locale, per, req_stato, req_testo, dettagli').eq('legge_id', l.id).eq('nascosta', false).order('ordine'),
         nums.length ? supabase.from('ars_atti').select('k, n, titolo, data, data_presentazione, iniziativa, commissione, iter, seduta').eq('tipo', 'D').in('n', nums) : Promise.resolve({ data: [] }),
         l.seduta ? supabase.from('ars_sedute').select('n, data, res_url, odg_url').eq('n', l.seduta).maybeSingle() : Promise.resolve({ data: null }),
       ]);
@@ -54,10 +54,13 @@ export default function Legge() {
   let percorso = ex.timeline;
   if (!percorso) {
     percorso = [];
-    const pres = data.ddl.map((d) => d.data_presentazione || d.data).filter(Boolean).sort()[0];
+    const pres = [l.percorso?.presentato, ...data.ddl.map((d) => d.data_presentazione || d.data)].filter(Boolean).sort()[0];
     if (pres) percorso.push({ quando: fmtData(pres), cosa: 'Il disegno di legge viene presentato all\'Assemblea.' });
+    const viste = new Set();
     const comm = [];
-    for (const d of data.ddl) for (const [dd, c] of (d.iter?.commissione || [])) if (!l.data || dd <= l.data) comm.push([dd, c]);
+    for (const [dd, c] of [...(l.percorso?.commissione || []), ...data.ddl.flatMap((d) => d.iter?.commissione || [])]) {
+      if ((!l.data || dd <= l.data) && !viste.has(dd + c)) { viste.add(dd + c); comm.push([dd, c]); }
+    }
     comm.sort((a, b) => a[0].localeCompare(b[0]));
     if (comm.length) {
       const nomi = [...new Set(comm.map((x) => x[1]))];
@@ -86,7 +89,8 @@ export default function Legge() {
             <section className="panel"><h2>Le cifre principali</h2>
               <ul className="bullets">{ex.approvate.map(([t, v]) => <li key={t}><span><b>{v}</b> · {t}</span></li>)}</ul></section>}
           {data.misure.length > 0 && <Misure misure={data.misure} />}
-          {data.misure.length === 0 &&
+          {ex.scheda?.ia && <p className="sources">Spiegazione preparata con l'intelligenza artificiale dal testo del disegno di legge arrivato in Aula, riletta dalla redazione prima della pubblicazione. Il testo approvato può essere stato modificato in Aula con gli emendamenti: fa fede la legge pubblicata sulla Gazzetta ufficiale.</p>}
+          {data.misure.length === 0 && !ex.breve?.length &&
             <section className="panel tint">
               <h2>Cosa contiene</h2>
               <p>{l.titolo || titolo}</p>

@@ -323,12 +323,27 @@ def allegati_scheda(t):
     """Allegati del resoconto: Allegato A (comunicazioni: ddl presentati, interrogazioni...) e testi dei ddl votati."""
     out = []
     for m in re.finditer(r'href="([^"]*/bd/resoconti/file/[^"]+attachid=[^"]+)"[^>]*>(.*?)</a>', t, re.S):
-        lab = re.sub(r'<[^>]+>|\s+', ' ', m.group(2)).strip()
+        lab = html.unescape(re.sub(r'<[^>]+>|\s+', ' ', m.group(2)).strip())
         u = html.unescape(m.group(1))
+        try:  # nomi dei file con lettere accentate scritte male (es. "martedÃ¬")
+            u = u.encode('latin-1').decode('utf-8')
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
         if u.startswith('/'):
             u = DATI + u
-        out.append({'l': lab, 'u': u.replace(' ', '%20')})
+        out.append({'l': lab, 'u': urllib.parse.quote(u, safe=':/?&=%#')})
     return out
+
+
+def tipo_allegato(lab):
+    """'atti' = comunicazioni con interrogazioni, ddl presentati, risposte; 'ddl' = testo di un disegno di legge."""
+    if re.search(r'(?i)verbale|emendament|fascicolo|odg|ordine del giorno|pregiudiz|nota pec|questione', lab):
+        return None
+    if re.search(r'(?i)allegato\s*["“]?a\b|interrogazion|interpellanz|mozion|risposte scritte|comunicazion', lab):
+        return 'atti'
+    if re.search(r'(?i)^(?:ddl|d\.d\.l\.|disegn[oi] di legge)', lab):
+        return 'ddl'
+    return None
 
 
 def scarica_allegati(cache, stato, oggi, budget_schede=15, budget_file=12):
@@ -356,13 +371,14 @@ def scarica_allegati(cache, stato, oggi, budget_schede=15, budget_file=12):
             break
         info = st_res[n]
         visti = info.setdefault('allegati_letti', {})
-        for a in info.get('allegati', []):
+        for j, a in enumerate(info.get('allegati', [])):
             if budget_file <= 0:
                 break
             lab = a['l']
-            if re.match(r'(?i)allegato a\b', lab):
-                dest = os.path.join(cache, 'all', n + '.txt')
-            elif re.match(r'(?i)disegn[oi] di legge', lab):
+            tipo = tipo_allegato(lab)
+            if tipo == 'atti':
+                dest = os.path.join(cache, 'all', f'{n}_{j}.txt')
+            elif tipo == 'ddl':
                 rp = os.path.join(cache, 'res', n + '.txt')
                 try:
                     votato = 'otazione finale' in open(rp, encoding='utf-8', errors='ignore').read()
@@ -370,7 +386,7 @@ def scarica_allegati(cache, stato, oggi, budget_schede=15, budget_file=12):
                     votato = False
                 if not votato:
                     continue
-                num = re.sub(r'[^0-9a-z]+', '-', lab.lower().split('legge')[-1]).strip('-')[:40]
+                num = re.sub(r'[^0-9a-z]+', '-', re.split(r'(?i)legge|ddl', lab)[-1].lower()).strip('-')[:40]
                 dest = os.path.join(cache, 'ddl', f'{n}_{num}.txt')
             else:
                 continue

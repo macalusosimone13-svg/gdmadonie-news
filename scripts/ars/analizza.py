@@ -204,8 +204,9 @@ def url_allegati(cache):
     except Exception:
         return out
     for n, info in (st.get('res') or {}).items():
-        for a in info.get('allegati', []):
-            if re.match(r'(?i)allegato a\b', a.get('l', '')):
+        for j, a in enumerate(info.get('allegati', [])):
+            out[f'{n}_{j}'] = a['u']
+            if re.match(r'(?i)allegato\s*["“]?a\b', a.get('l', '')) and n not in out:
                 out[n] = a['u']
     return out
 
@@ -230,7 +231,7 @@ def data_da_url_odg(u):
 
 
 def numero_file(p):
-    return int(os.path.basename(p)[:-4])
+    return int(re.match(r'\d+', os.path.basename(p)).group(0))
 
 
 def atti_da_documenti(cache, nomi):
@@ -243,8 +244,9 @@ def atti_da_documenti(cache, nomi):
             [(f, 'a') for f in sorted(glob.glob(os.path.join(cache, 'all', '*.txt')), key=numero_file)] + \
             [(f, 'r') for f in sorted(glob.glob(os.path.join(cache, 'res', '*.txt')), key=numero_file)]
     for f, SRC in files:
-        sn = os.path.basename(f)[:-4]
-        u = urls.get(sn) if SRC == 'o' else allurl.get(sn) if SRC == 'a' else resurl.get(sn)
+        chiave_file = os.path.basename(f)[:-4]
+        sn = str(numero_file(f))
+        u = urls.get(sn) if SRC == 'o' else allurl.get(chiave_file) if SRC == 'a' else resurl.get(sn)
         if not u:
             continue
         d = (data_da_url_odg(u) or sdate.get(sn)) if SRC == 'o' else sdate.get(sn)
@@ -275,7 +277,7 @@ def atti_da_documenti(cache, nomi):
                     title = pulisci(m.group(1)).rstrip('. ')
                     items[k] = dict(k=k, tipo='D', n=int(m.group(2)), t=title, d=d,
                                     f=('Iniziativa ' + ini.group(1).strip()) if ini else '', a=comm or '', s=int(sn),
-                                    c=luoghi(title, title), p=page_at(st + seg.find(blk[:40])), src=SRC)
+                                    c=luoghi(title, title), p=page_at(st + seg.find(blk[:40])), src=SRC, u=u)
         # interrogazioni, interpellanze, mozioni
         lines = t.split('\n')
         offs, acc = [], 0
@@ -339,7 +341,7 @@ def atti_da_documenti(cache, nomi):
                 names = nm2
             items[k] = dict(k=k, tipo=tp, n=int(num), t=pulisci(title).rstrip('.'), d=d, dp=dp, f=names,
                             a=[x for x in dest if not re.match(r'^-?\d', x)], s=int(sn), c=luoghi(body, title),
-                            p=page_at(offs[i]), src=SRC)
+                            p=page_at(offs[i]), src=SRC, u=u)
             texts[k] = {'txt': pulisci(body)[:9000]}
         # risposte scritte del Governo
         for m in re.finditer(r'(?:Oggetto:\s*Interrogazione(?:\s+parlamentare)?\s*(?:n|si|N|nr)\s*\.?\s*(\d{3,5}))|(?:Con riferimento all.interrogazione\s*n\.?\s*(\d{3,5}))', t, re.I):
@@ -368,7 +370,7 @@ def atti_da_documenti(cache, nomi):
                 if re.search(r'\[|@|PROT|MITTENTE|DESTINATAR|Data:|ore \d\d[:.]\d\d|\d{5,}', ttl, re.I) or len(ttl) < 12:
                     ttl = 'Interrogazione n. ' + num
                 items[k] = dict(k=k, tipo='I', n=int(num), t=ttl, d=d, f=names, a=[], s=int(sn), dr=True,
-                                c=luoghi(ttl + ' ' + ans[:3000], ttl), p=page_at(m.start()), src=SRC)
+                                c=luoghi(ttl + ' ' + ans[:3000], ttl), p=page_at(m.start()), src=SRC, u=u)
     # numeri impossibili letti male nelle risposte (es. numeri di protocollo): fuori
     max_i = max([it['n'] for it in items.values() if it['tipo'] == 'I' and not it.get('dr')] or [0])
     for k in [k for k, it in items.items() if it.get('dr') and it['n'] > max_i + 40]:
@@ -468,7 +470,8 @@ def resoconti(cache):
             parla = re.search(r'per rispondere|per fornire la risposta|ha facoltà di parlare l.assessore|assessore per [a-z]', inizio, re.I)
             if re.search(r'parzialmente svolta', seg, re.I):
                 st = 'parzialmente svolta'
-            elif re.search(r'trasform\w*\s+(?:\w+\s+){0,3}in\s+interrogazion\w*\s+(?:con\s+richiesta\s+di|a)\s+risposta\s+scritta', inizio, re.I) and not parla:
+            elif (re.search(r'trasform\w*\s+(?:\w+\s+){0,3}in\s+interrogazion\w*\s+(?:con\s+richiesta\s+di|a)\s+risposta\s+scritta', inizio, re.I)
+                  or re.search(r'si\s+(?:considera|intende)\s+presentat\w\s+con\s+richiesta\s+di\s+risposta\s+scritta|per\s+assenza\s+dall.\s*Aula\s+del(?:la|le|i)?\s+firmatar', inizio, re.I)) and not parla:
                 st = 'trasformata'
             elif re.search(r'(è|viene) rinviata|differire la risposta|rinviamo', seg, re.I) and not re.search(r'per rispondere', seg[:600]):
                 st = 'rinviata'
@@ -577,6 +580,8 @@ def costruisci(cache, deputati, conv):
     allurl = url_allegati(cache)
 
     def url_doc(it):
+        if it.get('u'):
+            return it['u']
         if it['src'] == 'r':
             return resurl.get(str(it['s']))
         if it['src'] == 'a':

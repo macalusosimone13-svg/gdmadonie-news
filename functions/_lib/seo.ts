@@ -22,8 +22,8 @@ const TITOLO_SITO = 'GD Madonie News — Giovani Democratici Madonie';
 const DESC_SITO = "L'app ufficiale dei Giovani Democratici Madonie: notizie di politica locale e nazionale, comunicati, proposte, eventi e rassegna stampa.";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const esc = (s: unknown) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const taglia = (s: unknown, n = 158) => {
+export const esc = (s: unknown) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+export const taglia = (s: unknown, n = 158) => {
   const t = String(s ?? '').replace(/[#>*_`]/g, '').replace(/\s+/g, ' ').trim();
   return t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : t;
 };
@@ -79,7 +79,7 @@ const dataIt = (d: string | null, conOra = false) => {
   } catch { return ''; }
 };
 
-async function sb(path: string) {
+export async function sb(path: string) {
   try {
     const r = await fetch(`${SB}/rest/v1/${path}`, { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` }, cf: { cacheTtl: 120, cacheEverything: true } as any });
     return r.ok ? await r.json() : null;
@@ -95,7 +95,7 @@ type Opzioni = {
 };
 
 // Scrive titolo, meta e (se c'e') il contenuto dentro la index.html.
-function riscrivi(res: Response, o: Opzioni): Response {
+export function riscrivi(res: Response, o: Opzioni): Response {
   const img = o.image || null;
   const noindex = o.noindex || (o.status || 200) >= 400;
   let rw = new HTMLRewriter()
@@ -127,12 +127,12 @@ function riscrivi(res: Response, o: Opzioni): Response {
   return rw.transform(new Response(res.body, { status: o.status || 200, headers }));
 }
 
-const nonTrovata = (res: Response, url: string, cosa = 'Pagina') => { const nt = cosa === 'Evento' ? 'non trovato' : 'non trovata'; return riscrivi(res, {
+export const nonTrovata = (res: Response, url: string, cosa = 'Pagina') => { const nt = cosa === 'Evento' ? 'non trovato' : 'non trovata'; return riscrivi(res, {
   title: `${cosa} ${nt} — GD Madonie News`, description: `${cosa} ${nt}.`, url, status: 404,
   body: `<span class="k">GD Madonie News</span><h1>${esc(cosa)} ${nt}</h1><p>L'indirizzo non esiste o è stato rimosso.</p><p><a href="/">Torna al Feed</a> · <a href="/gd-madonie">News GD</a> · <a href="/paesi">Paesi</a></p>`,
 }); };
 
-const isHtml = (res: Response) => (res.headers.get('content-type') || '').includes('text/html');
+export const isHtml = (res: Response) => (res.headers.get('content-type') || '').includes('text/html');
 
 // ---------- Articoli: /articolo/<slug o codice> e il vecchio /post/<codice> ----------
 export async function paginaArticolo(context: any, chiave: string): Promise<Response> {
