@@ -167,7 +167,7 @@ export default function GDMadonie() {
   loadingNow ? <Loading /> :
   items.length === 0 ? <Empty /> :
   <>
-      <Lead post={items[0]} wide label={label} siteContent={content} />
+      <Lead post={items[0]} wide label={false} siteContent={content} />
       {items.length > 1 && <div className="news-main-grid gd-grid">{items.slice(1).map((p) => <Card key={p.id} post={p} />)}</div>}
       <div ref={sentinel} aria-hidden="true" />
       {more && <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><div className="w-7 h-7 border-4 border-slate-200 border-t-primary rounded-full animate-spin" /></div>}

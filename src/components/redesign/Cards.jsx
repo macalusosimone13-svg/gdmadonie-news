@@ -35,13 +35,14 @@ export function Card({ post, siteContent }) {
     </Link>);
 }
 
+// label={false}: niente etichetta blu sopra il titolo (pagina GD Madonie)
 export function Lead({ post, siteContent, wide, label }) {
   const img = postImg(post);
   const cat = CATEGORIES[post.category];
   return (
     <Link to={postLink(post)} className={`lead${img ? '' : ' noimg'}${wide ? ' wide' : ''}`}>
       <div className="lead-text">
-        <div className="chip-row"><span className="chip-blu">{label || getCategoryLabel(siteContent, post.category) || cat?.label}</span></div>
+        {label !== false && <div className="chip-row"><span className="chip-blu">{label || getCategoryLabel(siteContent, post.category) || cat?.label}</span></div>}
         <h3>{post.title}</h3>
         <div className="meta-line">{metaSource(post, siteContent)} <span className="d">· {fmtDate(post.published_date)}</span></div>
         {post.excerpt && <p>{post.excerpt}</p>}
