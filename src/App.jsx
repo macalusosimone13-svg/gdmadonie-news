@@ -88,6 +88,7 @@ const ArsDomande = lazyRetry(() => import('@/pages/ars/Domande'));
 const ArsAtto = lazyRetry(() => import('@/pages/ars/Atto'));
 const ArsAula = lazyRetry(() => import('@/pages/ars/Aula'));
 const ArsDeputati = lazyRetry(() => import('@/pages/ars/Deputati'));
+const ArsDeputato = lazyRetry(() => import('@/pages/ars/Deputato'));
 const ArsAvvisi = lazyRetry(() => import('@/pages/ars/Avvisi'));
 // Pagine di accesso: pochi visitatori le aprono rispetto a chi legge le
 // notizie, quindi anche queste si scaricano solo quando servono davvero
@@ -156,6 +157,7 @@ const AuthenticatedApp = () => {
             <Route path="atto/:slug" element={<ArsAtto />} />
             <Route path="aula" element={<ArsAula />} />
             <Route path="deputati" element={<ArsDeputati />} />
+            <Route path="deputato/:slug" element={<ArsDeputato />} />
             <Route path="avvisi" element={<ArsAvvisi />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>

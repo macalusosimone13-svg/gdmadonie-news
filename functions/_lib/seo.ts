@@ -127,7 +127,7 @@ export function riscrivi(res: Response, o: Opzioni): Response {
   return rw.transform(new Response(res.body, { status: o.status || 200, headers }));
 }
 
-export const nonTrovata = (res: Response, url: string, cosa = 'Pagina') => { const nt = cosa === 'Evento' ? 'non trovato' : 'non trovata'; return riscrivi(res, {
+export const nonTrovata = (res: Response, url: string, cosa = 'Pagina') => { const nt = ['Evento', 'Deputato'].includes(cosa) ? 'non trovato' : 'non trovata'; return riscrivi(res, {
   title: `${cosa} ${nt} — GD Madonie News`, description: `${cosa} ${nt}.`, url, status: 404,
   body: `<span class="k">GD Madonie News</span><h1>${esc(cosa)} ${nt}</h1><p>L'indirizzo non esiste o è stato rimosso.</p><p><a href="/">Torna al Feed</a> · <a href="/gd-madonie">News GD</a> · <a href="/paesi">Paesi</a></p>`,
 }); };

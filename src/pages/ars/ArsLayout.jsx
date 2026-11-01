@@ -57,7 +57,7 @@ export default function ArsLayout() {
           {principale && <p className="ars-lead">Le leggi della Regione, i voti in Aula e le domande dei deputati al Governo, spiegati in parole semplici. Chiedi quello che vuoi: l'intelligenza artificiale cerca in tutti gli atti dal 2022 a oggi.</p>}
           <CasellaChiedi onChiedi={chiedi} iniziale={domanda} />
           <RigaScorrevole as="nav" className="ars-tabs" aria-label="Sezione ARS" etichettaFreccia="Mostra le altre sezioni dell'ARS" chiave={loc.pathname}>
-            {TABS.map(([to, lab, end]) => <NavLink key={to} to={to} end={!!end} className={({ isActive }) => (isActive ? 'on' : '')}>{lab}</NavLink>)}
+            {TABS.map(([to, lab, end]) => <NavLink key={to} to={to} end={!!end} className={({ isActive }) => (isActive || (to === '/ars/deputati' && loc.pathname.startsWith('/ars/deputato/')) ? 'on' : '')}>{lab}</NavLink>)}
           </RigaScorrevole>
         </div>
       </section>
