@@ -109,12 +109,14 @@ export default function Layout() {
       {ux.show_banner && ux.banner_text && <div className="banner">{ux.banner_text}</div>}
       <header className="site" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="header-inner">
+          <div className="header-left">
           {location.pathname !== '/' && <Link to={location.pathname.startsWith('/evento') ? '/gd-madonie' : location.pathname.startsWith('/ars/') ? '/ars' : location.pathname.startsWith('/paesi/') ? (location.pathname.match(/^\/paesi\/[^/]+(?=\/.)/)?.[0] || '/paesi') : (/^\/(post|articolo)\//.test(location.pathname) && backTarget) || '/'} className={`back-feed ${/^\/(post|articolo|evento|paesi)\//.test(location.pathname) ? 'always' : ''}`} aria-label={location.pathname.startsWith('/paesi/') ? (/^\/paesi\/[^/]+\/./.test(location.pathname) ? 'Torna alle notizie del paese' : 'Torna a tutti i paesi') : /^\/(post|articolo|evento)\//.test(location.pathname) ? 'Torna alla sezione' : 'Torna al Feed'}><ArrowLeft size={20} /></Link>}
           <Link to="/" className="logo" aria-label="GD Madonie News - Feed">
             {(location.pathname.startsWith('/rassegna-stampa') || location.pathname.startsWith('/articolo') || (location.pathname.startsWith('/post/') && backTarget && backTarget !== '/gd-madonie'))
               ? <div className="logo-text logo-news-only"><b>NEWS</b></div>
               : <div className="logo-text">GD MADONIE<span>NEWS</span></div>}
           </Link>
+          </div>
           <nav className="main-nav" aria-label="Navigazione principale">
             <NavLink to="/" end className={linkCls}>Feed</NavLink>
             <div className="nav-dropdown" ref={gdRef}>
