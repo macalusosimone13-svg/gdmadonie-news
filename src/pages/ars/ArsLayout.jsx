@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { CasellaChiedi, Risposta } from '@/components/ars/Chiedi';
+import RigaScorrevole from '@/components/ars/RigaScorrevole';
 import '@/ars.css';
 
 // Contenitore di tutte le pagine /ars: fascia blu con la ricerca IA e le
@@ -55,9 +56,9 @@ export default function ArsLayout() {
           {principale ? <h1>Cosa decide<br /><em>l'ARS</em></h1> : <div className="eyebrow" style={{ color: 'var(--a-on-navy-muted)' }}>Assemblea Regionale Siciliana</div>}
           {principale && <p className="ars-lead">Le leggi della Regione, i voti in Aula e le domande dei deputati al Governo, spiegati in parole semplici. Chiedi quello che vuoi: l'intelligenza artificiale cerca in tutti gli atti dal 2022 a oggi.</p>}
           <CasellaChiedi onChiedi={chiedi} iniziale={domanda} />
-          <nav className="ars-tabs" aria-label="Sezione ARS">
+          <RigaScorrevole as="nav" className="ars-tabs" aria-label="Sezione ARS" etichettaFreccia="Mostra le altre sezioni dell'ARS" chiave={loc.pathname}>
             {TABS.map(([to, lab, end]) => <NavLink key={to} to={to} end={!!end} className={({ isActive }) => (isActive ? 'on' : '')}>{lab}</NavLink>)}
-          </nav>
+          </RigaScorrevole>
         </div>
       </section>
       <main className="wrap-a ars-main">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { fmtData } from '@/lib/ars';
 import { linkNotizia } from '@/lib/paesiLink';
+import RigaScorrevole from '@/components/ars/RigaScorrevole';
 
 const collegamento = (f) => (f.fonte === 'paese' && f.id.includes('/') ? linkNotizia(f.id.split('/')[0], { id: f.id.split('/')[1], titolo: f.titolo }) : f.link);
 
@@ -28,9 +29,9 @@ export function CasellaChiedi({ onChiedi, iniziale = '' }) {
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Chiedi qualsiasi cosa sull'ARS…" aria-label="Chiedi qualsiasi cosa sull'ARS" autoComplete="off" enterKeyHint="search" maxLength={300} />
         <button type="submit">Chiedi</button>
       </form>
-      <div className="sugg" aria-label="Domande di esempio">
+      <RigaScorrevole className="sugg" aria-label="Domande di esempio" etichettaFreccia="Mostra altre domande di esempio">
         {SUGGERITE.map(([lab, dom]) => <button key={lab} type="button" onClick={() => { setQ(dom); onChiedi(dom); }}>{lab}</button>)}
-      </div>
+      </RigaScorrevole>
     </div>);
 }
 

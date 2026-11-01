@@ -298,3 +298,29 @@
   .ars-hero .ars-lead{display:none}.ars-hero h1{font-size:34px}.ars-hero .wrap-a{gap:12px}
 }
 @media (max-width:420px){.ars-tabs a{padding:12px 9px 14px;font-size:13px}.ars-hero{padding-block:20px 0}.ars .how{grid-template-columns:1fr}.ars .kv{grid-template-columns:1fr}.ars .ses{grid-template-columns:76px 1fr}}
+
+/* Righe scorrevoli (domande di esempio, schede ARS).
+   Computer: le domande vanno a capo e si vedono tutte, un po' piu' grandi.
+   Telefono: si scorrono col dito; sfumatura + freccia indicano che ci sono altre voci. */
+.ars .scorri{position:relative;min-width:0}
+.ars .scorri.piu-dx>:first-child{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 72px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 72px),transparent)}
+.ars .scorri.piu-sx>:first-child{-webkit-mask-image:linear-gradient(90deg,transparent,#000 72px);mask-image:linear-gradient(90deg,transparent,#000 72px)}
+.ars .scorri.piu-sx.piu-dx>:first-child{-webkit-mask-image:linear-gradient(90deg,transparent,#000 72px,#000 calc(100% - 72px),transparent);mask-image:linear-gradient(90deg,transparent,#000 72px,#000 calc(100% - 72px),transparent)}
+.ars .scorri-freccia{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:34px;height:34px;border-radius:50%;border:1px solid rgba(143,176,255,.45);background:var(--a-navy);color:var(--a-on-navy);font:700 22px/1 'Rubik',sans-serif;display:flex;align-items:center;justify-content:center;padding:0 0 3px;box-shadow:0 4px 14px rgba(6,11,28,.45);cursor:pointer}
+.ars .scorri-freccia.dx{right:0}
+.ars .scorri-freccia.sx{left:0}
+.ars .scorri:has(.ars-tabs) .scorri-freccia{top:calc(50% - 2px)}
+.ars .sugg{scroll-behavior:smooth}
+/* computer: la sezione ARS larga come il resto del sito (prima 1120 px) */
+@media (min-width:1200px){.ars .wrap-a{max-width:1280px}}
+@media (min-width:821px){
+  .ars .ask{max-width:none}
+  .ars .ask form{max-width:880px;padding:10px 10px 10px 20px}
+  .ars .ask input{font-size:17px}
+  .ars .ask button[type=submit]{padding:12px 22px;font-size:16px}
+  .ars .sugg{flex-wrap:wrap;overflow:visible;gap:10px}
+  .ars .sugg button{font-size:15px;padding:9px 16px}
+  .ars .sugg button:hover{background:rgba(143,176,255,.22);border-color:rgba(143,176,255,.6)}
+  .ars-tabs a{font-size:15px;padding:16px 18px 18px}
+  .ars-tabs a:hover{color:var(--a-on-navy)}
+}
