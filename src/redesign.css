@@ -576,3 +576,14 @@
 .paese-share .share-row { border-top:0; padding-top:0; margin-top:22px; }
 .paese-share .share-btn { min-height:40px; padding:0 16px; }
 @media (max-width:640px){ .paese-share .share-label{ width:100%; } }
+
+/* Header: logo e freccia indietro in un unico blocco a sinistra.
+   Da computer il menu resta sempre nello stesso punto, al centro, su tutte le pagine
+   (prima si spostava quando il logo passava da "GD MADONIE NEWS" a "NEWS" o compariva la freccia). */
+.rd .header-left{ display:flex; align-items:center; min-width:0; }
+@media (min-width:901px){
+  .rd .header-inner{ display:grid; grid-template-columns:1fr auto 1fr; column-gap:24px; }
+  .rd .header-left{ justify-self:start; }
+  .rd .header-left .logo{ margin-right:0 !important; }
+  .rd .header-actions{ justify-self:end; margin-left:0; }
+}
