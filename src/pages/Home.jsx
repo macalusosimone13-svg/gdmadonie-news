@@ -150,7 +150,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <div className="marquee"><div className="marquee-track"><span>{TOPICS}</span><span>{TOPICS}</span></div></div>
+        <div className="marquee"><div className="marquee-track">{[0, 1, 2, 3].map((i) => <span key={i} aria-hidden={i > 0 || undefined}>{TOPICS}{'\u00a0'}</span>)}</div></div>
 
         {loading ?
         <div className="featured-wrap"><div className="wrap"><div className="skel" style={{ height: 360 }} /></div></div> :

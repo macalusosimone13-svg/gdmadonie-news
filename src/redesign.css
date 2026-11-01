@@ -56,9 +56,10 @@
   .hero h1 .accent { color:var(--acc); }
   .hero-actions { margin-top:40px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
   .marquee { background:var(--blu); color:#fff; overflow:hidden; white-space:nowrap; padding:16px 0; }
-  .marquee-track { display:inline-flex; animation:marquee-scroll 26s linear infinite; }
-  .marquee-track span { font-family:'Rubik',sans-serif; font-weight:800; text-transform:uppercase; font-size:clamp(1.1rem,2.6vw,1.6rem); padding:0 28px; }
-  @keyframes marquee-scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .marquee-track { display:inline-flex; animation:marquee-scroll 25s linear infinite; }
+  .marquee-track span { font-family:'Rubik',sans-serif; font-weight:800; text-transform:uppercase; font-size:clamp(1.1rem,2.6vw,1.6rem); padding:0; }
+  /* 4 copie uguali: scorre di una copia (25%), così il nastro è sempre pieno anche su schermi larghi */
+  @keyframes marquee-scroll { from{transform:translateX(0)} to{transform:translateX(-25%)} }
 
   /* featured */
   .featured-wrap { padding:44px 0 10px; }
