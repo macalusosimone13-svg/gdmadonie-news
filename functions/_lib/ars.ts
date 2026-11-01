@@ -201,11 +201,11 @@ async function deputato(res: Response, slug: string) {
   ]);
   const g = nomeGruppo(d);
   const pt = conti?.per_tipo || {};
-  const description = taglia(`${d.nome}, all'Assemblea Regionale Siciliana con ${g}${d.collegio ? `, ${collegio(d.collegio)}` : ''}${d.voti ? ` (${num(d.voti)} preferenze)` : ''}.${conti ? ` Ha firmato ${conti.tot} atti: ${pt.I?.tot || 0} interrogazioni, ${pt.P?.tot || 0} interpellanze, ${pt.M?.tot || 0} mozioni.` : ''} Incarichi e tutti gli atti presentati.`, 300);
+  const description = taglia(`${d.nome}, all'Assemblea Regionale Siciliana con ${g}${d.collegio ? `, ${collegio(d.collegio)}` : ''}${d.voti ? ` (${num(d.voti)} preferenze)` : ''}.${conti?.tot ? ` Ha firmato ${conti.tot} atti: ${pt.I?.tot || 0} interrogazioni, ${pt.P?.tot || 0} interpellanze, ${pt.M?.tot || 0} mozioni.` : ''} Incarichi e tutti gli atti presentati.`, 300);
   const body = testa('ARS · Deputati') + `<h1>${esc(d.nome)}</h1>` +
     `<p>${esc(g)}${d.in_carica ? '' : ' · non più in carica'}${d.collegio ? ` · ${esc(collegio(d.collegio))}` : ''}${d.voti ? ` · ${num(d.voti)} preferenze` : ''}${d.lista ? ` · lista ${esc(d.lista)}` : ''}</p>` + NAV +
     ((d.ruoli || []).length ? `<h2>Incarichi</h2><ul>${d.ruoli.map((r: string) => `<li>${esc(r)}</li>`).join('')}</ul>` : '') +
-    (conti ? `<h2>Atti firmati</h2><p>${conti.tot} atti, ${conti.primo} come primo firmatario: ${pt.I?.tot || 0} interrogazioni (${pt.I?.risposta || 0} con risposta del Governo), ${pt.P?.tot || 0} interpellanze, ${pt.M?.tot || 0} mozioni. ${conti.madonie} nominano le Madonie o uno dei suoi paesi.</p>` : '') +
+    (conti?.tot ? `<h2>Atti firmati</h2><p>${conti.tot} atti, ${conti.primo} come primo firmatario: ${pt.I?.tot || 0} interrogazioni (${pt.I?.risposta || 0} con risposta del Governo), ${pt.P?.tot || 0} interpellanze, ${pt.M?.tot || 0} mozioni. ${conti.madonie} nominano le Madonie o uno dei suoi paesi.</p>` : '') +
     ((conti?.temi || []).length ? `<p>Temi più frequenti: ${conti.temi.map((t: any) => `${esc(t.tema)} (${t.n})`).join(', ')}.</p>` : '') +
     ((atti || []).length ? `<h2>Ultimi atti</h2><ul>${atti.map(rigaAtto).join('')}</ul>` : '') +
     (d.url ? `<p><a href="${esc(d.url)}" rel="noopener">Scheda ufficiale sul sito dell'ARS</a></p>` : '') + NOTA;
