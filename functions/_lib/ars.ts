@@ -167,17 +167,53 @@ async function aula(res: Response) {
   return riscrivi(res, { title: "Sedute dell'ARS e commissioni — GD Madonie News", description, url: `${SITE}/ars/aula`, image: OG, body, jsonLd: BREAD([['ARS', '/ars'], ['Aula e commissioni', '/ars/aula']]) });
 }
 
-// ---------- /ars/deputati ----------
+// ---------- /ars/deputati e /ars/deputato/<slug> ----------
+// Slug del profilo: stessa regola di slugDeputato in src/lib/ars.js e nella funzione sitemap.
+const slugDeputato = (nome: string) => String(nome || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const nomeGruppo = (d: any) => d.gruppo_breve || d.gruppo || 'Gruppo non indicato';
+const num = (n: any) => { try { return new Intl.NumberFormat('it-IT', { useGrouping: 'always' } as any).format(Number(n)); } catch { return String(n); } };
+const collegio = (c: string) => (!c ? '' : /^regional/i.test(c) ? 'listino regionale' : `collegio di ${c}`);
+
 async function deputati(res: Response) {
-  const dep = await sb('ars_deputati?select=nome,gruppo,collegio,palermo&in_carica=eq.true&order=nome.asc');
+  const dep = await sb('ars_deputati?select=nome,gruppo,gruppo_breve,collegio,voti,palermo&in_carica=eq.true&order=nome.asc');
   if (dep === null) return res;
   const pa = dep.filter((d: any) => d.palermo);
-  const description = `I ${dep.length} deputati in carica all'Assemblea Regionale Siciliana, con gruppo e collegio. ${pa.length} sono eletti nel collegio di Palermo, quello delle Madonie.`;
-  const riga = (d: any) => `<li>${esc(d.nome)}${d.gruppo ? ' — ' + esc(d.gruppo) : ''}${d.collegio ? ' (' + esc(d.collegio) + ')' : ''}</li>`;
+  const description = `I ${dep.length} deputati dell'Assemblea Regionale Siciliana divisi per gruppo, con collegio, preferenze e atti presentati. ${pa.length} sono eletti nel collegio di Palermo, quello delle Madonie.`;
+  const gruppi = new Map<string, any[]>();
+  for (const d of dep) gruppi.set(nomeGruppo(d), [...(gruppi.get(nomeGruppo(d)) || []), d]);
+  const ord = [...gruppi.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'it'));
+  const riga = (d: any) => `<li><a href="/ars/deputato/${slugDeputato(d.nome)}">${esc(d.nome)}</a>${d.collegio ? ' — ' + esc(collegio(d.collegio)) : ''}${d.voti ? `, ${num(d.voti)} preferenze` : ''}</li>`;
   const body = testa('ARS · Deputati') + `<h1>Chi ci rappresenta all'ARS</h1><p>${esc(description)}</p>` + NAV +
-    (pa.length ? `<h2>Eletti nel collegio di Palermo</h2><ul>${pa.map(riga).join('')}</ul>` : '') +
-    `<h2>Tutti i deputati</h2><ul>${dep.map(riga).join('')}</ul>` + NOTA;
-  return riscrivi(res, { title: "Deputati dell'ARS: chi ci rappresenta — GD Madonie News", description, url: `${SITE}/ars/deputati`, image: OG, body, jsonLd: BREAD([['ARS', '/ars'], ['Deputati', '/ars/deputati']]) });
+    ord.map(([g, l]) => `<h2>${esc(g)} (${l.length})</h2><ul>${l.map(riga).join('')}</ul>`).join('') + NOTA;
+  return riscrivi(res, { title: "Deputati dell'ARS divisi per gruppo: chi ci rappresenta — GD Madonie News", description, url: `${SITE}/ars/deputati`, image: OG, body, jsonLd: BREAD([['ARS', '/ars'], ['Deputati', '/ars/deputati']]) });
+}
+
+async function deputato(res: Response, slug: string) {
+  const tutti = await sb('ars_deputati?select=nome,gruppo,gruppo_breve,lista,collegio,voti,url,in_carica,palermo,ruoli&order=nome.asc');
+  if (tutti === null) return res;
+  const d = tutti.find((x: any) => slugDeputato(x.nome) === slug);
+  const url = `${SITE}/ars/deputato/${slug}`;
+  if (!d) return nonTrovata(res, url, 'Deputato');
+  const [conti, atti] = await Promise.all([
+    sb(`rpc/ars_deputato_conti?p_nome=${enc(d.nome)}`),
+    sb(`rpc/ars_deputato_atti?p_nome=${enc(d.nome)}&p_n=20`),
+  ]);
+  const g = nomeGruppo(d);
+  const pt = conti?.per_tipo || {};
+  const description = taglia(`${d.nome}, all'Assemblea Regionale Siciliana con ${g}${d.collegio ? `, ${collegio(d.collegio)}` : ''}${d.voti ? ` (${num(d.voti)} preferenze)` : ''}.${conti?.tot ? ` Ha firmato ${conti.tot} atti: ${pt.I?.tot || 0} interrogazioni, ${pt.P?.tot || 0} interpellanze, ${pt.M?.tot || 0} mozioni.` : ''} Incarichi e tutti gli atti presentati.`, 300);
+  const body = testa('ARS · Deputati') + `<h1>${esc(d.nome)}</h1>` +
+    `<p>${esc(g)}${d.in_carica ? '' : ' · non più in carica'}${d.collegio ? ` · ${esc(collegio(d.collegio))}` : ''}${d.voti ? ` · ${num(d.voti)} preferenze` : ''}${d.lista ? ` · lista ${esc(d.lista)}` : ''}</p>` + NAV +
+    ((d.ruoli || []).length ? `<h2>Incarichi</h2><ul>${d.ruoli.map((r: string) => `<li>${esc(r)}</li>`).join('')}</ul>` : '') +
+    (conti?.tot ? `<h2>Atti firmati</h2><p>${conti.tot} atti, ${conti.primo} come primo firmatario: ${pt.I?.tot || 0} interrogazioni (${pt.I?.risposta || 0} con risposta del Governo), ${pt.P?.tot || 0} interpellanze, ${pt.M?.tot || 0} mozioni. ${conti.madonie} nominano le Madonie o uno dei suoi paesi.</p>` : '') +
+    ((conti?.temi || []).length ? `<p>Temi più frequenti: ${conti.temi.map((t: any) => `${esc(t.tema)} (${t.n})`).join(', ')}.</p>` : '') +
+    ((atti || []).length ? `<h2>Ultimi atti</h2><ul>${atti.map(rigaAtto).join('')}</ul>` : '') +
+    (d.url ? `<p><a href="${esc(d.url)}" rel="noopener">Scheda ufficiale sul sito dell'ARS</a></p>` : '') + NOTA;
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'ProfilePage', url,
+    mainEntity: { '@type': 'Person', name: d.nome, jobTitle: "Deputato dell'Assemblea Regionale Siciliana", affiliation: { '@type': 'Organization', name: d.gruppo || g }, sameAs: d.url ? [d.url] : undefined },
+  };
+  return riscrivi(res, { title: `${d.nome} — ARS, ${g}: incarichi e atti presentati — GD Madonie News`, description, url, image: OG, type: 'profile', body, jsonLd });
 }
 
 export async function paginaArs(context: any): Promise<Response> {
@@ -196,6 +232,7 @@ export async function paginaArs(context: any): Promise<Response> {
     }
     if (parti.length === 2 && parti[0] === 'legge') return await legge(res, parti[1]);
     if (parti.length === 2 && parti[0] === 'atto') return await atto(res, parti[1]);
+    if (parti.length === 2 && parti[0] === 'deputato') return await deputato(res, parti[1]);
   } catch {
     return res;
   }

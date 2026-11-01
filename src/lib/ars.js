@@ -68,3 +68,24 @@ export const GLOSSARIO = {
 
 // "I - Affari Istituzionali" -> "Commissione I - Affari Istituzionali"; i nomi che iniziano gia' con "Commissione" restano come sono.
 export const nomeCommissione = (c) => (/^commission/i.test(String(c || '').trim()) ? c : `Commissione ${c}`);
+
+// Profilo di un deputato: /ars/deputato/<cognome-nome> (minuscolo, senza accenti).
+// Stessa regola in functions/_lib/ars.ts e nella funzione sitemap.
+export const slugDeputato = (nome) => String(nome || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+export const linkDeputato = (nome) => `/ars/deputato/${slugDeputato(nome)}`;
+// "Chinnici Valentina" -> "VC"
+export const iniziali = (nome) => {
+  const p = String(nome || '').split(' ').filter(Boolean);
+  if (p.length < 2) return (p[0] || '?').slice(0, 2).toUpperCase();
+  const cognomeLungo = ['De', 'La', 'Lo', 'Di', 'Li', 'Del', 'Dal'].includes(p[0]) && p.length > 2;
+  const cognome = cognomeLungo ? p[0] + p[1] : p[0];
+  const nome1 = p[cognomeLungo ? 2 : 1];
+  return ((nome1?.[0] || '') + (cognome?.[0] || '')).toUpperCase();
+};
+// 4595 -> "4.595" (in italiano il punto delle migliaia a volte manca sotto 10.000)
+export const fmtNum = (n) => {
+  try { return new Intl.NumberFormat('it-IT', { useGrouping: 'always' }).format(Number(n)); } catch { return Number(n).toLocaleString('it-IT'); }
+};
+// "Palermo" -> "Collegio di Palermo"; "Regionale" -> "Listino regionale"
+export const fmtCollegio = (c) => (!c ? '' : /^regional/i.test(c) ? 'Listino regionale' : `Collegio di ${c}`);

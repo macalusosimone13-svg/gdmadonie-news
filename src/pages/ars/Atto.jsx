@@ -7,7 +7,8 @@ import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
 import CondividiRiga from '@/components/CondividiRiga';
 import { AttoRiga, Avvisami, Caricamento, Segnala, Termine, TipoAtto } from '@/components/ars/ArsComuni';
-import { MADONIE, SITE, TIPI, cognomi, fmtData, kDaSlug, linkAtto, linkLegge } from '@/lib/ars';
+import { MADONIE, SITE, TIPI, cognomi, fmtData, kDaSlug, linkAtto, linkDeputato, linkLegge, slugDeputato } from '@/lib/ars';
+import { useDeputati } from '@/lib/arsDeputati';
 
 // Testo ufficiale diviso in paragrafi leggibili (premesso che / considerato che / per sapere...).
 function Paragrafi({ testo }) {
@@ -26,6 +27,8 @@ export default function Atto() {
     staleTime: 5 * 60 * 1000,
     queryFn: async () => (await supabase.from('ars_atti').select('*').eq('k', k).maybeSingle()).data,
   });
+  const { data: deputati } = useDeputati();
+  const deputatiNoti = deputati ? new Set(deputati.map((x) => x.slug)) : null;
   const [sintesi, setSintesi] = useState(null);
   const [sintesiStato, setSintesiStato] = useState('');
   useEffect(() => {
@@ -96,7 +99,7 @@ export default function Atto() {
           {a.fonte === 'r' && !a.testo ? `Discussa in Aula il ${fmtData(a.data)}` : `Annunciata in Aula il ${fmtData(a.data)}`}{a.seduta ? ` (seduta n. ${a.seduta})` : ''}
         </p>
         {a.firmatari?.length > 0 &&
-          <p style={{ fontSize: 15 }}><b>Presentata da:</b> {a.firmatari.map((f, i) => <span key={f}>{i > 0 && ', '}<Link to={`/ars/domande?firmatario=${encodeURIComponent(f)}&tipo=tutto`}>{f}</Link></span>)}{a.gruppo ? ` (${a.gruppo})` : ''}</p>}
+          <p style={{ fontSize: 15 }}><b>Presentata da:</b> {a.firmatari.map((f, i) => <span key={f}>{i > 0 && ', '}<Link to={deputatiNoti?.has(slugDeputato(f)) ? linkDeputato(f) : `/ars/domande?firmatario=${encodeURIComponent(f)}&tipo=tutto`}>{f}</Link></span>)}{a.gruppo ? ` (${a.gruppo})` : ''}</p>}
         {a.iniziativa && <p style={{ fontSize: 15 }}><b>Iniziativa:</b> {a.iniziativa.replace(/^Iniziativa /, '')}</p>}
         {a.destinatari?.length > 0 && <p style={{ fontSize: 15 }}><b>Rivolta a:</b> {a.destinatari.join('; ')}</p>}
         {a.commissione && <p style={{ fontSize: 15 }}><b><Termine k="commissione">Commissione</Termine>:</b> {a.commissione}</p>}
