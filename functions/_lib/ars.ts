@@ -190,7 +190,7 @@ async function deputati(res: Response) {
 }
 
 async function deputato(res: Response, slug: string) {
-  const tutti = await sb('ars_deputati?select=nome,gruppo,gruppo_breve,lista,collegio,voti,url,in_carica,palermo,ruoli&order=nome.asc');
+  const tutti = await sb('ars_deputati?select=nome,gruppo,gruppo_breve,lista,collegio,voti,url,in_carica,palermo,ruoli,foto_url&order=nome.asc');
   if (tutti === null) return res;
   const d = tutti.find((x: any) => slugDeputato(x.nome) === slug);
   const url = `${SITE}/ars/deputato/${slug}`;
@@ -211,7 +211,7 @@ async function deputato(res: Response, slug: string) {
     (d.url ? `<p><a href="${esc(d.url)}" rel="noopener">Scheda ufficiale sul sito dell'ARS</a></p>` : '') + NOTA;
   const jsonLd = {
     '@context': 'https://schema.org', '@type': 'ProfilePage', url,
-    mainEntity: { '@type': 'Person', name: d.nome, jobTitle: "Deputato dell'Assemblea Regionale Siciliana", affiliation: { '@type': 'Organization', name: d.gruppo || g }, sameAs: d.url ? [d.url] : undefined },
+    mainEntity: { '@type': 'Person', name: d.nome, image: d.foto_url || undefined, jobTitle: "Deputato dell'Assemblea Regionale Siciliana", affiliation: { '@type': 'Organization', name: d.gruppo || g }, sameAs: d.url ? [d.url] : undefined },
   };
   return riscrivi(res, { title: `${d.nome} — ARS, ${g}: incarichi e atti presentati — GD Madonie News`, description, url, image: OG, type: 'profile', body, jsonLd });
 }
