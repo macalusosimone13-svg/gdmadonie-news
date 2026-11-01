@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { Loader2, RefreshCw, ExternalLink, Check, X, Wand2 } from 'lucide-react';
-import { fmtData, kDaSlug, linkAtto, linkLegge } from '@/lib/ars';
+import { Loader2, RefreshCw, ExternalLink, Check, X, Wand2, Upload, Link2 } from 'lucide-react';
+import { uploadFile } from '@/lib/uploadFile';
+import { fmtData, iniziali, kDaSlug, linkAtto, linkLegge, slugDeputato } from '@/lib/ars';
 
 // Sezione ARS: tutto si aggiorna da solo (GitHub Actions ogni 30 minuti +
 // funzioni Supabase). Da qui la redazione:
 //  1) vede se l'aggiornamento automatico sta funzionando;
 //  2) rilegge e pubblica le schede delle leggi preparate dall'IA (bozze);
-//  3) corregge un atto (titolo o paesi sbagliati): la correzione resta anche
+//  3) aggiunge le foto dei deputati (le carica la redazione: l'aggiornamento automatico non le tocca);
+//  4) corregge un atto (titolo o paesi sbagliati): la correzione resta anche
 //     quando l'atto viene riletto dal sito dell'ARS, e resta scritta nello storico.
 // Le segnalazioni dei lettori ("Segnala un errore") arrivano in "Richieste dal sito".
 
@@ -16,6 +19,7 @@ export default function ArsPanel() {
     <div className="space-y-5">
       <Stato />
       <Schede />
+      <FotoDeputati />
       <Correggi />
     </div>);
 }
@@ -188,4 +192,88 @@ function Correggi() {
         </div>}
       {msg && <p className="text-sm">{msg}</p>}
     </Box>);
+}
+
+// Foto dei deputati: si carica un'immagine dal telefono/computer oppure si
+// incolla l'indirizzo di un'immagine. Compare su /ars/deputati e sul profilo.
+function FotoDeputati() {
+  const qc = useQueryClient();
+  const [lista, setLista] = useState(null);
+  const [cerca, setCerca] = useState('');
+  const [soloSenza, setSoloSenza] = useState(true);
+  const [busy, setBusy] = useState('');
+  const [msg, setMsg] = useState({});
+  const carica = async () => {
+    const { data } = await supabase.from('ars_deputati').select('nome, gruppo_breve, gruppo, in_carica, foto_url').order('nome');
+    setLista(data || []);
+  };
+  useEffect(() => { carica(); }, []);
+  const salva = async (nome, foto_url) => {
+    const { error } = await supabase.from('ars_deputati').update({ foto_url }).eq('nome', nome);
+    if (error) { setMsg((m) => ({ ...m, [nome]: 'Errore: ' + error.message })); return false; }
+    setLista((l) => l.map((d) => (d.nome === nome ? { ...d, foto_url } : d)));
+    setMsg((m) => ({ ...m, [nome]: foto_url ? 'Foto salvata ✓' : 'Foto tolta' }));
+    qc.invalidateQueries({ queryKey: ['ars-deputati-tutti'] });
+    return true;
+  };
+  const daFile = async (nome, file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setMsg((m) => ({ ...m, [nome]: 'Scegli un\'immagine (jpg, png, webp).' })); return; }
+    setBusy(nome);
+    try { const r = await uploadFile(file); await salva(nome, r.file_url); } catch (e) { setMsg((m) => ({ ...m, [nome]: 'Caricamento non riuscito: ' + e.message })); }
+    setBusy('');
+  };
+  const daLink = async (nome, url) => {
+    const u = String(url || '').trim();
+    if (!/^https:\/\/\S+$/i.test(u)) { setMsg((m) => ({ ...m, [nome]: 'Incolla un indirizzo che inizia con https://' })); return false; }
+    return salva(nome, u);
+  };
+  const conFoto = (lista || []).filter((d) => d.foto_url).length;
+  const inCarica = (lista || []).filter((d) => d.in_carica).length;
+  const vis = useMemo(() => (lista || []).filter((d) => d.in_carica || !soloSenza)
+    .filter((d) => !soloSenza || !d.foto_url)
+    .filter((d) => !cerca || d.nome.toLowerCase().includes(cerca.toLowerCase()) || String(d.gruppo_breve || d.gruppo || '').toLowerCase().includes(cerca.toLowerCase())), [lista, soloSenza, cerca]);
+  return (
+    <Box titolo="Foto dei deputati" desc="Carica una foto dal telefono o dal computer, oppure incolla l'indirizzo dell'immagine (ad esempio dalla scheda del deputato sul sito dell'ARS: tieni premuto sulla foto e scegli «Copia indirizzo immagine»). Chi non ha la foto mostra le iniziali.">
+      {!lista ? <Loader2 className="w-5 h-5 animate-spin" /> :
+        <>
+          <p className="text-sm"><b>{conFoto}</b> deputati con la foto su {lista.length} ({inCarica} in carica).</p>
+          <div className="flex flex-wrap gap-2 items-center">
+            <input className="flex-1 min-w-[180px] border border-border rounded-lg p-2 bg-background text-sm" placeholder="Cerca per nome o gruppo" value={cerca} onChange={(e) => setCerca(e.target.value)} />
+            <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={soloSenza} onChange={(e) => setSoloSenza(e.target.checked)} /> Solo quelli senza foto</label>
+          </div>
+          {vis.length === 0 ? <p className="text-sm text-muted-foreground">{soloSenza ? 'Tutti i deputati in carica hanno la foto. Togli la spunta per vederli.' : 'Nessun deputato trovato.'}</p> :
+            <ul className="divide-y divide-border">{vis.map((d) => <RigaFoto key={d.nome} d={d} busy={busy === d.nome} msg={msg[d.nome]} daFile={daFile} daLink={daLink} togli={() => salva(d.nome, null)} />)}</ul>}
+        </>}
+    </Box>);
+}
+
+function RigaFoto({ d, busy, msg, daFile, daLink, togli }) {
+  const file = useRef(null);
+  const [link, setLink] = useState('');
+  const [errImg, setErrImg] = useState(false);
+  useEffect(() => { setErrImg(false); }, [d.foto_url]);
+  return (
+    <li className="py-3 flex flex-wrap gap-3 items-center">
+      {d.foto_url && !errImg
+        ? <img src={d.foto_url} alt="" onError={() => setErrImg(true)} className="w-14 h-14 rounded-full object-cover object-top bg-muted shrink-0" />
+        : <span className="w-14 h-14 rounded-full bg-primary/10 text-primary font-black flex items-center justify-center shrink-0">{iniziali(d.nome)}</span>}
+      <div className="min-w-[140px] flex-1">
+        <a href={`/ars/deputato/${slugDeputato(d.nome)}`} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">{d.nome}</a>
+        <div className="text-xs text-muted-foreground">{d.gruppo_breve || d.gruppo}{d.in_carica ? '' : ' · non più in carica'}</div>
+        {errImg && <div className="text-xs text-red-600">L'immagine salvata non si apre: caricane un'altra.</div>}
+        {msg && <div className="text-xs mt-1">{msg}</div>}
+      </div>
+      <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
+        <input ref={file} type="file" accept="image/*" className="hidden" onChange={(e) => { daFile(d.nome, e.target.files?.[0]); e.target.value = ''; }} />
+        <button type="button" disabled={busy} onClick={() => file.current?.click()} className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50">
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Carica foto
+        </button>
+        <form className="flex gap-1 flex-1 sm:flex-none" onSubmit={async (e) => { e.preventDefault(); if (await daLink(d.nome, link)) setLink(''); }}>
+          <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="oppure incolla l'indirizzo" className="flex-1 sm:w-56 border border-border rounded-lg p-2 bg-background text-sm" />
+          <button className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg border border-border" aria-label="Salva l'indirizzo della foto"><Link2 className="w-4 h-4" /> Salva</button>
+        </form>
+        {d.foto_url && <button type="button" onClick={togli} className="text-sm text-red-700 font-semibold px-2">Togli</button>}
+      </div>
+    </li>);
 }

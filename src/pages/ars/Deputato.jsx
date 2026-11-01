@@ -8,7 +8,8 @@ import { useJsonLd } from '@/lib/useJsonLd';
 import CondividiRiga from '@/components/CondividiRiga';
 import RigaScorrevole from '@/components/ars/RigaScorrevole';
 import { AttoRiga, Caricamento, Segnala, Termine } from '@/components/ars/ArsComuni';
-import { SITE, fmtCollegio, fmtData, fmtNum, iniziali } from '@/lib/ars';
+import { SITE, fmtCollegio, fmtData, fmtNum } from '@/lib/ars';
+import AvatarDeputato from '@/components/ars/AvatarDeputato';
 import { useDeputati } from '@/lib/arsDeputati';
 
 // /ars/deputato/<slug>: profilo di un deputato. Dati ufficiali dell'ARS:
@@ -67,7 +68,7 @@ export default function Deputato() {
   });
   useJsonLd(d ? {
     '@context': 'https://schema.org', '@type': 'ProfilePage', url,
-    mainEntity: { '@type': 'Person', name: d.nome, jobTitle: "Deputato dell'Assemblea Regionale Siciliana", affiliation: { '@type': 'Organization', name: d.gruppo || d.gruppoNome }, sameAs: d.url ? [d.url] : undefined },
+    mainEntity: { '@type': 'Person', name: d.nome, image: d.foto_url || undefined, jobTitle: "Deputato dell'Assemblea Regionale Siciliana", affiliation: { '@type': 'Organization', name: d.gruppo || d.gruppoNome }, sameAs: d.url ? [d.url] : undefined },
   } : null);
 
   if (isLoading) return <Caricamento righe={3} alt={160} />;
@@ -87,7 +88,7 @@ export default function Deputato() {
       <article className="dep-profilo">
         <Link to="/ars/deputati" className="back"><ArrowLeft size={16} /> Tutti i deputati</Link>
         <header className="dep-testa">
-          <span className="dep-avatar grande" aria-hidden="true">{iniziali(d.nome)}</span>
+          <AvatarDeputato d={d} grande />
           <div className="dep-testa-txt">
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <span className="pill blue">{d.gruppoNome}</span>

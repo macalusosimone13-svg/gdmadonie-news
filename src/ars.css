@@ -380,3 +380,4 @@
 .ars .dep-primo input{width:18px;height:18px;accent-color:var(--a-acc)}
 /* gli elementi della pagina non devono allargarsi oltre lo schermo (es. righe scorrevoli) */
 .ars .view>*{min-width:0}
+.ars img.dep-avatar.foto{object-fit:cover;object-position:center top;background:var(--a-tint);border:2px solid var(--a-card);box-shadow:0 0 0 1px var(--a-line)}

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useSEO } from '@/lib/useSEO';
 import { Caricamento, Segnala } from '@/components/ars/ArsComuni';
 import RigaScorrevole from '@/components/ars/RigaScorrevole';
-import { SITE, fmtCollegio, fmtNum, iniziali } from '@/lib/ars';
+import { SITE, fmtCollegio, fmtNum } from '@/lib/ars';
+import AvatarDeputato from '@/components/ars/AvatarDeputato';
 import { useDeputati, incaricoPrincipale } from '@/lib/arsDeputati';
 
 // /ars/deputati: i deputati in carica divisi per gruppo parlamentare.
@@ -68,7 +69,7 @@ export function SchedaDeputato({ d, conGruppo = false }) {
   const incarico = incaricoPrincipale(d.ruoli);
   return (
     <Link to={`/ars/deputato/${d.slug}`} className="dep-card" aria-label={`${d.nome}, ${d.gruppoNome}: apri il profilo`}>
-      <span className="dep-avatar" aria-hidden="true">{iniziali(d.nome)}</span>
+      <AvatarDeputato d={d} />
       <span className="dep-nome">{d.nome}</span>
       {conGruppo && <span className="pill plain">{d.gruppoNome}</span>}
       {d.palermo && d.in_carica && <span className="pill blue">Nostro collegio</span>}
