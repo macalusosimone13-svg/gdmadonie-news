@@ -9,13 +9,13 @@ const collegamento = (f) => (f.fonte === 'paese' && f.id.includes('/') ? linkNot
 
 // "Chiedi all'ARS": casella nella fascia blu + risposta scritta dall'IA con le fonti.
 export const SUGGERITE = [
-  ['Diga di Blufi', 'Ci sono novità sui lavori della diga di Blufi?'],
-  ['Ospedale di Petralia', "Cosa è stato chiesto all'ARS sull'ospedale di Petralia Sottana?"],
-  ['Cosa c\'è per i giovani', "Cosa c'è per i giovani nell'ultima manovra?"],
-  ['Le Madonie all\'ARS', "Cosa ha fatto l'ARS di recente che riguarda le Madonie?"],
-  ['Agricoltura', "Agricoltura: cosa ha deciso l'ARS di recente?"],
-  ['Medici di base', 'Quali domande sono state fatte sui medici di base nei piccoli comuni?'],
-  ['Prossime commissioni', 'Quali commissioni si riuniscono nei prossimi giorni e di cosa parlano?'],
+  ['Ultime leggi', "Quali leggi ha approvato l'ARS di recente e cosa cambiano per i cittadini?"],
+  ['Sanità e ospedali', "Cosa si sta facendo all'ARS su ospedali, pronto soccorso e liste d'attesa?"],
+  ['Giovani e lavoro', 'Ci sono misure per i giovani e per il lavoro nelle ultime leggi regionali?'],
+  ['Strade e trasporti', "Cosa ha deciso l'ARS su strade e trasporti pubblici in Sicilia?"],
+  ['Acqua e siccità', "Cosa è stato fatto all'ARS sulla crisi dell'acqua e sulla rete idrica?"],
+  ['Bonus e contributi', 'Ci sono bonus o contributi della Regione per famiglie e imprese?'],
+  ['Prossime sedute', 'Quali commissioni si riuniscono nei prossimi giorni e di cosa parlano?'],
 ];
 
 export function CasellaChiedi({ onChiedi, iniziale = '' }) {
