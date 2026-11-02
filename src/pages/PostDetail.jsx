@@ -21,6 +21,8 @@ import { ADS_ENABLED } from '@/lib/adsConfig';
 import MediaCarousel from '@/components/MediaCarousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import RelatedPosts from '@/components/RelatedPosts';
+import SpecialeCampione from '@/components/speciali/SpecialeCampione';
+import { specialThemeFor } from '@/lib/specialArticles';
 import Comments from '@/components/Comments';
 import { buildStoryBlob, STORY_DEFAULTS, viaProxy } from '@/lib/storyImage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -370,6 +372,77 @@ run('landscape', () => buildBrandedFile(imgSource, 'landscape', isAdmin && clean
     trackShare();
   };
 
+  const tail = (
+    <>
+        <div className="share-row">
+          <span className="share-label"><Share2 className="w-4 h-4" /> Condividi</span>
+          <a href={shareWa} target="_blank" rel="noopener noreferrer" onClick={trackShare} className="share-btn">WhatsApp</a>
+          <button onClick={shareStory} className="share-btn share-primary"><Instagram className="w-4 h-4" /> Storie e Post</button>
+          <button onClick={copyLink} className="share-btn">{linkCopied ? 'Link copiato ✓' : 'Copia link'}</button>
+        </div>
+        <Comments postId={post.id} />
+        <RelatedPosts post={post} />
+    </>);
+
+  const dialogs = (
+    <>
+        <Dialog open={shareChoiceOpen} onOpenChange={(o) => { setShareChoiceOpen(o); if (!o) setShareMsg(''); }}>
+          <DialogContent className="max-w-sm share-dialog">
+            <DialogHeader>
+              <DialogTitle>Condividi la notizia</DialogTitle>
+              <DialogDescription>Scegli il formato: si apre la condivisione del telefono, poi scegli Instagram, Facebook o WhatsApp.</DialogDescription>
+            </DialogHeader>
+            <div className="share-options">
+              {isAdmin &&
+              <label className="share-check">
+                <input type="checkbox" checked={cleanShare} onChange={(e) => setCleanShare(e.target.checked)} />
+                <span><b>Foto pulita (solo admin)</b><small>Niente titolo o categoria sopra la foto: resta solo l'indirizzo del sito.</small></span>
+              </label>}
+              {[
+              ...(isVideo && !videoFailed ? [['video', 'Video vero', 'Si muove e ha l\'audio, senza testo sopra', Film]] : []),
+              ['story', 'Immagine per le Storie', 'Verticale 9:16, per Storie Instagram, Facebook e WhatsApp', ImageIcon],
+              ['post', 'Immagine per il Feed', 'Più quadrata 4:5, per un post normale', ImageIcon],
+  ['landscape', 'Immagine orizzontale', 'Formato 1,91:1, per anteprime e siti web', ImageIcon]].
+              map(([key, title, desc, Icon]) =>
+              <button key={key} onClick={() => pickShareChoice(key)} disabled={!prepared[key]} className="share-option">
+                <span className="share-ico">{prepared[key] ? <Icon className="w-5 h-5" /> : <Loader2 className="w-5 h-5 animate-spin" />}</span>
+                <span><b>{title}</b><small>{prepared[key] ? desc : 'Preparo il file…'}</small></span>
+              </button>
+              )}
+              {prepFailed && <p className="share-msg">Non riesco a preparare l'immagine di questa notizia. Riprova tra poco.</p>}
+              {shareMsg && <p className="share-msg">{shareMsg}</p>}
+              {Object.values(prepared).length > 0 && !shareMsg &&
+              <button className="share-dl" onClick={() => { const f = prepared.story || prepared.post; if (f) downloadFile(f); }}>Oppure scarica l'immagine</button>}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Eliminare questa notizia?</AlertDialogTitle>
+              <AlertDialogDescription>"{post.title}" verrà rimossa definitivamente dal sito. Non può essere annullato.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Annulla</AlertDialogCancel>
+              <AlertDialogAction onClick={deletePost} disabled={deleting} className="bg-red-600 hover:bg-red-700">
+                {deleting ? 'Eliminazione...' : 'Elimina'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+    </>);
+
+  // Notizia speciale: pagina con grafica tutta sua (font, colori, numeri in evidenza).
+  const special = specialThemeFor(post);
+  if (special) return (
+    <>
+      <SpecialeCampione theme={special} post={post} date={date} isAdmin={isAdmin} onDelete={() => setDeleteOpen(true)}>
+        {tail}
+      </SpecialeCampione>
+      {dialogs}
+    </>);
+
   return (
     <div className="article-detail space-y-5">
       {(() => {
@@ -444,60 +517,8 @@ run('landscape', () => buildBrandedFile(imgSource, 'landscape', isAdmin && clean
           Leggi l'articolo completo su {sourceLabel(post)} <ExternalLink className="w-4 h-4" />
         </a>
       }
-      <div className="share-row">
-        <span className="share-label"><Share2 className="w-4 h-4" /> Condividi</span>
-        <a href={shareWa} target="_blank" rel="noopener noreferrer" onClick={trackShare} className="share-btn">WhatsApp</a>
-        <button onClick={shareStory} className="share-btn share-primary"><Instagram className="w-4 h-4" /> Storie e Post</button>
-        <button onClick={copyLink} className="share-btn">{linkCopied ? 'Link copiato ✓' : 'Copia link'}</button>
-      </div>
-      <Comments postId={post.id} />
-      <RelatedPosts post={post} />
-
-      <Dialog open={shareChoiceOpen} onOpenChange={(o) => { setShareChoiceOpen(o); if (!o) setShareMsg(''); }}>
-        <DialogContent className="max-w-sm share-dialog">
-          <DialogHeader>
-            <DialogTitle>Condividi la notizia</DialogTitle>
-            <DialogDescription>Scegli il formato: si apre la condivisione del telefono, poi scegli Instagram, Facebook o WhatsApp.</DialogDescription>
-          </DialogHeader>
-          <div className="share-options">
-            {isAdmin &&
-            <label className="share-check">
-              <input type="checkbox" checked={cleanShare} onChange={(e) => setCleanShare(e.target.checked)} />
-              <span><b>Foto pulita (solo admin)</b><small>Niente titolo o categoria sopra la foto: resta solo l'indirizzo del sito.</small></span>
-            </label>}
-            {[
-            ...(isVideo && !videoFailed ? [['video', 'Video vero', 'Si muove e ha l\'audio, senza testo sopra', Film]] : []),
-            ['story', 'Immagine per le Storie', 'Verticale 9:16, per Storie Instagram, Facebook e WhatsApp', ImageIcon],
-            ['post', 'Immagine per il Feed', 'Più quadrata 4:5, per un post normale', ImageIcon],
-['landscape', 'Immagine orizzontale', 'Formato 1,91:1, per anteprime e siti web', ImageIcon]].
-            map(([key, title, desc, Icon]) =>
-            <button key={key} onClick={() => pickShareChoice(key)} disabled={!prepared[key]} className="share-option">
-              <span className="share-ico">{prepared[key] ? <Icon className="w-5 h-5" /> : <Loader2 className="w-5 h-5 animate-spin" />}</span>
-              <span><b>{title}</b><small>{prepared[key] ? desc : 'Preparo il file…'}</small></span>
-            </button>
-            )}
-            {prepFailed && <p className="share-msg">Non riesco a preparare l'immagine di questa notizia. Riprova tra poco.</p>}
-            {shareMsg && <p className="share-msg">{shareMsg}</p>}
-            {Object.values(prepared).length > 0 && !shareMsg &&
-            <button className="share-dl" onClick={() => { const f = prepared.story || prepared.post; if (f) downloadFile(f); }}>Oppure scarica l'immagine</button>}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Eliminare questa notizia?</AlertDialogTitle>
-            <AlertDialogDescription>"{post.title}" verrà rimossa definitivamente dal sito. Non può essere annullato.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Annulla</AlertDialogCancel>
-            <AlertDialogAction onClick={deletePost} disabled={deleting} className="bg-red-600 hover:bg-red-700">
-              {deleting ? 'Eliminazione...' : 'Elimina'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {tail}
+      {dialogs}
     </div>);
 
 }
