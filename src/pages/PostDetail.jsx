@@ -22,7 +22,7 @@ import MediaCarousel from '@/components/MediaCarousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import RelatedPosts from '@/components/RelatedPosts';
 import SpecialeCampione from '@/components/speciali/SpecialeCampione';
-import { specialThemeFor } from '@/lib/specialArticles';
+import { specialThemeFor, specialShareImage } from '@/lib/specialArticles';
 import Comments from '@/components/Comments';
 import { buildStoryBlob, STORY_DEFAULTS, viaProxy } from '@/lib/storyImage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -289,6 +289,14 @@ run('landscape', () => buildBrandedFile(imgSource, 'landscape', isAdmin && clean
 
   // Palette del redesign: si ignorano colori/logo salvati in passato (avevano l'arancione).
   const buildBrandedFile = async (imageUrl, imgFormat, minimal) => {
+    // Notizia speciale: si condivide l'immagine preparata apposta (logo, colori, formato giusto).
+    const ready = specialShareImage(post, imgFormat);
+    if (ready) {
+      const res = await fetch(ready);
+      if (!res.ok) throw new Error('immagine speciale non trovata');
+      const blob = await res.blob();
+      return new File([blob], `gdmadonie-${imgFormat}.jpg`, { type: blob.type || 'image/jpeg' });
+    }
     const storyCfg = { ...STORY_DEFAULTS, bg_gradient_start: '#1B3A8C', bg_gradient_end: '#0A1226', category_bg_color: '#2F5BD8', category_text_color: '#FFFFFF', brand_title: 'GD Madonie News', brand_subtitle: 'Giovani Democratici Madonie' };
     const blob = await buildStoryBlob({
       imageUrl,

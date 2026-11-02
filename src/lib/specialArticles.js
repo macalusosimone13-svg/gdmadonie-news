@@ -7,3 +7,15 @@ export const SPECIAL_ARTICLES = {
 };
 
 export const specialThemeFor = (post) => (post?.slug ? SPECIAL_ARTICLES[post.slug] || null : null);
+
+// Immagini gia' pronte per il tasto "Storie e Post" delle notizie speciali:
+// al posto dell'immagine generata in automatico si condividono queste.
+export const SPECIAL_SHARE_IMAGES = {
+  'kimi-antonelli-campione-del-mondo': {
+    story: '/speciali/antonelli-storia.jpg',
+    post: '/speciali/antonelli-ig-post-1.jpg',
+    landscape: '/speciali/antonelli-campione-2026.jpg',
+  },
+};
+
+export const specialShareImage = (post, format) => (post?.slug ? SPECIAL_SHARE_IMAGES[post.slug]?.[format] || null : null);
