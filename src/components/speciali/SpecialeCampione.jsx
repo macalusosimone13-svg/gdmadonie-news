@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import ArticleBody from '@/components/ArticleBody';
+import InstagramPost from '@/components/speciali/InstagramPost';
 import '@/speciali.css';
 
 // Pagina speciale per una singola notizia (vedi src/lib/specialArticles.js):
@@ -16,6 +17,7 @@ const THEMES = {
       { n: '8', t: 'vittorie in stagione, prima del Messico' },
       { n: '380', t: 'punti, 119 più di Verstappen' },
     ],
+    instagramLabel: 'Il post della Formula 1',
   },
 };
 
@@ -26,10 +28,28 @@ function Tricolore({ thin }) {
   return <div className={`sp-tri${thin ? ' thin' : ''}`} aria-hidden="true"><i /><i /><i /></div>;
 }
 
+// Da computer il post Instagram va subito dopo i numeri; dal telefono in fondo,
+// prima della condivisione, per non spingere giu' il testo.
+const WIDE = '(min-width: 820px)';
+function useWide() {
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia?.(WIDE).matches);
+  useEffect(() => {
+    const mq = window.matchMedia?.(WIDE);
+    if (!mq) return;
+    const on = () => setWide(mq.matches);
+    mq.addEventListener?.('change', on);
+    return () => mq.removeEventListener?.('change', on);
+  }, []);
+  return wide;
+}
+
 const readingMinutes = (text) => Math.max(1, Math.round((text || '').split(/\s+/).filter(Boolean).length / 200));
 
 export default function SpecialeCampione({ theme, post, date, isAdmin, onDelete, children }) {
   const cfg = THEMES[theme] || THEMES['campione-f1-2026'];
+  const wide = useWide();
+  // Il link al post si inserisce dal pannello admin, nel campo "Link esterno".
+  const igPost = <InstagramPost url={post.external_link} label={cfg.instagramLabel} />;
 
   // I due font servono solo a questa pagina: si caricano qui, non su tutto il sito.
   useEffect(() => {
@@ -71,9 +91,13 @@ export default function SpecialeCampione({ theme, post, date, isAdmin, onDelete,
         </div>
       </section>
 
+      {wide && <div className="sp-ig-slot sp-ig-top">{igPost}</div>}
+
       <article className="sp-body">
         <ArticleBody text={post.content} />
       </article>
+
+      {!wide && <div className="sp-ig-slot">{igPost}</div>}
 
       <div className="sp-tail">{children}</div>
       <Tricolore />
