@@ -83,3 +83,12 @@
 .rd .sp-campione .bg-card{ background:var(--sp-surface); }
 .rd .sp-campione .border-border{ border-color:var(--sp-line); }
 .rd .sp-campione .text-muted-foreground{ color:var(--sp-soft); }
+/* Post Instagram incorporato (campo "Link esterno" della notizia) */
+.sp-ig-slot{ max-width:700px; margin:0 auto; padding:0 24px; box-sizing:border-box; }
+.sp-ig-slot.sp-ig-top{ padding-top:48px; }
+.sp-ig-slot:empty{ display:none; }
+.sp-ig{ margin:0 auto 8px; max-width:540px; }
+.sp-ig-label{ margin:0 0 14px; font-family:var(--sp-display); font-weight:700; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--sp-gold); }
+.sp-ig-label::before{ content:""; display:block; width:72px; height:4px; margin-bottom:14px;
+  background:linear-gradient(90deg,#009246 0 33.33%,#F4F1EA 33.33% 66.66%,#CE2B37 66.66%); }
+.sp-ig .instagram-media{ margin:0 !important; min-width:0 !important; width:100% !important; }
