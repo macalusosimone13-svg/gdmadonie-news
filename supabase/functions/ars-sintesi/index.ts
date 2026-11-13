@@ -21,11 +21,31 @@ const TIPI: Record<string, string> = { I: 'interrogazione', P: 'interpellanza', 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
 const json = (d: unknown, status = 200) => Response.json(d, { status, headers: cors });
 
+// Se l'IA risponde con un elenco di oggetti (succede quando nel testo dell'atto
+// c'e' in coda anche l'atto successivo), il primo e' quello giusto.
+function primoOggetto(v: any) {
+  if (Array.isArray(v)) v = v.find((x) => x && typeof x === 'object' && !Array.isArray(x));
+  if (!v || typeof v !== 'object') throw new Error('Risposta IA senza oggetto JSON');
+  return v;
+}
 function estraiJson(text: string) {
   let t = text.trim();
   const f = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (f) t = f[1].trim();
-  return JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+  try { return primoOggetto(JSON.parse(t)); } catch { /* sotto */ }
+  // Gemini a volte aggiunge testo o un secondo oggetto dopo il JSON:
+  // si prende il primo oggetto completo.
+  const s = t.indexOf('{');
+  if (s < 0) throw new Error('Risposta IA senza JSON');
+  let liv = 0, str = false, esc = false;
+  for (let i = s; i < t.length; i++) {
+    const c = t[i];
+    if (str) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') str = false; continue; }
+    if (c === '"') str = true;
+    else if (c === '{') liv++;
+    else if (c === '}' && --liv === 0) return primoOggetto(JSON.parse(t.slice(s, i + 1)));
+  }
+  throw new Error('JSON incompleto nella risposta IA');
 }
 async function gemini(system: string, testo: string) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
@@ -38,7 +58,7 @@ async function gemini(system: string, testo: string) {
     });
     if (r.ok) {
       const d = await r.json();
-      return estraiJson((d.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text || '').join('\n'));
+      return estraiJson((d.candidates?.[0]?.content?.parts ?? []).filter((p: any) => !p.thought).map((p: any) => p.text || '').join('\n'));
     }
     const err = await r.text();
     if ((r.status === 429 || r.status === 503) && a < 3) { await new Promise((ok) => setTimeout(ok, a * 2500)); continue; }
@@ -48,7 +68,8 @@ async function gemini(system: string, testo: string) {
 
 const PROMPT = `Sei il redattore della sezione ARS di GD Madonie News. Spieghi a chiunque (un ragazzo, un pensionato) un atto dell'Assemblea Regionale Siciliana partendo SOLO dal testo ufficiale che ricevi.
 Scrivi in italiano semplice, frasi brevi, niente parole tecniche (se servono, spiegale), tono neutro: nessun giudizio, nessuna opinione, nessun commento politico. Non inventare nulla che non sia nel testo: niente cifre, date, nomi o conseguenze che il testo non dice.
-Rispondi SOLO con JSON:
+Il testo ufficiale a volte contiene in coda anche altri atti (con un altro numero e un altro titolo): ignorali e spiega SOLO l'atto con il numero e il titolo indicati all'inizio.
+Rispondi SOLO con UN oggetto JSON (non un elenco):
 {"breve": "2 o 3 frasi: di cosa parla e perche' e' stato presentato",
  "chiede": ["cosa chiedono o propongono i firmatari, 1-4 punti brevi; per un disegno di legge: cosa cambierebbe"],
  "risposta": "solo se c'e' una risposta del Governo: 1-3 frasi su cosa ha risposto, altrimenti null",
@@ -81,6 +102,8 @@ async function sintetizza(sb: any, a: any) {
     risposta: risp && typeof out?.risposta === 'string' && out.risposta.trim() ? out.risposta.trim() : null,
     modello: GEMINI_MODEL,
   };
+  // mai salvare una sintesi vuota: meglio riprovare piu' avanti
+  if (!s.breve) throw new Error('Sintesi vuota dalla IA');
   const tema = TEMI.includes(out?.tema) ? out.tema : null;
   await sb.from('ars_atti').update({ sintesi: s, sintesi_hash: h, sintesi_at: new Date().toISOString(), tema }).eq('k', a.k);
   return s;
@@ -103,10 +126,11 @@ Deno.serve(async (req) => {
     const inizio = Date.now();
     const n = Math.min(Number(body.lotto) || 15, 40);
     const madonie = ['Madonie', 'Alimena', 'Aliminusa', 'Blufi', 'Bompietro', 'Caccamo', 'Caltavuturo', 'Castelbuono', 'Castellana Sicula', 'Cefalù', 'Collesano', 'Gangi', 'Geraci Siculo', 'Gratteri', 'Isnello', 'Montemaggiore Belsito', 'Petralia Soprana', 'Petralia Sottana', 'Polizzi Generosa', 'Pollina', 'San Mauro Castelverde', 'Scillato', 'Sclafani Bagni'];
-    const primi = await sb.from('ars_atti').select(CAMPI).is('sintesi', null).overlaps('luoghi', madonie).order('data', { ascending: false }).limit(n);
+    const primi = await sb.from('ars_atti').select(CAMPI).is('sintesi', null).overlaps('luoghi', madonie).order('sintesi_at', { ascending: true, nullsFirst: true }).order('data', { ascending: false }).limit(n);
     let lista = primi.data || [];
     if (lista.length < n) {
-      const altri = await sb.from('ars_atti').select(CAMPI).is('sintesi', null).order('data', { ascending: false }).limit(n - lista.length);
+      const altri = await sb.from('ars_atti').select(CAMPI).is('sintesi', null).not('k', 'in', `(${lista.map((x: any) => x.k).join(',') || '-'})`)
+        .order('sintesi_at', { ascending: true, nullsFirst: true }).order('data', { ascending: false }).limit(n - lista.length);
       lista = lista.concat(altri.data || []);
     }
     // atti con una risposta del Governo arrivata dopo la sintesi: va rifatta
@@ -118,7 +142,14 @@ Deno.serve(async (req) => {
     const fatti: string[] = [], errori: string[] = [];
     for (const a of lista) {
       if (Date.now() - inizio > 110000) break;
-      try { await sintetizza(sb, a); fatti.push(a.k); } catch (e) { errori.push(`${a.k}: ${(e as Error).message}`); if (/429/.test((e as Error).message)) break; }
+      try { await sintetizza(sb, a); fatti.push(a.k); } catch (e) {
+        const msg = (e as Error).message;
+        errori.push(`${a.k}: ${msg}`);
+        if (/Gemini (429|503)/.test(msg)) break;
+        // atto che da' errore: si segna il tentativo (sintesi resta vuota) cosi'
+        // va in fondo alla coda e non blocca gli altri a ogni giro
+        if (!a.sintesi) await sb.from('ars_atti').update({ sintesi_at: new Date().toISOString() }).eq('k', a.k);
+      }
     }
     return json({ fatti: fatti.length, errori });
   }
