@@ -243,11 +243,30 @@ def numero_file(p):
     return int(re.match(r'\d+', os.path.basename(p)).group(0))
 
 
+# Inizio di un altro atto dentro il testo di uno: nei PDF a volte manca il punto
+# ("N 3545 - Titolo") o il trattino ("N. 712   Titolo") e l'intestazione non
+# viene riconosciuta, cosi' il secondo atto finiva in coda al primo.
+ALTRO_ATTO = re.compile(r'^\s{0,10}N\s?\.?\s?(\d{1,5})(?:\s*[-\u2013]\s*|\s{2,})(?=[A-Z\u00c0-\u00dc\u00ab"\u201c])')
+SOPRA_ATTO = re.compile(r'^(XVIII Legislatura|INTERROGAZION|INTERPELLANZ|MOZION|\(risposta|\(N\.C)', re.I)
+
+
+def fine_atto(lines, i, endi, num):
+    """Riga dove finisce il testo dell'atto che comincia alla riga i."""
+    for q in range(i + 1, endi):
+        m = ALTRO_ATTO.match(lines[q])
+        if m and m.group(1).lstrip('0') != num.lstrip('0'):
+            # si lasciano fuori anche le righe d'intestazione sopra il nuovo atto
+            while q > i + 1 and (not lines[q - 1].strip() or SOPRA_ATTO.match(lines[q - 1].strip())):
+                q -= 1
+            return q
+    return endi
+
+
 def atti_da_documenti(cache, nomi):
     """Ordini del giorno ('o') e resoconti ('r') → atti + testi + risposte scritte."""
     urls, resurl = leggi_links(cache)
     sdate, _ = leggi_sedute(cache)
-    items, texts = {}, {}
+    items, texts, lung = {}, {}, {}
     allurl = url_allegati(cache)
     files = [(f, 'o') for f in sorted(glob.glob(os.path.join(cache, 'odg', '*.txt')), key=numero_file)] + \
             [(f, 'a') for f in sorted(glob.glob(os.path.join(cache, 'all', '*.txt')), key=numero_file)] + \
@@ -311,6 +330,10 @@ def atti_da_documenti(cache, nomi):
         for j, (i, tp, num) in enumerate(idx):
             k = tp + num
             endi = idx[j + 1][0] if j + 1 < len(idx) else min(len(lines), i + 500)
+            # quale documento usare si decide come sempre sul blocco intero (il
+            # piu' lungo); il testo pero' si ferma dove comincia un altro atto
+            lung_blocco = len(pulisci('\n'.join(lines[i:endi])))
+            endi = fine_atto(lines, i, endi, num)
             body = '\n'.join(lines[i:endi])
             if k in items:
                 it = items[k]
@@ -323,7 +346,8 @@ def atti_da_documenti(cache, nomi):
                         it['f'] = nm2
                     if dp and not it.get('dp'):
                         it['dp'] = dp
-                if len(pulisci(body)) > len(texts.get(k, {}).get('txt', '')):
+                if lung_blocco > lung.get(k, len(texts.get(k, {}).get('txt', ''))):
+                    lung[k] = min(lung_blocco, 9000)
                     texts.setdefault(k, {})['txt'] = pulisci(body)[:9000]
                     it['p'] = page_at(offs[i])
                 continue
@@ -352,6 +376,7 @@ def atti_da_documenti(cache, nomi):
                             a=[x for x in dest if not re.match(r'^-?\d', x)], s=int(sn), c=luoghi(body, title),
                             p=page_at(offs[i]), src=SRC, u=u)
             texts[k] = {'txt': pulisci(body)[:9000]}
+            lung[k] = min(lung_blocco, 9000)
         # risposte scritte del Governo
         for m in re.finditer(r'(?:Oggetto:\s*Interrogazione(?:\s+parlamentare)?\s*(?:n|si|N|nr)\s*\.?\s*(\d{3,5}))|(?:Con riferimento all.interrogazione\s*n\.?\s*(\d{3,5}))', t, re.I):
             num = m.group(1) or m.group(2)
