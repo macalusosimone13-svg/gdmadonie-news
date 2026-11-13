@@ -246,7 +246,7 @@ def numero_file(p):
 # Inizio di un altro atto dentro il testo di uno: nei PDF a volte manca il punto
 # ("N 3545 - Titolo") o il trattino ("N. 712   Titolo") e l'intestazione non
 # viene riconosciuta, cosi' il secondo atto finiva in coda al primo.
-ALTRO_ATTO = re.compile(r'^\s{0,10}N\s?\.?\s?(\d{1,5})(?:\s*[-\u2013]\s*|\s{2,})(?=[A-Z\u00c0-\u00dc\u00ab"\u201c])')
+ALTRO_ATTO = re.compile(r'^\s{0,10}N\s?\.?\s{0,8}(\d{1,5})(?:\s*[-\u2013]\s*|\s{2,})(?=[A-Z\u00c0-\u00dc\u00ab"\u201c])')
 SOPRA_ATTO = re.compile(r'^(XVIII Legislatura|INTERROGAZION|INTERPELLANZ|MOZION|\(risposta|\(N\.C)', re.I)
 
 
