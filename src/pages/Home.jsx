@@ -22,7 +22,8 @@ const GD_CATS = ['comunicato'];
 const TOPICS = 'SPOPOLAMENTO · SANITÀ · TRASPORTI · LAVORO · SCUOLA · AREE INTERNE · DIRITTI · AMBIENTE ·';
 
 function Featured({ post, isEvent, siteContent }) {
-  const img = post.image_url;
+  // Per i post video si usa la copertina (poster), non il file .mp4.
+  const img = isEvent ? post.image_url : postImg(post);
   const date = isEvent ?
   post.date ? format(new Date(post.date), "d MMMM yyyy 'ore' HH:mm", { locale: it }) : '' :
   fmtDate(post.published_date);
@@ -37,7 +38,7 @@ function Featured({ post, isEvent, siteContent }) {
           <span className="date">{date}{isEvent && post.location ? ` · ${post.location}` : ''}</span>
           <span className="feat-cta">{isEvent ? "Scopri l'evento" : 'Leggi la notizia'} →</span>
         </div>
-        <div className="featured-img"><img src={sized(img, 1000)} onError={fallbackTo(img)} alt="" fetchPriority="high" decoding="async" /></div>
+        <div className="featured-img"><img src={sized(img, 1000)} onError={fallbackTo(img)} alt="" fetchPriority="high" decoding="async" style={!isEvent && post.media_type === 'video' ? { objectPosition: '50% 25%' } : undefined} />{!isEvent && post.media_type === 'video' && <span className="vid-badge">▶</span>}</div>
       </Link>
     </div></div>);
 }
@@ -111,7 +112,9 @@ export default function Home() {
 
   const now = Date.now();
   const DAY_MS = 24 * 60 * 60 * 1000;
-  const hasRealImage = (p) => !!postImg(p) && p.media_type !== 'video';
+  // Una foto oppure, per i video, la copertina: cosi' anche i comunicati
+  // con video (es. le interviste) possono andare "In evidenza".
+  const hasRealImage = (p) => !!postImg(p);
   const isImminentEvent = (p) => p._type === 'event' && new Date(p.date).getTime() - now <= 7 * DAY_MS;
   // Corsia preferenziale "In evidenza": comunicati per 48 ore, News GD per
   // 2 ore. Passato quel tempo le News GD tornano a competere con le altre
