@@ -7,7 +7,7 @@ import { useJsonLd } from '@/lib/useJsonLd';
 import CondividiRiga from '@/components/CondividiRiga';
 import RigaScorrevole from '@/components/ars/RigaScorrevole';
 import { AttoRiga, Caricamento, Segnala, Termine } from '@/components/ars/ArsComuni';
-import { SITE, fmtCollegio, fmtData, fmtNum } from '@/lib/ars';
+import { SITE, fmtCollegio, fmtData, fmtNum, fotoDeputato } from '@/lib/ars';
 import AvatarDeputato from '@/components/ars/AvatarDeputato';
 import { useStatoIndietro, useLinkIndietro, scrollaInCima } from '@/lib/indietro';
 import { useDeputati } from '@/lib/arsDeputati';
@@ -72,7 +72,7 @@ export default function Deputato() {
   });
   useJsonLd(d ? {
     '@context': 'https://schema.org', '@type': 'ProfilePage', url,
-    mainEntity: { '@type': 'Person', name: d.nome, image: d.foto_url || undefined, jobTitle: "Deputato dell'Assemblea Regionale Siciliana", affiliation: { '@type': 'Organization', name: d.gruppo || d.gruppoNome }, sameAs: d.url ? [d.url] : undefined },
+    mainEntity: { '@type': 'Person', name: d.nome, image: fotoDeputato(d.foto_url) || undefined, jobTitle: "Deputato dell'Assemblea Regionale Siciliana", affiliation: { '@type': 'Organization', name: d.gruppo || d.gruppoNome }, sameAs: d.url ? [d.url] : undefined },
   } : null);
 
   if (isLoading) return <Caricamento righe={3} alt={160} />;

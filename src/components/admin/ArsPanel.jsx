@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { Loader2, RefreshCw, ExternalLink, Check, X, Wand2, Upload, Link2, ClipboardPaste, Search } from 'lucide-react';
 import { uploadFile } from '@/lib/uploadFile';
-import { fmtData, iniziali, kDaSlug, linkAtto, linkLegge, slugDeputato } from '@/lib/ars';
+import { fmtData, iniziali, kDaSlug, linkAtto, linkLegge, slugDeputato, fotoDeputato } from '@/lib/ars';
 
 // Sezione ARS: tutto si aggiorna da solo (GitHub Actions ogni 30 minuti +
 // funzioni Supabase). Da qui la redazione:
@@ -204,8 +204,10 @@ function FotoDeputati() {
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState({});
   const carica = async () => {
-    const { data } = await supabase.from('ars_deputati').select('nome, gruppo_breve, gruppo, in_carica, foto_url').order('nome');
+    const { data } = await supabase.from('ars_deputati').select('nome, gruppo_breve, gruppo, in_carica, foto_url, url').order('nome');
     setLista(data || []);
+    // Se hanno tutti la foto, si mostrano tutti: serve per controllarle.
+    if (!(data || []).some((d) => d.in_carica && !fotoDeputato(d.foto_url))) setSoloSenza(false);
   };
   useEffect(() => { carica(); }, []);
   const salva = async (nome, foto_url) => {
@@ -224,14 +226,15 @@ function FotoDeputati() {
     setBusy('');
   };
   const daLink = async (nome, url) => {
-    const u = String(url || '').trim();
+    // Link della pagina di Google Immagini: si salva l'immagine vera che c'e' dentro.
+    const u = fotoDeputato(url);
     if (!/^https:\/\/\S+$/i.test(u)) { setMsg((m) => ({ ...m, [nome]: 'Incolla un indirizzo che inizia con https://' })); return false; }
     return salva(nome, u);
   };
-  const conFoto = (lista || []).filter((d) => d.foto_url).length;
+  const conFoto = (lista || []).filter((d) => fotoDeputato(d.foto_url)).length;
   const inCarica = (lista || []).filter((d) => d.in_carica).length;
   const vis = useMemo(() => (lista || []).filter((d) => d.in_carica || !soloSenza)
-    .filter((d) => !soloSenza || !d.foto_url)
+    .filter((d) => !soloSenza || !fotoDeputato(d.foto_url))
     .filter((d) => !cerca || d.nome.toLowerCase().includes(cerca.toLowerCase()) || String(d.gruppo_breve || d.gruppo || '').toLowerCase().includes(cerca.toLowerCase())), [lista, soloSenza, cerca]);
   // Divisi per partito, nello stesso ordine della pagina Deputati (prima i gruppi piu' numerosi).
   const perGruppo = useMemo(() => {
@@ -283,7 +286,9 @@ async function dagliAppunti(nome, daFile, daLink, setMsg) {
 
 function RigaFoto({ d, busy, msg, setMsg, daFile, daLink, togli }) {
   const file = useRef(null);
-  const google = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(d.nome + ' deputato ARS')}`;
+  // Ricerca solo tra le immagini del sito ufficiale dell'ARS: niente omonimi.
+  const google = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(d.nome + ' site:ars.sicilia.it')}`;
+  const foto = fotoDeputato(d.foto_url);
   // Incollando un'immagine direttamente nel campo (Ctrl+V o «Incolla» sul telefono).
   const onPaste = (e) => {
     const f = [...(e.clipboardData?.files || [])].find((x) => x.type.startsWith('image/'));
@@ -291,16 +296,17 @@ function RigaFoto({ d, busy, msg, setMsg, daFile, daLink, togli }) {
   };
   const [link, setLink] = useState('');
   const [errImg, setErrImg] = useState(false);
-  useEffect(() => { setErrImg(false); }, [d.foto_url]);
+  useEffect(() => { setErrImg(false); }, [foto]);
   return (
     <li className="py-3 flex flex-wrap gap-3 items-center">
-      {d.foto_url && !errImg
-        ? <img src={d.foto_url} alt="" onError={() => setErrImg(true)} className="w-14 h-14 rounded-full object-cover object-top bg-muted shrink-0" />
-        : <span className="w-14 h-14 rounded-full bg-primary/10 text-primary font-black flex items-center justify-center shrink-0">{iniziali(d.nome)}</span>}
+      {foto && !errImg
+        ? <img src={foto} alt="" onError={() => setErrImg(true)} className="w-20 h-20 rounded-full object-cover object-top bg-muted shrink-0" />
+        : <span className="w-20 h-20 rounded-full bg-primary/10 text-primary font-black flex items-center justify-center shrink-0">{iniziali(d.nome)}</span>}
       <div className="min-w-[140px] flex-1">
         <a href={`/ars/deputato/${slugDeputato(d.nome)}`} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">{d.nome}</a>
         <div className="text-xs text-muted-foreground">{d.gruppo_breve || d.gruppo}{d.in_carica ? '' : ' · non più in carica'}</div>
-        {errImg && <div className="text-xs text-red-600">L'immagine salvata non si apre: caricane un'altra.</div>}
+        {d.foto_url && (errImg || !foto) && <div className="text-xs text-red-600 font-semibold">La foto salvata non si apre: cercane un'altra.</div>}
+        {d.url && <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-primary hover:underline">Confronta con la scheda ufficiale ARS ↗</a>}
         {msg && <div className="text-xs mt-1">{msg}</div>}
       </div>
       <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
