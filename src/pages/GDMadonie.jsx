@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useStatoIndietro } from '@/lib/indietro';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { sb44 } from '@/api/supabaseEntities';
@@ -46,21 +47,26 @@ export default function GDMadonie() {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const initialTab = ['comunicati', 'news', 'eventi'].includes(tabParam) ? tabParam : 'comunicati';
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useStatoIndietro('tab', initialTab);
   // Se arriviamo qui da un link con ?tab=... mentre siamo gia' su questa
   // pagina (stessa rotta: React Router non la rimonta), lo stato iniziale
   // sopra non basta - va sincronizzato quando cambia il parametro in URL.
+  // (Solo quando il parametro cambia davvero: all'apertura, tornando
+  // indietro da una notizia, vale la scheda che si stava guardando.)
+  const tabParamPrima = useRef(tabParam);
   useEffect(() => {
+    if (tabParamPrima.current === tabParam) return;
+    tabParamPrima.current = tabParam;
     if (['comunicati', 'news', 'eventi'].includes(tabParam) && tabParam !== activeTab) setActiveTab(tabParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabParam]);
   const [content, setContent] = useState(null);
-  const [view, setView] = useState('list');
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [newsVisibleCount, setNewsVisibleCount] = useState(PAGE_SIZE);
+  const [view, setView] = useStatoIndietro('vista', 'list');
+  const [visibleCount, setVisibleCount] = useStatoIndietro('quanti', PAGE_SIZE);
+  const [newsVisibleCount, setNewsVisibleCount] = useStatoIndietro('quantiNews', PAGE_SIZE);
   const [hasNew, setHasNew] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [newsSearchQuery, setNewsSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useStatoIndietro('cerca', '');
+  const [newsSearchQuery, setNewsSearchQuery] = useStatoIndietro('cercaNews', '');
   const lastSig = useRef(null);
 
   useEffect(() => {loadSiteContent().then(setContent);}, []);

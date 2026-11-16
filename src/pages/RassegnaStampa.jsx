@@ -1,6 +1,7 @@
 import { sized, fallbackTo } from '@/lib/imgSize';
 // force retransform: chunk invalidate v3
 import { Fragment, useEffect, useState } from 'react';
+import { useStatoIndietro } from '@/lib/indietro';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams, useParams } from 'react-router-dom';
 import { sb44 } from '@/api/supabaseEntities';
@@ -24,20 +25,26 @@ export default function RassegnaStampa() {
   const { tipo } = useParams();
   const lockedCategory = tipo === 'nazionale' ? 'politica_nazionale' : tipo === 'regionale' ? 'politica_regionale' : null;
   const categoriaParam = searchParams.get('categoria');
-  const initialCategory = lockedCategory || (['politica_nazionale', 'politica_regionale'].includes(categoriaParam) ? categoriaParam : 'all');
-  const [category, setCategory] = useState(initialCategory);
+  // La categoria dipende solo dall'indirizzo (Tutte / Nazionale / Regionale).
+  const category = lockedCategory || (['politica_nazionale', 'politica_regionale'].includes(categoriaParam) ? categoriaParam : 'all');
   const [saved, setSaved] = useState([]);
-  const [source, setSource] = useState('all');
-  const [view, setView] = useState('feed');
+  // Fonte scelta, pagina dell'elenco, ricerca e vista restano legate a
+  // questo passo della cronologia: aprendo una notizia e tornando indietro
+  // si ritrova tutto com'era (es. pagina 4, Giornale di Sicilia).
+  const [source, setSourceRaw] = useStatoIndietro('fonte', 'all');
+  const [view, setView] = useStatoIndietro('vista', 'feed');
   const [user, setUser] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshResult, setRefreshResult] = useState(null);
   const [sourceLogos, setSourceLogos] = useState({});
   const [testate, setTestate] = useState([]);
   const [favSources, setFavSources] = useState([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useStatoIndietro('pagina', 1);
   const [sourceOpen, setSourceOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQueryRaw] = useStatoIndietro('cerca', '');
+  // Cambiando fonte o ricerca si riparte dalla prima pagina.
+  const setSource = (v) => { setSourceRaw(v); setPage(1); };
+  const setSearchQuery = (v) => { setSearchQueryRaw(v); setPage(1); };
   const PER_PAGE = 30;
 
   // Pagina di puro aggregatore (titoli, estratti e link verso altre testate):
@@ -50,12 +57,7 @@ export default function RassegnaStampa() {
     noindex: true
   });
 
-  useEffect(() => {
-    setCategory(lockedCategory || (['politica_nazionale', 'politica_regionale'].includes(categoriaParam) ? categoriaParam : 'all'));
-    setSource('all');
-    setSourceOpen(false);
-    setView('feed');
-  }, [tipo, categoriaParam]);
+  useEffect(() => { setSourceOpen(false); }, [tipo, categoriaParam]);
 
   const postsQuery = useQuery({
     queryKey: ['rassegna-posts', source, category],
@@ -130,7 +132,6 @@ export default function RassegnaStampa() {
     setSaved((prev) => prev.filter((s) => s.id !== itemId));
   };
 
-  useEffect(() => {setPage(1);}, [source, category, searchQuery]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const safePage = Math.min(page, totalPages);
   const paged = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);

@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useStatoIndietro } from '@/lib/indietro';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
@@ -14,8 +15,8 @@ export default function Leggi() {
     description: "Tutte le leggi votate dall'Assemblea Regionale Siciliana nella XVIII legislatura: titolo, data, voti favorevoli e contrari, percorso in commissione. Aggiornato in automatico.",
     url: `${SITE}/ars/leggi`,
   });
-  const [anno, setAnno] = useState('tutti');
-  const [q, setQ] = useState('');
+  const [anno, setAnno] = useStatoIndietro('anno', 'tutti');
+  const [q, setQ] = useStatoIndietro('q', '');
   const { data, isLoading } = useQuery({
     queryKey: ['ars-leggi'],
     staleTime: 5 * 60 * 1000,

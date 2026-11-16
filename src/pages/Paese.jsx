@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useStatoIndietro } from '@/lib/indietro';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { ArrowLeft } from 'lucide-react';
+import LinkIndietro from '@/components/LinkIndietro';
 import { supabase } from '@/lib/supabaseClient';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
@@ -25,7 +27,7 @@ const fmt = (d) => (d ? format(new Date(d), 'd MMMM yyyy', { locale: it }) : '')
 
 export default function Paese() {
   const { slug } = useParams();
-  const [tema, setTema] = useState('tutti');
+  const [tema, setTema] = useStatoIndietro('tema', 'tutti');
 
   const { data, isLoading } = useQuery({
     queryKey: ['paese', slug],
@@ -90,7 +92,7 @@ export default function Paese() {
   return (
     <div className="rd-page">
       <div className="page-head"><div className="hero-glow" /><div className="wrap-wide">
-        <Link to="/paesi" className="tab" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 22, textDecoration: 'none' }}><ArrowLeft size={15} /> Tutti i paesi</Link>
+        <LinkIndietro to="/paesi" className="tab" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 22, textDecoration: 'none' }}><ArrowLeft size={15} /> Tutti i paesi</LinkIndietro>
         <span className="section-kicker"><Link to="/paesi">Paesi delle Madonie</Link></span>
         <h1>{isLoading ? '…' : nome.toUpperCase()}</h1>
         <p>Politica e amministrazione a {nome || '…'}: consiglio comunale, bilancio, fondi, opere pubbliche e servizi. Dal sito del Comune e dai giornali, aggiornato in automatico.</p>

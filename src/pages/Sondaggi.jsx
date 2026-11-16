@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useStatoIndietro } from '@/lib/indietro';
 import { useQuery } from '@tanstack/react-query';
 import { sb44 } from '@/api/supabaseEntities';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
@@ -33,7 +34,7 @@ const schedaIniziale = () => {
 const FALLBACK_COLORS = ['#0F1B3A', '#2F5BD8', '#0ea5e9', '#16a34a', '#a8262c', '#7c3aed', '#ca8a04', '#0d9488'];
 
 export default function Sondaggi() {
-  const [scope, setScope] = useState(schedaIniziale);
+  const [scope, setScope] = useStatoIndietro('scheda', schedaIniziale);
   const isTermometro = scope === 'termometro';
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 640 : false);
   useEffect(() => {
