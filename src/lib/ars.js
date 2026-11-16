@@ -89,3 +89,21 @@ export const fmtNum = (n) => {
 };
 // "Palermo" -> "Collegio di Palermo"; "Regionale" -> "Listino regionale"
 export const fmtCollegio = (c) => (!c ? '' : /^regional/i.test(c) ? 'Listino regionale' : `Collegio di ${c}`);
+
+// Indirizzo della foto di un deputato pronto da mostrare. Se e' stato
+// incollato il link della pagina di Google Immagini (google.com/imgres?...)
+// invece di quello dell'immagine, si usa l'immagine vera che c'e' dentro
+// (parametro imgurl). Altrimenti l'indirizzo resta com'e'.
+export const fotoDeputato = (url) => {
+  const u = String(url || '').trim();
+  if (!u) return '';
+  try {
+    const x = new URL(u);
+    if (/(^|\.)google\.[a-z.]+$/i.test(x.hostname)) {
+      const img = x.searchParams.get('imgurl');
+      if (img && /^https?:\/\//i.test(img)) return img.replace(/^http:\/\//i, 'https://');
+      return '';
+    }
+  } catch { return ''; }
+  return u;
+};
