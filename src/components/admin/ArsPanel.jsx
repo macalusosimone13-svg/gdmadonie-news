@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { Loader2, RefreshCw, ExternalLink, Check, X, Wand2, Upload, Link2 } from 'lucide-react';
+import { Loader2, RefreshCw, ExternalLink, Check, X, Wand2, Upload, Link2, ClipboardPaste, Search } from 'lucide-react';
 import { uploadFile } from '@/lib/uploadFile';
 import { fmtData, iniziali, kDaSlug, linkAtto, linkLegge, slugDeputato } from '@/lib/ars';
 
@@ -233,8 +233,17 @@ function FotoDeputati() {
   const vis = useMemo(() => (lista || []).filter((d) => d.in_carica || !soloSenza)
     .filter((d) => !soloSenza || !d.foto_url)
     .filter((d) => !cerca || d.nome.toLowerCase().includes(cerca.toLowerCase()) || String(d.gruppo_breve || d.gruppo || '').toLowerCase().includes(cerca.toLowerCase())), [lista, soloSenza, cerca]);
+  // Divisi per partito, nello stesso ordine della pagina Deputati (prima i gruppi piu' numerosi).
+  const perGruppo = useMemo(() => {
+    const nomeG = (d) => (d.in_carica ? d.gruppo_breve || d.gruppo || 'Gruppo non indicato' : 'Non più in carica');
+    const tot = new Map();
+    for (const d of lista || []) if (d.in_carica) tot.set(nomeG(d), (tot.get(nomeG(d)) || 0) + 1);
+    const m = new Map();
+    for (const d of vis) m.set(nomeG(d), [...(m.get(nomeG(d)) || []), d]);
+    return [...m.entries()].sort((a, b) => (tot.get(b[0]) || -1) - (tot.get(a[0]) || -1) || a[0].localeCompare(b[0], 'it'));
+  }, [vis, lista]);
   return (
-    <Box titolo="Foto dei deputati" desc="Carica una foto dal telefono o dal computer, oppure incolla l'indirizzo dell'immagine (ad esempio dalla scheda del deputato sul sito dell'ARS: tieni premuto sulla foto e scegli «Copia indirizzo immagine»). Chi non ha la foto mostra le iniziali.">
+    <Box titolo="Foto dei deputati" desc="Il modo più veloce: tocca «Cerca su Google», sulla foto scelta fai tasto destro (o tieni premuto sul telefono) → «Copia immagine», torna qui e tocca «Incolla foto». Non serve salvare niente. Si può anche caricare un file o incollare l'indirizzo dell'immagine. Chi non ha la foto mostra le iniziali.">
       {!lista ? <Loader2 className="w-5 h-5 animate-spin" /> :
         <>
           <p className="text-sm"><b>{conFoto}</b> deputati con la foto su {lista.length} ({inCarica} in carica).</p>
@@ -243,13 +252,43 @@ function FotoDeputati() {
             <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={soloSenza} onChange={(e) => setSoloSenza(e.target.checked)} /> Solo quelli senza foto</label>
           </div>
           {vis.length === 0 ? <p className="text-sm text-muted-foreground">{soloSenza ? 'Tutti i deputati in carica hanno la foto. Togli la spunta per vederli.' : 'Nessun deputato trovato.'}</p> :
-            <ul className="divide-y divide-border">{vis.map((d) => <RigaFoto key={d.nome} d={d} busy={busy === d.nome} msg={msg[d.nome]} daFile={daFile} daLink={daLink} togli={() => salva(d.nome, null)} />)}</ul>}
+            perGruppo.map(([g, dep]) => (
+              <div key={g}>
+                <h4 className="font-black uppercase text-sm mt-4 mb-1">{g} <span className="text-muted-foreground font-semibold">· {dep.length}</span></h4>
+                <ul className="divide-y divide-border">{dep.map((d) => <RigaFoto key={d.nome} d={d} busy={busy === d.nome} msg={msg[d.nome]} setMsg={(t) => setMsg((m) => ({ ...m, [d.nome]: t }))} daFile={daFile} daLink={daLink} togli={() => salva(d.nome, null)} />)}</ul>
+              </div>))}
         </>}
     </Box>);
 }
 
-function RigaFoto({ d, busy, msg, daFile, daLink, togli }) {
+// Prende l'immagine copiata negli appunti ("Copia immagine" su Google o su
+// qualsiasi sito) e la carica sul nostro spazio, cosi' non dipende dal sito
+// di origine. Se negli appunti c'e' un indirizzo https, salva quello.
+async function dagliAppunti(nome, daFile, daLink, setMsg) {
+  if (!navigator.clipboard?.read) { setMsg('Tocca il campo «oppure incolla» qui accanto e scegli Incolla.'); return; }
+  try {
+    const items = await navigator.clipboard.read();
+    for (const it of items) {
+      const tipo = it.types.find((t) => t.startsWith('image/'));
+      if (tipo) { const blob = await it.getType(tipo); await daFile(nome, new File([blob], 'foto.' + (tipo.split('/')[1] || 'png'), { type: tipo })); return; }
+    }
+    for (const it of items) {
+      if (it.types.includes('text/plain')) { const t = (await (await it.getType('text/plain')).text()).trim(); if (/^https:\/\/\S+$/i.test(t)) { await daLink(nome, t); return; } }
+    }
+    setMsg('Negli appunti non c\'è un\'immagine: sulla foto fai tasto destro (o tieni premuto) → «Copia immagine».');
+  } catch {
+    setMsg('Il browser non ha dato il permesso: tocca il campo «oppure incolla» qui accanto e scegli Incolla.');
+  }
+}
+
+function RigaFoto({ d, busy, msg, setMsg, daFile, daLink, togli }) {
   const file = useRef(null);
+  const google = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(d.nome + ' deputato ARS')}`;
+  // Incollando un'immagine direttamente nel campo (Ctrl+V o «Incolla» sul telefono).
+  const onPaste = (e) => {
+    const f = [...(e.clipboardData?.files || [])].find((x) => x.type.startsWith('image/'));
+    if (f) { e.preventDefault(); daFile(d.nome, f); }
+  };
   const [link, setLink] = useState('');
   const [errImg, setErrImg] = useState(false);
   useEffect(() => { setErrImg(false); }, [d.foto_url]);
@@ -265,12 +304,16 @@ function RigaFoto({ d, busy, msg, daFile, daLink, togli }) {
         {msg && <div className="text-xs mt-1">{msg}</div>}
       </div>
       <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
+        <a href={google} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg border border-border"><Search className="w-4 h-4" /> Cerca su Google</a>
+        <button type="button" disabled={busy} onClick={() => dagliAppunti(d.nome, daFile, daLink, setMsg)} className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50">
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardPaste className="w-4 h-4" />} Incolla foto
+        </button>
         <input ref={file} type="file" accept="image/*" className="hidden" onChange={(e) => { daFile(d.nome, e.target.files?.[0]); e.target.value = ''; }} />
-        <button type="button" disabled={busy} onClick={() => file.current?.click()} className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50">
-          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Carica foto
+        <button type="button" disabled={busy} onClick={() => file.current?.click()} className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg border border-border disabled:opacity-50">
+          <Upload className="w-4 h-4" /> Carica file
         </button>
         <form className="flex gap-1 flex-1 sm:flex-none" onSubmit={async (e) => { e.preventDefault(); if (await daLink(d.nome, link)) setLink(''); }}>
-          <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="oppure incolla l'indirizzo" className="flex-1 sm:w-56 border border-border rounded-lg p-2 bg-background text-sm" />
+          <input value={link} onChange={(e) => setLink(e.target.value)} onPaste={onPaste} placeholder="oppure incolla qui" className="flex-1 sm:w-56 border border-border rounded-lg p-2 bg-background text-sm" />
           <button className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg border border-border" aria-label="Salva l'indirizzo della foto"><Link2 className="w-4 h-4" /> Salva</button>
         </form>
         {d.foto_url && <button type="button" onClick={togli} className="text-sm text-red-700 font-semibold px-2">Togli</button>}
