@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useStatoIndietro } from '@/lib/indietro';
 import { Link } from 'react-router-dom';
 import { useSEO } from '@/lib/useSEO';
 import { Caricamento, Segnala } from '@/components/ars/ArsComuni';
@@ -18,8 +19,8 @@ export default function Deputati() {
     description: "I 70 deputati dell'Assemblea Regionale Siciliana divisi per gruppo: collegio, preferenze, incarichi e tutti gli atti che hanno presentato. In evidenza gli eletti nel collegio di Palermo, che comprende le Madonie.",
     url: `${SITE}/ars/deputati`,
   });
-  const [soloPalermo, setSoloPalermo] = useState(false);
-  const [exAperti, setExAperti] = useState(false);
+  const [soloPalermo, setSoloPalermo] = useStatoIndietro('palermo', false);
+  const [exAperti, setExAperti] = useStatoIndietro('ex', false);
   const { data, isLoading } = useDeputati();
 
   const inCarica = useMemo(() => (data || []).filter((d) => d.in_carica), [data]);

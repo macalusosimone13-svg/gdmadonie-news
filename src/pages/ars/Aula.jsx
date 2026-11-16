@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useStatoIndietro } from '@/lib/indietro';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { useSEO } from '@/lib/useSEO';
@@ -12,8 +13,8 @@ export default function Aula() {
     url: `${SITE}/ars/aula`,
   });
   const oggi = oggiRoma();
-  const [comm, setComm] = useState('');
-  const [mostraPassate, setMostraPassate] = useState(false);
+  const [comm, setComm] = useStatoIndietro('comm', '');
+  const [mostraPassate, setMostraPassate] = useStatoIndietro('passate', false);
   const { data, isLoading } = useQuery({
     queryKey: ['ars-aula', oggi],
     staleTime: 5 * 60 * 1000,

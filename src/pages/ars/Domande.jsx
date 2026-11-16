@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { scrollaInCima } from '@/lib/indietro';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
@@ -114,8 +115,8 @@ export default function Domande() {
             <div className="rows" style={{ opacity: isFetching ? 0.6 : 1 }}>{data.righe.map((a) => <AttoRiga key={a.k} a={a} />)}</div>}
         {pagine > 1 &&
           <div className="pager">
-            <button type="button" className="btn ghost small" disabled={pag === 0} onClick={() => { imposta('pag', String(pag - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>← Precedenti</button>
-            <button type="button" className="btn ghost small" disabled={pag + 1 >= pagine} onClick={() => { imposta('pag', String(pag + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Successivi →</button>
+            <button type="button" className="btn ghost small" disabled={pag === 0} onClick={() => { imposta('pag', String(pag - 1)); scrollaInCima(); }}>← Precedenti</button>
+            <button type="button" className="btn ghost small" disabled={pag + 1 >= pagine} onClick={() => { imposta('pag', String(pag + 1)); scrollaInCima(); }}>Successivi →</button>
           </div>}
       </section>
       <div className="sources">Fonte: allegati agli ordini del giorno e resoconti delle sedute dell'ARS (XVIII legislatura, dal 10 novembre 2022). <Segnala pagina="/ars/domande" /></div>

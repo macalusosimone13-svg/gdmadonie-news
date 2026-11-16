@@ -1,7 +1,9 @@
 import { Fragment, useMemo, useState } from 'react';
+import { useStatoIndietro } from '@/lib/indietro';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
+import LinkIndietro from '@/components/LinkIndietro';
 import { supabase } from '@/lib/supabaseClient';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
@@ -73,7 +75,7 @@ export default function Legge() {
   return (
     <div className="view">
       <article className="law-head">
-        <Link to="/ars/leggi" className="back"><ArrowLeft size={16} /> Tutte le leggi</Link>
+        <LinkIndietro to="/ars/leggi" className="back"><ArrowLeft size={16} /> Tutte le leggi</LinkIndietro>
         <span className={`pill ${l.approvata ? 'ok' : 'warn'}`}>{l.approvata ? `✓ Approvata dall'ARS il ${fmtData(l.data)}` : `Respinta il ${fmtData(l.data)}`}</span>
         <h1>{titolo}</h1>
         {l.titolo_breve && l.titolo && <p style={{ color: 'var(--a-muted)' }}>Titolo ufficiale: {l.titolo}</p>}
@@ -133,9 +135,9 @@ export default function Legge() {
 }
 
 function Misure({ misure }) {
-  const [persona, setPersona] = useState('Tutti');
-  const [tema, setTema] = useState('Tutti');
-  const [ordine, setOrdine] = useState('soldi');
+  const [persona, setPersona] = useStatoIndietro('persona', 'Tutti');
+  const [tema, setTema] = useStatoIndietro('tema', 'Tutti');
+  const [ordine, setOrdine] = useStatoIndietro('ordine', 'soldi');
   const [aperta, setAperta] = useState(null);
   const temi = useMemo(() => [...new Set(misure.map((m) => m.tema).filter(Boolean))], [misure]);
   const conta = (p) => misure.filter((m) => (m.per || []).includes(p)).length;

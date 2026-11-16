@@ -1,11 +1,12 @@
 import AssistantLogo from '@/components/AssistantLogo';
-import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, LogIn, Instagram, Facebook, Send, Twitter, Youtube, Globe, Mail, Link as LinkIcon, ArrowUp, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { getCurrentUser } from '@/lib/supabaseAuth';
 import { sb44 } from '@/api/supabaseEntities';
 import UserAvatar from '@/components/UserAvatar';
 import { useBackTarget } from '@/lib/backTarget';
+import { indiceCronologia } from '@/lib/indietro';
 import { useUxConfig } from '@/lib/UxConfigContext';
 
 // Pagine gia' riprogettate col nuovo stile: hanno il loro contenitore.
@@ -26,6 +27,15 @@ export default function Layout() {
   const location = useLocation();
   const { config: ux } = useUxConfig();
   const backTarget = useBackTarget();
+  const navigate = useNavigate();
+  // Freccia indietro dell'header: torna davvero alla pagina da cui si e'
+  // arrivati (stessa sezione, stessa pagina dell'elenco, stesso punto).
+  // Solo se la pagina e' stata aperta direttamente (da Google, da un link
+  // condiviso...) e non c'e' nulla "prima" nel sito, porta alla sezione giusta.
+  const tornaIndietro = (e) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (indiceCronologia() > 0) { e.preventDefault(); navigate(-1); }
+  };
 
   useEffect(() => {
     getCurrentUser().then((u) => { setUser(u); }).catch(() => {}).finally(() => setAuthChecked(true));
@@ -110,7 +120,7 @@ export default function Layout() {
       <header className="site" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="header-inner">
           <div className="header-left">
-          {location.pathname !== '/' && <Link to={location.pathname.startsWith('/evento') ? '/gd-madonie' : location.pathname.startsWith('/ars/') ? '/ars' : location.pathname.startsWith('/paesi/') ? (location.pathname.match(/^\/paesi\/[^/]+(?=\/.)/)?.[0] || '/paesi') : (/^\/(post|articolo)\//.test(location.pathname) && backTarget) || '/'} className={`back-feed ${/^\/(post|articolo|evento|paesi)\//.test(location.pathname) ? 'always' : ''}`} aria-label={location.pathname.startsWith('/paesi/') ? (/^\/paesi\/[^/]+\/./.test(location.pathname) ? 'Torna alle notizie del paese' : 'Torna a tutti i paesi') : /^\/(post|articolo|evento)\//.test(location.pathname) ? 'Torna alla sezione' : 'Torna al Feed'}><ArrowLeft size={20} /></Link>}
+          {location.pathname !== '/' && <Link onClick={tornaIndietro} to={location.pathname.startsWith('/evento') ? '/gd-madonie' : location.pathname.startsWith('/ars/') ? '/ars' : location.pathname.startsWith('/paesi/') ? (location.pathname.match(/^\/paesi\/[^/]+(?=\/.)/)?.[0] || '/paesi') : (/^\/(post|articolo)\//.test(location.pathname) && backTarget) || '/'} className={`back-feed ${/^\/(post|articolo|evento|paesi)\//.test(location.pathname) ? 'always' : ''}`} aria-label={location.pathname.startsWith('/paesi/') ? (/^\/paesi\/[^/]+\/./.test(location.pathname) ? 'Torna alle notizie del paese' : 'Torna a tutti i paesi') : /^\/(post|articolo|evento)\//.test(location.pathname) ? 'Torna alla sezione' : 'Torna al Feed'} title="Indietro"><ArrowLeft size={20} /></Link>}
           <Link to="/" className="logo" aria-label="GD Madonie News - Feed">
             <div className="logo-text">GD MADONIE<span>NEWS</span></div>
           </Link>

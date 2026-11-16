@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useStatoIndietro } from '@/lib/indietro';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
@@ -33,7 +33,7 @@ export default function Panoramica() {
     isPartOf: { '@type': 'WebSite', name: 'GD Madonie News', url: SITE },
   });
   const { data: p, isLoading } = usePanoramica();
-  const [paese, setPaese] = useState('Madonie');
+  const [paese, setPaese] = useStatoIndietro('paese', 'Madonie');
   const { data: locali } = useQuery({
     queryKey: ['ars-paese', paese],
     enabled: paese !== 'Madonie',

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
@@ -10,6 +9,7 @@ import RigaScorrevole from '@/components/ars/RigaScorrevole';
 import { AttoRiga, Caricamento, Segnala, Termine } from '@/components/ars/ArsComuni';
 import { SITE, fmtCollegio, fmtData, fmtNum } from '@/lib/ars';
 import AvatarDeputato from '@/components/ars/AvatarDeputato';
+import { useStatoIndietro, useLinkIndietro, scrollaInCima } from '@/lib/indietro';
 import { useDeputati } from '@/lib/arsDeputati';
 
 // /ars/deputato/<slug>: profilo di un deputato. Dati ufficiali dell'ARS:
@@ -40,11 +40,15 @@ export default function Deputato() {
     },
   });
 
-  const [filtro, setFiltro] = useState('tutto');
-  const [primo, setPrimo] = useState(false);
-  const [pag, setPag] = useState(0);
-  useEffect(() => { setPag(0); }, [filtro, primo, slug]);
-  useEffect(() => { setFiltro('tutto'); setPrimo(false); }, [slug]);
+  // Filtri e pagina degli atti restano com'erano tornando indietro
+  // (es. dopo aver aperto un atto). Cambiando filtro si riparte da pagina 1.
+  const [filtro, setFiltroRaw] = useStatoIndietro('filtro', 'tutto');
+  const [primo, setPrimoRaw] = useStatoIndietro('primo', false);
+  const [pag, setPagRaw] = useStatoIndietro('pag', 0);
+  const setFiltro = (v) => { setFiltroRaw(v); setPagRaw(0); };
+  const setPrimo = (v) => { setPrimoRaw(v); setPagRaw(0); };
+  const setPag = (agg) => { setPagRaw(agg); scrollaInCima('atti-deputato'); };
+  const linkIndietro = useLinkIndietro();
   const f = FILTRI.find((x) => x[0] === filtro) || FILTRI[0];
   const { data: atti, isFetching } = useQuery({
     queryKey: ['ars-deputato-atti', d?.nome, filtro, primo, pag],
@@ -86,7 +90,7 @@ export default function Deputato() {
   return (
     <div className="view">
       <article className="dep-profilo">
-        <Link to="/ars/deputati" className="back"><ArrowLeft size={16} /> Tutti i deputati</Link>
+        <Link to="/ars/deputati" className="back" onClick={(e) => linkIndietro(e, '/ars/deputati')}><ArrowLeft size={16} /> Tutti i deputati</Link>
         <header className="dep-testa">
           <AvatarDeputato d={d} grande />
           <div className="dep-testa-txt">
@@ -133,7 +137,7 @@ export default function Deputato() {
           </section>}
       </div>
 
-      <section style={{ display: 'grid', gap: 12 }}>
+      <section id="atti-deputato" style={{ display: 'grid', gap: 12 }}>
         <div className="sec-h"><h2>I suoi atti</h2></div>
         <RigaScorrevole className="chips dep-filtri" role="group" aria-label="Tipo di atto" etichettaFreccia="Mostra altri filtri">
           {FILTRI.map(([k, lab]) => <button key={k} type="button" className="chip" aria-pressed={filtro === k} onClick={() => setFiltro(k)}>{lab}</button>)}

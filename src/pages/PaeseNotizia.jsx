@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
+import LinkIndietro from '@/components/LinkIndietro';
 import { supabase } from '@/lib/supabaseClient';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
@@ -83,7 +84,7 @@ export default function PaeseNotizia() {
   return (
     <div className="rd-page">
       <div className="article-detail space-y-5">
-        <Link to={`/paesi/${slug}`} className="back-link"><ArrowLeft size={15} /> Tutte le notizie di {nome || '…'}</Link>
+        <LinkIndietro to={`/paesi/${slug}`} className="back-link"><ArrowLeft size={15} /> Tutte le notizie di {nome || '…'}</LinkIndietro>
         {isLoading ?
           <div className="space-y-4"><div className="skel" style={{ height: 40 }} /><div className="skel" style={{ height: 160 }} /></div> :
           <>

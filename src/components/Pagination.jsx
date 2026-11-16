@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { scrollaInCima } from '@/lib/indietro';
 
 export default function Pagination({ page, totalPages, onChange }) {
   if (totalPages <= 1) return null;
@@ -6,7 +7,7 @@ export default function Pagination({ page, totalPages, onChange }) {
   const go = (n) => {
     if (n < 1 || n > totalPages || n === page) return;
     onChange(n);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollaInCima();
   };
 
   const win = 2;

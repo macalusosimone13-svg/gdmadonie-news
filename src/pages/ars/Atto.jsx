@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
+import LinkIndietro from '@/components/LinkIndietro';
 import { supabase } from '@/lib/supabaseClient';
 import { useSEO } from '@/lib/useSEO';
 import { useJsonLd } from '@/lib/useJsonLd';
@@ -87,7 +88,7 @@ export default function Atto() {
   return (
     <div className="view">
       <article className="atto">
-        <Link to="/ars/domande" className="back"><ArrowLeft size={16} /> Tutte le domande e proposte</Link>
+        <LinkIndietro to="/ars/domande" className="back"><ArrowLeft size={16} /> Tutte le domande e proposte</LinkIndietro>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <TipoAtto tipo={a.tipo} n={a.n} />
           {a.ha_risposta && <span className="pill ok">Il Governo ha risposto</span>}
