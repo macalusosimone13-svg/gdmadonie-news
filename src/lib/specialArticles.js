@@ -4,6 +4,7 @@
 // speciale basta cancellare la riga.
 export const SPECIAL_ARTICLES = {
   'kimi-antonelli-campione-del-mondo': 'campione-f1-2026',
+  'basta-bonus-impresa-giovani-sicilia': 'diritto-a-restare',
 };
 
 export const specialThemeFor = (post) => (post?.slug ? SPECIAL_ARTICLES[post.slug] || null : null);
@@ -15,6 +16,11 @@ export const SPECIAL_SHARE_IMAGES = {
     story: '/speciali/antonelli-storia.jpg',
     post: '/speciali/antonelli-ig-post-1.jpg',
     landscape: '/speciali/antonelli-campione-2026.jpg',
+  },
+  'basta-bonus-impresa-giovani-sicilia': {
+    story: '/speciali/basta-bonus-storia.jpg',
+    post: '/speciali/basta-bonus-copertina.jpg',
+    landscape: '/speciali/basta-bonus-orizzontale.jpg',
   },
 };
 

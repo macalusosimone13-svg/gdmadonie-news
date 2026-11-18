@@ -22,6 +22,7 @@ import MediaCarousel from '@/components/MediaCarousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import RelatedPosts from '@/components/RelatedPosts';
 import SpecialeCampione from '@/components/speciali/SpecialeCampione';
+import SpecialeRestare from '@/components/speciali/SpecialeRestare';
 import { specialThemeFor, specialShareImage } from '@/lib/specialArticles';
 import Comments from '@/components/Comments';
 import { buildStoryBlob, STORY_DEFAULTS, viaProxy } from '@/lib/storyImage';
@@ -442,12 +443,14 @@ run('landscape', () => buildBrandedFile(imgSource, 'landscape', isAdmin && clean
     </>);
 
   // Notizia speciale: pagina con grafica tutta sua (font, colori, numeri in evidenza).
+  // Ogni tema ha la sua pagina: Antonelli (oro e notte), Diritto a restare (verde del carosello).
   const special = specialThemeFor(post);
+  const SpecialPage = special === 'diritto-a-restare' ? SpecialeRestare : SpecialeCampione;
   if (special) return (
     <>
-      <SpecialeCampione theme={special} post={post} date={date} isAdmin={isAdmin} onDelete={() => setDeleteOpen(true)}>
+      <SpecialPage theme={special} post={post} date={date} isAdmin={isAdmin} onDelete={() => setDeleteOpen(true)}>
         {tail}
-      </SpecialeCampione>
+      </SpecialPage>
       {dialogs}
     </>);
 
