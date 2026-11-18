@@ -303,6 +303,16 @@
   .ev-meta { font-size:14px; font-weight:600; opacity:.7; display:flex; gap:18px; flex-wrap:wrap; }
   .ev-btn { align-self:flex-start; margin-top:4px; }
   .ev-img { background:var(--tint); } .ev-img img { width:100%; height:100%; object-fit:cover; }
+  /* Immagini verticali: nella notizia grande si vede tutta, accanto al testo;
+     nelle card piccole si rimpicciolisce intera su uno sfondo sfocato */
+  .lead.portrait, .lead.wide.portrait { grid-template-columns:minmax(0,1fr) min(40%,400px); min-height:0; }
+  .lead.portrait .lead-media { overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .lead.portrait .lead-media img { position:relative; inset:auto; display:block; width:100%; height:auto; max-height:560px; object-fit:contain; }
+  .featured-img.portrait img { object-fit:contain; }
+  .featured:hover .featured-img.portrait img { transform:scale(1.02); }
+  .card-media-bg { position:absolute; inset:-12%; background-size:cover; background-position:center; filter:blur(18px) saturate(1.1); opacity:.85; }
+  .article-card.portrait .card-media img { position:relative; object-fit:contain; }
+  .article-card.portrait:hover .card-media img { transform:scale(1.03); }
   @media (max-width:760px){ .ev-card{grid-template-columns:84px 1fr} .ev-img{display:none} .ev-date b{font-size:2rem} .ev-info{padding:18px} .lead.wide{grid-template-columns:1fr} }
   .gd-grid { grid-template-columns:repeat(3,1fr); }
   @media (max-width:900px){ .gd-grid{grid-template-columns:repeat(2,1fr)} }
@@ -587,4 +597,11 @@
   .rd .header-left{ justify-self:start; }
   .rd .header-left .logo{ margin-right:0 !important; }
   .rd .header-actions{ justify-self:end; margin-left:0; }
+}
+/* Immagini verticali sul telefono: la notizia grande mostra l'immagine intera, senza tagli */
+@media (max-width:760px){
+  .rd .lead.portrait, .rd .lead.wide.portrait { grid-template-columns:1fr; }
+  .rd .lead.portrait .lead-media { order:-1; height:auto; }
+  .rd .lead.portrait .lead-media img { max-height:70vh; }
+  .rd .featured-img.portrait { height:min(70vh,460px); }
 }

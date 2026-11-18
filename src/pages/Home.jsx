@@ -9,7 +9,7 @@ import AdSlot from '@/components/AdSlot';
 import Reveal from '@/components/Reveal';
 import { ADS_ENABLED } from '@/lib/adsConfig';
 import { sized, fallbackTo } from '@/lib/imgSize';
-import { Card, Lead, TrendBox, postImg, fmtDate, postLink } from '@/components/redesign/Cards';
+import { Card, Lead, TrendBox, postImg, fmtDate, postLink, usePortrait } from '@/components/redesign/Cards';
 import { Newsletter, FollowStats } from '@/components/redesign/SideBoxes';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -28,6 +28,8 @@ function Featured({ post, isEvent, siteContent }) {
   post.date ? format(new Date(post.date), "d MMMM yyyy 'ore' HH:mm", { locale: it }) : '' :
   fmtDate(post.published_date);
   const label = isEvent ? 'Evento GD' : getCategoryLabel(siteContent, post.category);
+  // Immagine verticale: si vede intera su sfondo sfocato, invece di essere tagliata.
+  const [portrait, onLoad] = usePortrait(isEvent ? null : post);
   return (
     <div className="featured-wrap"><div className="wrap">
       <Link to={postLink({ ...post, _type: isEvent ? 'event' : undefined })} className="featured">
@@ -38,7 +40,7 @@ function Featured({ post, isEvent, siteContent }) {
           <span className="date">{date}{isEvent && post.location ? ` · ${post.location}` : ''}</span>
           <span className="feat-cta">{isEvent ? "Scopri l'evento" : 'Leggi la notizia'} →</span>
         </div>
-        <div className="featured-img"><img src={sized(img, 1000)} onError={fallbackTo(img)} alt="" fetchPriority="high" decoding="async" style={!isEvent && post.media_type === 'video' ? { objectPosition: '50% 25%' } : undefined} />{!isEvent && post.media_type === 'video' && <span className="vid-badge">▶</span>}</div>
+        <div className={`featured-img${portrait ? ' portrait' : ''}`}>{portrait && <span className="card-media-bg" aria-hidden="true" style={{ backgroundImage: `url("${sized(img, 120)}")` }} />}<img src={sized(img, 1000)} onError={fallbackTo(img)} onLoad={onLoad} alt="" fetchPriority="high" decoding="async" style={!portrait && !isEvent && post.media_type === 'video' ? { objectPosition: '50% 25%' } : undefined} />{!isEvent && post.media_type === 'video' && <span className="vid-badge">▶</span>}</div>
       </Link>
     </div></div>);
 }
