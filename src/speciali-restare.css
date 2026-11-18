@@ -115,6 +115,7 @@
 .sr-ig-slot:empty{ display:none; }
 .sp-restare .sp-ig{ margin:0 auto 8px; max-width:540px; }
 .sp-restare .sp-ig-label{ margin:0 0 14px; font-family:var(--sr-label); font-weight:800; font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:var(--sr-green); }
+.sp-restare .sp-ig-label::before{ background:var(--sr-green); width:64px; height:6px; }
 .sp-restare .sp-ig .instagram-media{ margin:0 !important; min-width:0 !important; width:100% !important; }
 
 /* Condivisione, commenti e correlate: fondo nero come le slide scure */
