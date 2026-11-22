@@ -655,7 +655,7 @@ function ScriviTuTab() {
 // e "Focus Madonie" (fino al 22/11/2026 "Dove nasci conta"; la chiave resta
 // dove_nasci_conta), scritti dall'IA (function rubriche-ai) partendo dalle
 // notizie raccolte in automatico, piu' "La settimana all'ARS" (ars-settimana).
-// Dal 22/11/2026 le puntate del lunedi' e del venerdi' alle 7 si pubblicano
+// Dal 22/11/2026 le puntate del lunedi' e del venerdi' alle 10 si pubblicano
 // DA SOLE (function pubblica-rubrica: controlli automatici, copertina, email);
 // se un controllo non passa restano qui come bozze. I pulsanti "genera adesso"
 // creano invece bozze da rileggere e pubblicare a mano. ---
@@ -741,7 +741,7 @@ function RubricheTab({ onChange }) {
     <div className="space-y-4">
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <p className="text-sm text-foreground leading-relaxed">
-          Ogni <b>lunedì alle 7</b> l'IA scrive <b>Il punto della settimana</b> in tre versioni (Madonie, Sicilia, Italia) e ogni <b>venerdì alle 7</b> <b>Focus Madonie</b> (il tema di cui si è parlato di più nella settimana) e <b>La settimana all'ARS</b>. Si <b>pubblicano da sole</b>, con la copertina e l'email agli iscritti, dopo un controllo automatico del testo; se il controllo non passa restano qui sotto come <b>bozze</b> da rivedere.
+          Ogni <b>lunedì alle 10</b> l'IA scrive <b>Il punto della settimana</b> in tre versioni (Madonie, Sicilia, Italia) e ogni <b>venerdì alle 10</b> <b>Focus Madonie</b> (il tema di cui si è parlato di più nella settimana) e <b>La settimana all'ARS</b>. Si <b>pubblicano da sole</b>, con la copertina e l'email agli iscritti, dopo un controllo automatico del testo; se il controllo non passa restano qui sotto come <b>bozze</b> da rivedere.
         </p>
         <p className="text-xs text-muted-foreground">Vuoi farne una adesso? Ci vogliono circa 20–30 secondi. Quelle fatte con questi pulsanti restano bozze da rileggere.</p>
         <div className="flex flex-wrap gap-2">
@@ -758,7 +758,7 @@ function RubricheTab({ onChange }) {
       {loading ?
       <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div> :
       items.length === 0 ?
-      <p className="text-sm text-muted-foreground text-center py-8">Ancora nessuna rubrica. La prima arriva lunedì alle 7, oppure generala adesso con i pulsanti qui sopra.</p> :
+      <p className="text-sm text-muted-foreground text-center py-8">Ancora nessuna rubrica. La prima arriva lunedì alle 10, oppure generala adesso con i pulsanti qui sopra.</p> :
       <div className="space-y-5">
           {bozze.length > 0 &&
         <div className="space-y-2">
