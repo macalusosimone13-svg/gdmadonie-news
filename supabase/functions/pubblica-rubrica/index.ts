@@ -5,7 +5,7 @@ import { copertinaPng } from './disegna.ts';
 // ---------------------------------------------------------------------------
 // pubblica-rubrica — pubblica DA SOLA una rubrica scritta dall'IA (22/11/2026).
 // Simone: "deve fare il post in automatico senza che ci sia bisogno che io
-// approvi". I job del lunedi' e del venerdi' alle 7 chiamano questa funzione,
+// approvi". I job del lunedi' e del venerdi' alle 10 chiamano questa funzione,
 // che fa scrivere la rubrica a rubriche-ai o ars-settimana e poi la pubblica.
 // Il pulsante "genera adesso" del pannello continua invece a creare bozze da
 // rivedere.
@@ -24,7 +24,7 @@ import { copertinaPng } from './disegna.ts';
 // Chiamate (auth CRON_SECRET o JWT admin):
 //  - dai job pg_cron: POST { genera: { funzione: 'rubriche-ai'|'ars-settimana',
 //    corpo: {...} } } → fa scrivere la rubrica (sempre con auto:true, quindi
-//    solo alle 7 e senza doppioni) e, se la bozza nasce, la pubblica;
+//    solo alle 10 e senza doppioni) e, se la bozza nasce, la pubblica;
 //  - a mano: POST { post_id } pubblica una bozza gia' scritta;
 //  - POST { post_id, prova: true } fa i controlli e disegna la copertina, ma
 //    non carica nulla e non pubblica: funziona anche su rubriche gia' uscite

@@ -40,7 +40,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 //
 // Chiamata: POST { tipo: 'punto' | 'dnc', ambito?: 'paesi'|'regionale'|'nazionale', auto?: true, prova?: true }
 // Auth: CRON_SECRET (job automatici) oppure JWT di un admin.
-// Con auto:true (dai job) lavora solo alle 7 ora italiana e non crea doppioni
+// Con auto:true (dai job) lavora solo alle 10 ora italiana (dal 22/11/2026,
+// prima alle 7) e non crea doppioni
 // se la stessa rubrica e' gia' stata generata nelle ultime 20 ore.
 // Con prova:true fa tutto tranne salvare: serve a vedere cosa sceglierebbe.
 // ---------------------------------------------------------------------------
@@ -51,6 +52,7 @@ const GEMINI_RISERVE = ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
 const GIORNI = 7;
 const GIORNI_MEMORIA = 35;
 const NOME_FOCUS = 'Focus Madonie';
+const ORA_USCITA = 10; // ora italiana delle uscite automatiche (fino al 22/11/2026 le 7)
 
 class Saltata extends Error {}
 
@@ -348,8 +350,8 @@ Deno.serve(async (req) => {
     const auto = !!body?.auto, prova = !!body?.prova;
 
     if (auto && !prova) {
-      // i job girano alle 5 e alle 6 UTC: si lavora solo quando in Italia sono le 7
-      if (oraRoma() !== 7) return json({ saltato: 'non sono le 7 in Italia' });
+      // i job girano alle 8 e alle 9 UTC: si lavora solo quando in Italia sono le 10
+      if (oraRoma() !== ORA_USCITA) return json({ saltato: `non sono le ${ORA_USCITA} in Italia` });
       const { count } = await sb.from('posts').select('id', { count: 'exact', head: true }).eq('rubrica', rubrica).gte('created_at', new Date(Date.now() - 20 * 3600000).toISOString());
       if ((count || 0) > 0) return json({ saltato: 'gia\' generato oggi' });
     }

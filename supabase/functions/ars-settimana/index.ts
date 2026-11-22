@@ -5,8 +5,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // News GD (status 'draft', rubrica 'settimana_ars') con i fatti della
 // settimana all'Assemblea Regionale Siciliana presi dall'archivio del sito:
 // leggi approvate, atti sulle Madonie, risposte del Governo, cosa c'e' la
-// settimana dopo. Simone la rilegge e la pubblica da Admin → Redazione →
-// Rubriche IA. Se la settimana e' vuota la bozza non si crea.
+// settimana dopo. Se la settimana e' vuota la bozza non si crea.
+// Dal 22/11/2026 il job del venerdi' (alle 10) passa da pubblica-rubrica, che
+// la pubblica subito dopo i controlli; dal pulsante del pannello resta bozza.
 // POST { auto?: true } — auth CRON_SECRET o JWT admin.
 // ---------------------------------------------------------------------------
 
@@ -78,7 +79,8 @@ Deno.serve(async (req) => {
     let body: any = {};
     try { body = await req.json(); } catch { /* */ }
     if (body.auto) {
-      if (oraRoma() !== 7) return json({ saltato: 'non sono le 7 in Italia' });
+      // job alle 8 e alle 9 UTC: si lavora solo quando in Italia sono le 10 (fino al 22/11/2026 le 7)
+      if (oraRoma() !== 10) return json({ saltato: 'non sono le 10 in Italia' });
       const { count } = await sb.from('posts').select('id', { count: 'exact', head: true }).eq('rubrica', 'settimana_ars').gte('created_at', new Date(Date.now() - 20 * 3600000).toISOString());
       if ((count || 0) > 0) return json({ saltato: 'gia\' generata oggi' });
     }
