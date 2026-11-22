@@ -110,12 +110,14 @@ Deno.serve(async (req) => {
     for (const x of ['Petralia Sottana', 'Petralia Soprana']) if (!comuni.includes(x)) comuni.push(x);
   }
   const futuro = p?.futuro === true || /\b(prossim|quando|in programma|calendario|convocat)/i.test(domanda);
+  // "ultime leggi", "leggi approvate di recente", "nuove leggi": le leggi piu' recenti entrano sempre tra le fonti
+  const recenti = /\blegg[ei]\b/i.test(domanda) && /\b(ultim|recent|nuov|appena|approvat|votat|quest'anno|questo mese)/i.test(domanda);
 
   // 2) fonti
-  let { data: fonti, error } = await sb.rpc('ars_cerca_fonti', { musts, anys, comuni, limite: 24, futuro });
+  let { data: fonti, error } = await sb.rpc('ars_cerca_fonti', { musts, anys, comuni, limite: 24, futuro, recenti });
   if (error) console.error('[fonti]', error.message);
   if ((fonti || []).length < 4 && musts.length) {
-    const r2 = await sb.rpc('ars_cerca_fonti', { musts: [], anys: [...musts, ...anys], comuni, limite: 24, futuro });
+    const r2 = await sb.rpc('ars_cerca_fonti', { musts: [], anys: [...musts, ...anys], comuni, limite: 24, futuro, recenti });
     const visti = new Set((fonti || []).map((f: any) => f.fonte + f.id));
     fonti = [...(fonti || []), ...(r2.data || []).filter((f: any) => !visti.has(f.fonte + f.id))];
   }

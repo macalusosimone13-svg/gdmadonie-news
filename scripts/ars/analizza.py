@@ -488,7 +488,12 @@ def resoconti(cache):
             if (n, num) in seen:
                 continue
             seen.add((n, num))
-            titm = re.search(r'[“"]([^”"]{8,400})[”"]', seg0)
+            # il titolo puo' aprirsi con « e chiudersi con " (resoconto della seduta 282):
+            # anche « » valgono come virgolette, e un "titolo" che contiene la frase
+            # del Presidente o comincia con il numero del ddl non e' un titolo.
+            titm = re.search(r'[«“"]([^»”"]{8,400})[»”"]', seg0)
+            if titm and re.search(r'PRESIDENTE\.|Ind[iì]co la votazione', titm.group(1)) or titm and titm.group(1).lstrip().startswith('('):
+                titm = None
             votes.append(dict(seduta=n, data=date_at(m.start()), ddl=num, label=lab,
                               titolo=(titm.group(1).strip() if titm else titles.get(num, '')),
                               presenti=g('Presenti'), votanti=g('Votanti'), favorevoli=fav, contrari=con,
@@ -579,6 +584,8 @@ def costruisci(cache, deputati, conv):
         t = v['titolo'] or title.get(main, '')
         lab = re.split(r'[«“"]', v['label'])[0].strip(' -–,')
         t = re.sub(r'\s+', ' ', t or '').strip()
+        if t.count('“') > t.count('”'):
+            t += '”'
         if re.match(r'^118\b', lab) and not t:
             continue
         lid = legge_id(v['seduta'], lab)
