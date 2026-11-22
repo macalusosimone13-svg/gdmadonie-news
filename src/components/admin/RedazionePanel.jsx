@@ -652,15 +652,18 @@ function ScriviTuTab() {
 }
 
 // --- Tab "Rubriche IA": "Il punto della settimana" (Madonie, Sicilia, Italia)
-// e "Dove nasci conta", scritti dall'IA (function rubriche-ai) partendo dalle
-// notizie raccolte in automatico. Arrivano da soli come bozze il lunedì e il
-// venerdì alle 7 (anche "La settimana all'ARS", funzione ars-settimana); da qui si possono anche generare quando si vuole. Nessuna
-// bozza esce sul sito senza essere riletta e pubblicata da qui. ---
+// e "Focus Madonie" (fino al 22/11/2026 "Dove nasci conta"; la chiave resta
+// dove_nasci_conta), scritti dall'IA (function rubriche-ai) partendo dalle
+// notizie raccolte in automatico, piu' "La settimana all'ARS" (ars-settimana).
+// Dal 22/11/2026 le puntate del lunedi' e del venerdi' alle 7 si pubblicano
+// DA SOLE (function pubblica-rubrica: controlli automatici, copertina, email);
+// se un controllo non passa restano qui come bozze. I pulsanti "genera adesso"
+// creano invece bozze da rileggere e pubblicare a mano. ---
 const RUBRICHE = {
   punto_paesi: { label: 'Il punto · Madonie', body: { tipo: 'punto', ambito: 'paesi' } },
   punto_regionale: { label: 'Il punto · Sicilia', body: { tipo: 'punto', ambito: 'regionale' } },
   punto_nazionale: { label: 'Il punto · Italia', body: { tipo: 'punto', ambito: 'nazionale' } },
-  dove_nasci_conta: { label: 'Dove nasci conta', body: { tipo: 'dnc' } },
+  dove_nasci_conta: { label: 'Focus Madonie', body: { tipo: 'dnc' } },
   settimana_ars: { label: "La settimana all'ARS", body: {}, fn: 'ars-settimana' }
 };
 
@@ -738,9 +741,9 @@ function RubricheTab({ onChange }) {
     <div className="space-y-4">
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <p className="text-sm text-foreground leading-relaxed">
-          Ogni <b>lunedì alle 7</b> l'IA prepara <b>Il punto della settimana</b> in tre versioni (Madonie, Sicilia, Italia) e ogni <b>venerdì alle 7</b> la puntata di <b>Dove nasci conta</b>, sul tema di cui si è parlato di più nella settimana. Arrivano qui come <b>bozze</b>: nessuno le vede finché non le rileggi e le pubblichi.
+          Ogni <b>lunedì alle 7</b> l'IA scrive <b>Il punto della settimana</b> in tre versioni (Madonie, Sicilia, Italia) e ogni <b>venerdì alle 7</b> <b>Focus Madonie</b> (il tema di cui si è parlato di più nella settimana) e <b>La settimana all'ARS</b>. Si <b>pubblicano da sole</b>, con la copertina e l'email agli iscritti, dopo un controllo automatico del testo; se il controllo non passa restano qui sotto come <b>bozze</b> da rivedere.
         </p>
-        <p className="text-xs text-muted-foreground">Vuoi farne una adesso? Ci vogliono circa 20–30 secondi.</p>
+        <p className="text-xs text-muted-foreground">Vuoi farne una adesso? Ci vogliono circa 20–30 secondi. Quelle fatte con questi pulsanti restano bozze da rileggere.</p>
         <div className="flex flex-wrap gap-2">
           {Object.entries(RUBRICHE).map(([key, r]) =>
           <button key={key} type="button" onClick={() => genera(key)} disabled={!!busy} className={PILL_AI}>
